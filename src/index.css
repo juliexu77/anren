@@ -2,35 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mom Brain - Celestial Neon Glass Design System (Aster-inspired) */
+/* Mom Brain - Celestial Neon Glass Design System (exact Aster copy) */
 /* Dark glass foundation with luminous emerald accents */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
 @layer base {
   :root {
+    /* Font stacks */
     --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
     --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-num: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
 
-    /* Background: Deep emerald-charcoal */
-    --bg: 160 15% 6%;
-    --bg-bottom: 180 25% 4%;
-    --surface: 160 12% 11%;
-    --surface-muted: 160 12% 14%;
+    /* Spacing scale (8pt grid) */
+    --s-1: 4px;
+    --s-2: 8px;
+    --s-3: 12px;
+    --s-4: 16px;
+    --s-5: 24px;
+    --s-6: 32px;
+    --s-7: 40px;
+
+    /* ═══════════════════════════════════════════════════════════════════
+       CELESTIAL NEON GLASS - Dark emerald glass with luminous accents
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* Background: Deep emerald to dark ink */
+    --bg: 160 18% 6%;
+    --bg-bottom: 180 30% 4%;
+    --surface: 160 14% 11%;
+    --surface-muted: 160 14% 14%;
     --text: 0 0% 100%;
     --text-secondary: 0 0% 100%;
     --text-muted: 0 0% 100%;
     --divider: 160 10% 20%;
 
-    /* Card ombré (glass effect) */
-    --card-ombre-1: 160 12% 11%;
-    --card-ombre-2: 160 12% 11%;
-    --card-ombre-3: 160 12% 11%;
-    --card-ombre-4: 160 12% 11%;
+    /* Card ombré progression (glass effect) */
+    --card-ombre-1: 160 14% 11%;
+    --card-ombre-1-dark: 160 14% 11%;
+    --card-ombre-2: 160 14% 11%;
+    --card-ombre-2-dark: 160 14% 11%;
+    --card-ombre-3: 160 14% 11%;
+    --card-ombre-3-dark: 160 14% 11%;
+    --card-ombre-4: 160 14% 11%;
+    --card-ombre-4-dark: 160 14% 11%;
 
-    /* Accent: Emerald + champagne gold */
-    --accent-1: 160 50% 45%;
+    /* Accent: Muted emerald-sage */
+    --accent-rose: 160 40% 50%;
+    --accent-1: 160 40% 50%;
     --accent-2: 38 45% 62%;
 
     /* Gold accent for highlights */
@@ -38,9 +58,9 @@
     --gold-glow: 38 45% 55%;
 
     /* Atmospheric glow */
-    --radial-glow: 160 20% 20%;
+    --radial-glow: 160 20% 22%;
 
-    /* Glass morphism */
+    /* Card elevation - glass morphism */
     --glass-overlay-start: rgba(255,255,255,0.04);
     --glass-overlay-end: rgba(255,255,255,0.02);
     --glass-border: rgba(255,255,255,0.12);
@@ -48,22 +68,26 @@
     --glass-highlight: rgba(255,255,255,0.18);
     --glass-shadow: rgba(0,0,0,0.4);
     --glass-shadow-deep: rgba(0,0,0,0.5);
-    --glass-backdrop: rgba(10,18,14,0.80);
+    --glass-backdrop: rgba(8,16,12,0.80);
     --glass-tab-active: rgba(255,255,255,0.1);
     --elev-shadow: 0 8px 20px var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
     --card-radius: 12px;
 
+    /* Transitions */
     --transition-smooth: all 200ms ease-in-out;
 
-    /* Tailwind compatibility */
+    /* ═══════════════════════════════════════════════════════════════════
+       TAILWIND COMPATIBILITY
+       ═══════════════════════════════════════════════════════════════════ */
+
     --background: var(--bg);
     --foreground: var(--text);
     --card: var(--surface);
     --card-foreground: 0 0% 100%;
     --popover: var(--surface);
     --popover-foreground: var(--text);
-    --primary: 160 50% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 160 40% 50%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 38 45% 62%;
     --secondary-foreground: 0 0% 10%;
     --muted: var(--surface-muted);
@@ -77,22 +101,26 @@
     --ring: var(--accent-1);
     --radius: 12px;
 
-    /* CTA gradient */
-    --cta-gradient-start: 160 50% 45%;
-    --cta-gradient-end: 140 40% 35%;
+    /* Primary CTA gradient */
+    --cta-gradient-start: 160 40% 50%;
+    --cta-gradient-end: 140 35% 40%;
     --cta-shadow: 0 0 20px rgba(60, 160, 120, 0.3);
 
-    /* Neon glow - emerald */
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--accent-1)) 0%, hsl(var(--accent-2)) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 8px 16px var(--glass-shadow);
+    --shadow-card: 0 8px 20px var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+
+    /* Neon glow effects */
     --neon-glow:
       0 0 12px hsl(var(--accent-1) / 0.5),
       0 0 24px hsl(var(--accent-2) / 0.3),
       0 0 48px hsl(var(--accent-1) / 0.2);
 
+    /* Icon opacity */
     --icon-opacity: 0.9;
-
-    /* Shadows */
-    --shadow-soft: 0 8px 16px var(--glass-shadow);
-    --shadow-card: 0 8px 20px var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
 
     /* Sidebar */
     --sidebar-background: var(--bg);
@@ -106,7 +134,7 @@
   }
 }
 
-/* Force all text to pure white */
+/* Force all text to pure white - HIGH SPECIFICITY override */
 [class*="text-foreground\/"],
 [class*="text-muted-foreground"],
 .text-foreground\/5, .text-foreground\/10, .text-foreground\/15,
@@ -138,6 +166,7 @@
   body {
     @apply text-foreground font-sans;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
     overflow-x: hidden;
     width: 100%;
     background: linear-gradient(180deg, hsl(var(--bg)) 0%, hsl(var(--bg-bottom)) 100%);
@@ -146,6 +175,7 @@
     line-height: 1.6;
   }
 
+  /* Typography System */
   h1, h2, h3 {
     @apply font-display;
     text-transform: uppercase;
@@ -156,17 +186,43 @@
 
   h4, h5, h6 {
     @apply font-sans;
+    letter-spacing: 0;
     font-weight: 600;
   }
 
   p, span {
     @apply font-sans;
+    letter-spacing: 0;
     font-weight: 500;
   }
 
   label, button {
     @apply font-sans;
+    letter-spacing: 0;
     font-weight: 600;
+  }
+
+  .uppercase, [class*="uppercase"] {
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  /* Display Caps */
+  .display-caps {
+    font-family: var(--font-serif);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .display-caps-lg {
+    font-family: var(--font-serif);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    line-height: 1.0;
+    font-size: 2.5rem;
   }
 
   svg {
@@ -191,7 +247,13 @@
     background: transparent !important;
   }
 
-  /* Glass morphism cards */
+  .number, .value, .time {
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Component base styles - Glass Morphism */
   .card,
   .liquid-glass,
   .glass-card {
@@ -219,11 +281,51 @@
     border-radius: var(--card-radius) var(--card-radius) 0 0;
   }
 
+  .bg-gradient-to-b:not(.backdrop-blur-md):not([class*="from-[#"]):not([class*="from-black"]):not([data-radix-dialog-content] *),
+  .bg-gradient-to-br:not(.backdrop-blur-md):not([class*="from-[#"]):not([class*="from-black"]):not([data-radix-dialog-content] *),
+  .bg-gradient-to-t:not(.backdrop-blur-md):not([class*="from-[#"]):not([class*="from-black"]):not([data-radix-dialog-content] *),
+  .bg-gradient-to-r:not(.backdrop-blur-md):not([class*="from-[#"]):not([class*="from-black"]):not([data-radix-dialog-content] *),
+  .bg-gradient-to-l:not(.backdrop-blur-md):not([class*="from-[#"]):not([class*="from-black"]):not([data-radix-dialog-content] *) {
+    background: linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end)) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border-subtle);
+    box-shadow:
+      0 8px 24px 0 var(--glass-shadow-deep),
+      inset 0 1px 0 var(--glass-highlight);
+    border-radius: var(--card-radius);
+  }
+
+  .backdrop-blur-md[class*="bg-background"] {
+    background: var(--glass-backdrop) !important;
+    backdrop-filter: blur(16px) saturate(100%);
+    border: 1px solid var(--glass-border-subtle);
+    border-radius: var(--card-radius);
+  }
+
+  .card .bg-background,
+  .card .bg-card,
+  .bg-gradient-to-b .bg-background,
+  .bg-gradient-to-br .bg-background {
+    background: transparent !important;
+  }
+
   .bg-card:not(.backdrop-blur-md) {
     background: linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end)) !important;
     backdrop-filter: blur(8px);
     border: 1px solid var(--glass-border-subtle);
     border-radius: var(--card-radius);
+  }
+
+  /* Transparent tabs */
+  [role="tablist"] {
+    background: transparent !important;
+    border: 1px solid var(--glass-border-subtle);
+  }
+
+  [role="tab"][data-state="active"] {
+    background: transparent !important;
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 1px 0 var(--glass-overlay-start);
   }
 
   /* Transparent inputs */
@@ -239,7 +341,7 @@
     border-color: hsl(var(--accent-1) / 0.5);
   }
 
-  /* Primary buttons - emerald gradient */
+  /* Primary buttons - theme gradient */
   .bg-primary,
   button.bg-primary {
     background: linear-gradient(135deg, hsl(var(--accent-1)) 0%, hsl(var(--accent-2)) 100%) !important;
@@ -258,6 +360,29 @@
       0 0 24px hsl(var(--accent-2) / 0.3),
       0 0 48px hsl(var(--accent-1) / 0.2);
   }
+
+  .moonlight-glow {
+    text-shadow: 0 0 16px hsl(var(--accent-1) / 0.5),
+                 0 0 32px hsl(var(--accent-1) / 0.25);
+  }
+
+  /* Active tab styling */
+  [role="tablist"] button[data-state="active"] {
+    background: var(--glass-tab-active) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Value highlighting */
+  .value--highlight {
+    color: hsl(var(--accent-1));
+    font-weight: 700;
+  }
+
+  /* Dividers */
+  .hr {
+    height: 1px;
+    background: hsl(var(--divider));
+  }
 }
 
 @layer components {
@@ -272,5 +397,238 @@
       0 0 20px hsl(var(--accent-1) / 0.35),
       0 0 40px hsl(var(--accent-1) / 0.15),
       0 8px 20px var(--glass-shadow);
+  }
+
+  .supportive-card {
+    background: transparent;
+    backdrop-filter: blur(24px) saturate(100%);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 0 var(--glass-overlay-end), 0 4px 16px 0 var(--glass-shadow-deep);
+    border: 1px solid var(--glass-border-subtle);
+  }
+
+  .pp-card {
+    background: transparent;
+    backdrop-filter: blur(24px) saturate(100%);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.02), 0 4px 16px 0 rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: var(--s-4) var(--s-5);
+  }
+}
+
+@layer utilities {
+  /* Semantic Typography */
+  .text-h1 {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    line-height: 36px;
+    font-weight: 700;
+  }
+
+  .text-h2 {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    line-height: 28px;
+    font-weight: 700;
+  }
+
+  .text-h3 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 600;
+  }
+
+  .text-body {
+    font-size: 17px;
+    line-height: 26px;
+    font-weight: 500;
+  }
+
+  .text-body-sm {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+  }
+
+  .text-caption {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+
+  .text-caption-sm {
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 500;
+  }
+
+  .text-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  .text-micro {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 500;
+  }
+
+  .text-micro-caps {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+
+  .text-display-caps {
+    font-family: var(--font-serif);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .text-display-caps-xl {
+    font-family: var(--font-serif);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    line-height: 1.0;
+    font-size: 2.5rem;
+  }
+
+  .text-display-caps-lg {
+    font-family: var(--font-serif);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    line-height: 1.1;
+    font-size: 1.5rem;
+  }
+
+  .text-display-caps-sm {
+    font-family: var(--font-serif);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    line-height: 1.2;
+    font-size: 0.875rem;
+  }
+
+  .text-nav {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 500;
+  }
+
+  .text-button {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+  }
+
+  .text-sheet-title {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+  }
+
+  .text-numeric {
+    font-family: var(--font-num);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .gentle-fade {
+    transition: var(--transition-smooth);
+  }
+
+  .confidence-badge {
+    @apply rounded-full px-3 py-2 text-label font-medium;
+    background: hsl(var(--accent-1));
+    color: hsl(0 0% 100%);
+  }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Star twinkling animation */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: var(--star-opacity, 0.7);
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: calc(var(--star-opacity, 0.7) * 0.2);
+    transform: scale(0.7);
+    filter: brightness(0.6);
+  }
+}
+
+/* Shooting star animation */
+@keyframes shootingStar {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle, 35deg)) translateX(0) scaleX(0.3);
+  }
+  10% {
+    opacity: 1;
+    transform: rotate(var(--angle, 35deg)) translateX(20px) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle, 35deg)) translateX(300px) scaleX(0.5);
+  }
+}
+
+/* Constellation node pulse */
+@keyframes node-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.animate-node-pulse {
+  animation: node-pulse 4s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Scroll fade */
+.scroll-fade {
+  transition: opacity 0.2s ease;
+}
+
+.scroll-fade.scrolled {
+  opacity: 0.85;
+}
+
+/* PWA standalone spacing */
+@media all and (display-mode: standalone) {
+  .standalone-header-boost {
+    padding-top: max(3rem, calc(env(safe-area-inset-top) + 1.5rem)) !important;
+    padding-bottom: 1rem !important;
   }
 }
