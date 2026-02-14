@@ -1,1 +1,7 @@
 project_id = "skbktztzbkdgkkguzltv"
+
+[functions.sort-cards]
+verify_jwt = false
+
+[functions.parse-image]
+verify_jwt = false
