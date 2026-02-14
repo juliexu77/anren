@@ -4,80 +4,133 @@ export interface NeonTheme {
   id: string;
   name: string;
   description: string;
+  bgPrimary: string;
+  bgSecondary: string;
+  accent1: string;
+  accent2: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  cardBg: string;
+  cardBorder: string;
+  divider: string;
+  surface: string;
+  surfaceMuted: string;
+  // Legacy compat
   baseHsl: string;
   accentHsl: string;
   secondaryHsl: string;
-  bgPrimary: string;
-  bgSecondary: string;
-  glowPrimary: string;
-  glowSecondary: string;
   foreground: string;
   foregroundSecondary: string;
   foregroundMuted: string;
+  glowPrimary: string;
+  glowSecondary: string;
   isLight: boolean;
 }
 
-const WHITE_TEXT = {
-  foreground: '0 0% 100%',
-  foregroundSecondary: '0 0% 100%',
-  foregroundMuted: '0 0% 100%',
-};
-
 export const NEON_THEMES: NeonTheme[] = [
   {
-    id: 'rosewood-den',
-    name: 'Rosewood Gate',
-    description: 'Lacquered warmth',
-    baseHsl: '15 45% 25%',
-    accentHsl: '35 60% 50%',
-    secondaryHsl: '10 40% 35%',
-    bgPrimary: '15 45% 18%',
-    bgSecondary: '10 35% 12%',
-    glowPrimary: 'rgba(120, 70, 50, 0.25)',
-    glowSecondary: 'rgba(180, 120, 60, 0.15)',
-    ...WHITE_TEXT,
-    isLight: false,
+    id: 'stone-tea',
+    name: 'Stone & Tea',
+    description: 'Warm cream, quiet warmth',
+    bgPrimary: '40 30% 95%',
+    bgSecondary: '35 20% 90%',
+    accent1: '18 45% 45%',
+    accent2: '150 25% 40%',
+    textPrimary: '25 20% 18%',
+    textSecondary: '25 15% 35%',
+    textMuted: '25 12% 50%',
+    cardBg: '40 30% 97%',
+    cardBorder: '35 20% 85%',
+    divider: '35 15% 82%',
+    surface: '38 25% 92%',
+    surfaceMuted: '36 20% 88%',
+    baseHsl: '18 45% 45%',
+    accentHsl: '18 45% 45%',
+    secondaryHsl: '150 25% 40%',
+    foreground: '25 20% 18%',
+    foregroundSecondary: '25 15% 35%',
+    foregroundMuted: '25 12% 50%',
+    glowPrimary: 'rgba(180, 150, 120, 0.1)',
+    glowSecondary: 'rgba(120, 160, 130, 0.08)',
+    isLight: true,
   },
   {
-    id: 'chinese-jade',
-    name: 'Jade Mist',
-    description: 'Soft waves',
-    baseHsl: '160 45% 40%',
-    accentHsl: '165 55% 50%',
-    secondaryHsl: '140 40% 55%',
-    bgPrimary: '160 45% 40%',
-    bgSecondary: '140 35% 50%',
-    glowPrimary: 'rgba(80, 160, 130, 0.3)',
-    glowSecondary: 'rgba(100, 180, 140, 0.25)',
-    ...WHITE_TEXT,
-    isLight: false,
+    id: 'bamboo-mist',
+    name: 'Bamboo Mist',
+    description: 'Soft sage, forest calm',
+    bgPrimary: '140 15% 93%',
+    bgSecondary: '145 12% 89%',
+    accent1: '155 35% 38%',
+    accent2: '30 40% 48%',
+    textPrimary: '150 15% 15%',
+    textSecondary: '145 10% 32%',
+    textMuted: '140 8% 48%',
+    cardBg: '140 18% 96%',
+    cardBorder: '145 12% 83%',
+    divider: '140 10% 80%',
+    surface: '142 14% 91%',
+    surfaceMuted: '140 12% 87%',
+    baseHsl: '155 35% 38%',
+    accentHsl: '155 35% 38%',
+    secondaryHsl: '30 40% 48%',
+    foreground: '150 15% 15%',
+    foregroundSecondary: '145 10% 32%',
+    foregroundMuted: '140 8% 48%',
+    glowPrimary: 'rgba(100, 150, 120, 0.1)',
+    glowSecondary: 'rgba(180, 150, 100, 0.08)',
+    isLight: true,
   },
   {
-    id: 'chinese-plum',
-    name: 'Peony',
-    description: 'Petal rings',
-    baseHsl: '330 55% 45%',
-    accentHsl: '335 65% 55%',
-    secondaryHsl: '350 45% 60%',
-    bgPrimary: '330 55% 45%',
-    bgSecondary: '340 50% 60%',
-    glowPrimary: 'rgba(180, 90, 130, 0.35)',
-    glowSecondary: 'rgba(200, 140, 160, 0.25)',
-    ...WHITE_TEXT,
-    isLight: false,
+    id: 'clay-earth',
+    name: 'Clay Earth',
+    description: 'Terracotta warmth',
+    bgPrimary: '25 25% 93%',
+    bgSecondary: '20 18% 88%',
+    accent1: '12 50% 42%',
+    accent2: '35 45% 50%',
+    textPrimary: '20 25% 16%',
+    textSecondary: '18 18% 33%',
+    textMuted: '15 12% 48%',
+    cardBg: '28 28% 96%',
+    cardBorder: '22 18% 83%',
+    divider: '20 14% 80%',
+    surface: '24 22% 91%',
+    surfaceMuted: '22 18% 87%',
+    baseHsl: '12 50% 42%',
+    accentHsl: '12 50% 42%',
+    secondaryHsl: '35 45% 50%',
+    foreground: '20 25% 16%',
+    foregroundSecondary: '18 18% 33%',
+    foregroundMuted: '15 12% 48%',
+    glowPrimary: 'rgba(180, 120, 90, 0.1)',
+    glowSecondary: 'rgba(200, 170, 100, 0.08)',
+    isLight: true,
   },
   {
-    id: 'mustard-olive',
-    name: 'Mustard Olive',
-    description: 'Ochre warmth',
-    baseHsl: '40 60% 30%',
-    accentHsl: '45 70% 55%',
-    secondaryHsl: '38 65% 45%',
-    bgPrimary: '38 45% 14%',
-    bgSecondary: '35 35% 9%',
-    glowPrimary: 'rgba(190, 155, 50, 0.25)',
-    glowSecondary: 'rgba(200, 170, 60, 0.18)',
-    ...WHITE_TEXT,
+    id: 'ink-silk',
+    name: 'Ink & Silk',
+    description: 'Deep charcoal, quiet luxury',
+    bgPrimary: '30 8% 12%',
+    bgSecondary: '25 6% 8%',
+    accent1: '35 50% 55%',
+    accent2: '18 40% 50%',
+    textPrimary: '35 15% 90%',
+    textSecondary: '30 10% 72%',
+    textMuted: '25 8% 55%',
+    cardBg: '30 10% 16%',
+    cardBorder: '28 8% 22%',
+    divider: '25 6% 20%',
+    surface: '28 8% 14%',
+    surfaceMuted: '26 7% 18%',
+    baseHsl: '35 50% 55%',
+    accentHsl: '35 50% 55%',
+    secondaryHsl: '18 40% 50%',
+    foreground: '35 15% 90%',
+    foregroundSecondary: '30 10% 72%',
+    foregroundMuted: '25 8% 55%',
+    glowPrimary: 'rgba(200, 170, 100, 0.15)',
+    glowSecondary: 'rgba(180, 130, 90, 0.1)',
     isLight: false,
   },
 ];
@@ -95,9 +148,9 @@ const STORAGE_KEY = 'aster-color-theme';
 export const ColorThemeProvider = ({ children }: { children: ReactNode }) => {
   const [currentThemeId, setCurrentThemeId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem(STORAGE_KEY) || 'rosewood-den';
+      return localStorage.getItem(STORAGE_KEY) || 'stone-tea';
     }
-    return 'rosewood-den';
+    return 'stone-tea';
   });
 
   const currentTheme = NEON_THEMES.find(t => t.id === currentThemeId) || NEON_THEMES[0];
@@ -108,75 +161,63 @@ export const ColorThemeProvider = ({ children }: { children: ReactNode }) => {
     root.setAttribute('data-color-theme', currentTheme.id);
     root.setAttribute('data-theme-light', currentTheme.isLight ? 'true' : 'false');
 
+    // Backgrounds
     root.style.setProperty('--bg', currentTheme.bgPrimary);
     root.style.setProperty('--bg-bottom', currentTheme.bgSecondary);
     root.style.setProperty('--background', currentTheme.bgPrimary);
 
-    const bgParts = currentTheme.bgPrimary.split(' ');
-    const bgH = bgParts[0] || '0';
-    const bgS = parseFloat(bgParts[1] || '0');
-    const bgL = parseFloat(bgParts[2] || '0');
+    // Surfaces
+    root.style.setProperty('--surface', currentTheme.surface);
+    root.style.setProperty('--surface-muted', currentTheme.surfaceMuted);
+    root.style.setProperty('--card', currentTheme.surface);
+    root.style.setProperty('--card-bg', currentTheme.cardBg);
+    root.style.setProperty('--card-border', currentTheme.cardBorder);
+    root.style.setProperty('--popover', currentTheme.cardBg);
+    root.style.setProperty('--muted', currentTheme.surfaceMuted);
 
-    const cardL = Math.max(bgL + 5, 10);
-    const cardS = Math.min(bgS + 5, 100);
-    const cardColor = `${bgH} ${cardS}% ${cardL}%`;
-    root.style.setProperty('--card', cardColor);
-    root.style.setProperty('--popover', cardColor);
-    root.style.setProperty('--surface', cardColor);
+    // Borders
+    root.style.setProperty('--border', currentTheme.divider);
+    root.style.setProperty('--input', currentTheme.surfaceMuted);
+    root.style.setProperty('--divider', currentTheme.divider);
 
-    const mutedL = Math.max(bgL + 8, 15);
-    root.style.setProperty('--surface-muted', `${bgH} ${cardS}% ${mutedL}%`);
-    root.style.setProperty('--muted', `${bgH} ${cardS}% ${mutedL}%`);
+    // Text colors
+    root.style.setProperty('--text', currentTheme.textPrimary);
+    root.style.setProperty('--text-secondary', currentTheme.textSecondary);
+    root.style.setProperty('--text-muted', currentTheme.textMuted);
+    root.style.setProperty('--foreground', currentTheme.textPrimary);
+    root.style.setProperty('--muted-foreground', currentTheme.textMuted);
+    root.style.setProperty('--card-foreground', currentTheme.textPrimary);
+    root.style.setProperty('--popover-foreground', currentTheme.textPrimary);
+    root.style.setProperty('--sidebar-foreground', currentTheme.textPrimary);
+    root.style.setProperty('--accent-foreground', currentTheme.isLight ? '40 30% 97%' : '35 15% 90%');
+    root.style.setProperty('--secondary-foreground', currentTheme.isLight ? '40 30% 97%' : '35 15% 90%');
+    root.style.setProperty('--primary-foreground', currentTheme.isLight ? '40 30% 97%' : '30 8% 12%');
 
-    const borderL = Math.min(bgL + 18, 50);
-    const borderColor = `${bgH} ${Math.max(bgS - 10, 0)}% ${borderL}%`;
-    root.style.setProperty('--border', borderColor);
-    root.style.setProperty('--input', borderColor);
-    root.style.setProperty('--divider', borderColor);
+    // Accents
+    root.style.setProperty('--accent-1', currentTheme.accent1);
+    root.style.setProperty('--accent-2', currentTheme.accent2);
+    root.style.setProperty('--primary', currentTheme.accent1);
+    root.style.setProperty('--secondary', currentTheme.accent2);
+    root.style.setProperty('--accent', currentTheme.accent1);
+    root.style.setProperty('--ring', currentTheme.accent1);
+    root.style.setProperty('--sidebar-primary', currentTheme.accent1);
+    root.style.setProperty('--sidebar-ring', currentTheme.accent1);
 
-    root.style.setProperty('--glass-overlay-start', 'rgba(255,255,255,0.04)');
-    root.style.setProperty('--glass-overlay-end', 'rgba(255,255,255,0.02)');
-    root.style.setProperty('--glass-border', 'rgba(255,255,255,0.12)');
-    root.style.setProperty('--glass-border-subtle', 'rgba(255,255,255,0.08)');
-    root.style.setProperty('--glass-highlight', 'rgba(255,255,255,0.18)');
-    root.style.setProperty('--glass-shadow', 'rgba(0,0,0,0.4)');
-    root.style.setProperty('--glass-shadow-deep', 'rgba(0,0,0,0.5)');
-    root.style.setProperty('--glass-backdrop', `hsla(${bgH}, ${bgS}%, ${Math.max(bgL - 3, 0)}%, 0.80)`);
-    root.style.setProperty('--glass-tab-active', 'rgba(255,255,255,0.1)');
+    // Card shadows based on theme lightness
+    if (currentTheme.isLight) {
+      root.style.setProperty('--card-shadow', 'rgba(25, 20, 15, 0.06)');
+      root.style.setProperty('--card-shadow-hover', 'rgba(25, 20, 15, 0.12)');
+    } else {
+      root.style.setProperty('--card-shadow', 'rgba(0, 0, 0, 0.3)');
+      root.style.setProperty('--card-shadow-hover', 'rgba(0, 0, 0, 0.4)');
+    }
 
-    root.style.setProperty('--text', currentTheme.foreground);
-    root.style.setProperty('--text-secondary', currentTheme.foregroundSecondary);
-    root.style.setProperty('--text-muted', currentTheme.foregroundMuted);
-    root.style.setProperty('--foreground', currentTheme.foreground);
-    root.style.setProperty('--muted-foreground', currentTheme.foregroundMuted);
-    root.style.setProperty('--card-foreground', currentTheme.foreground);
-    root.style.setProperty('--popover-foreground', currentTheme.foreground);
-    root.style.setProperty('--sidebar-foreground', currentTheme.foreground);
-    root.style.setProperty('--accent-foreground', currentTheme.foreground);
-    root.style.setProperty('--secondary-foreground', currentTheme.foreground);
+    // Body background
+    document.body.style.background = `hsl(${currentTheme.bgPrimary})`;
 
-    root.style.setProperty('--primary-foreground', '0 0% 8%');
-
-    root.style.setProperty('--glow-primary', currentTheme.glowPrimary);
-    root.style.setProperty('--glow-secondary', currentTheme.glowSecondary);
-
-    root.style.setProperty('--accent-1', currentTheme.accentHsl);
-    root.style.setProperty('--accent-2', currentTheme.secondaryHsl);
-    root.style.setProperty('--primary', currentTheme.accentHsl);
-    root.style.setProperty('--secondary', currentTheme.secondaryHsl);
-    root.style.setProperty('--accent', currentTheme.accentHsl);
-    root.style.setProperty('--ring', currentTheme.accentHsl);
-    root.style.setProperty('--sidebar-primary', currentTheme.accentHsl);
-    root.style.setProperty('--sidebar-ring', currentTheme.accentHsl);
-
-    root.style.setProperty('--feed-color', currentTheme.accentHsl);
-    root.style.setProperty('--chat-color', currentTheme.accentHsl);
-    root.style.setProperty('--diaper-color', currentTheme.secondaryHsl);
-    root.style.setProperty('--note-color', currentTheme.secondaryHsl);
-
-    root.style.setProperty('--cta-gradient-start', currentTheme.accentHsl);
-
-    localStorage.setItem(STORAGE_KEY, currentTheme.id);
+    try {
+      localStorage.setItem(STORAGE_KEY, currentTheme.id);
+    } catch {}
   }, [currentTheme]);
 
   const setTheme = (themeId: string) => {
