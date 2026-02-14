@@ -23,7 +23,7 @@ interface Props {
 export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Props) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<CardCategory>("general");
+  const [category, setCategory] = useState<CardCategory>("finance");
 
   // Sync local state when card changes
   const currentCardId = card?.id;

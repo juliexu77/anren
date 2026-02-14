@@ -36,7 +36,7 @@ export function useCards() {
         id: crypto.randomUUID(),
         title: data.title,
         body: data.body,
-        category: data.category ?? "general",
+        category: data.category ?? "finance",
         source: data.source ?? "text",
         imageUrl: data.imageUrl,
         createdAt: now,
