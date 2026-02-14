@@ -10,13 +10,14 @@ interface Props {
 
 export function BottomNav({ activeTab, onTabChange }: Props) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
+    <nav className="fixed bottom-4 left-0 right-0 z-50 flex justify-center">
       <div
-        className="relative flex items-center justify-around px-8 pb-5 pt-2"
+        className="flex items-center justify-center gap-8 px-8 py-2.5 rounded-full"
         style={{
-          background: 'hsl(var(--bg) / 0.92)',
-          backdropFilter: 'blur(12px)',
-          borderTop: '1px solid hsl(var(--divider) / 0.5)',
+          background: 'hsl(var(--bg) / 0.45)',
+          backdropFilter: 'blur(20px) saturate(1.4)',
+          border: '1px solid hsl(var(--divider) / 0.3)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
         }}
       >
         <button
