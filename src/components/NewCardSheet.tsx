@@ -10,7 +10,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Loader2, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -30,6 +32,7 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
   const [category, setCategory] = useState<CardCategory>("finance");
   const [imageUrl, setImageUrl] = useState<string | undefined>();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const didPickRef = useRef(false);
 
@@ -46,24 +49,50 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
     setBody("");
     setCategory("finance");
     setImageUrl(undefined);
+    setIsParsing(false);
+  };
+
+  const parseImageWithAI = async (base64: string) => {
+    setIsParsing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-image", {
+        body: { imageBase64: base64 },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data.title) setTitle(data.title);
+      if (data.body) setBody(data.body);
+      if (data.category && data.category in CATEGORY_CONFIG) {
+        setCategory(data.category as CardCategory);
+      }
+      toast.success("Image parsed! ✨");
+    } catch (e: any) {
+      console.error("AI parse error:", e);
+      toast.error(e.message || "Failed to parse image");
+      setBody("📸 Photo captured — could not parse automatically.");
+    } finally {
+      setIsParsing(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
-      // User cancelled file picker — close
       if (!didPickRef.current) onClose();
       return;
     }
     didPickRef.current = true;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setImageUrl(ev.target?.result as string);
-      setBody("📸 Photo captured — AI parsing coming soon!");
+      const base64 = ev.target?.result as string;
+      setImageUrl(base64);
       setSheetOpen(true);
+      // Trigger AI parsing
+      parseImageWithAI(base64);
     };
     reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
     e.target.value = "";
   };
 
@@ -94,7 +123,6 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
 
   return (
     <>
-      {/* Hidden file input — always rendered */}
       <input
         ref={fileInputRef}
         type="file"
@@ -103,7 +131,6 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
         onChange={handleImageUpload}
       />
 
-      {/* Floating "Free text" button when file picker is open but sheet isn't */}
       {open && !sheetOpen && (
         <div className="fixed bottom-24 left-0 right-0 z-50 flex justify-center animate-fade-in">
           <button
@@ -119,13 +146,31 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
       <Sheet open={sheetOpen} onOpenChange={(o) => { if (!o) handleSheetClose(); }}>
         <SheetContent side="bottom" className="rounded-t-3xl h-[80vh] flex flex-col">
           <SheetHeader>
-            <SheetTitle className="font-display text-lg">New Note</SheetTitle>
+            <SheetTitle className="font-display text-lg">
+              {isParsing ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Sparkles className="w-4 h-4" />
+                  Analyzing image…
+                </span>
+              ) : (
+                "New Note"
+              )}
+            </SheetTitle>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto space-y-4 mt-4">
             {imageUrl && (
-              <div className="rounded-xl overflow-hidden aspect-video bg-muted">
+              <div className="rounded-xl overflow-hidden aspect-video bg-muted relative">
                 <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                {isParsing && (
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <span className="text-sm text-foreground font-medium">AI is reading…</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -134,13 +179,15 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Title (optional)"
               className="font-display text-lg border-none bg-secondary/50 focus-visible:ring-primary/30"
+              disabled={isParsing}
             />
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Add a note..."
+              placeholder={isParsing ? "Extracting info from image…" : "Add a note..."}
               className="min-h-[120px] border-none bg-secondary/50 resize-none focus-visible:ring-primary/30"
               autoFocus={!imageUrl}
+              disabled={isParsing}
             />
 
             <div>
@@ -152,6 +199,7 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
                     <button
                       key={key}
                       onClick={() => setCategory(key)}
+                      disabled={isParsing}
                       className={`category-pill ${
                         category === key
                           ? "bg-primary text-primary-foreground"
@@ -167,8 +215,8 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
           </div>
 
           <div className="pt-4 border-t border-border">
-            <Button onClick={handleSubmit} className="w-full" disabled={!body.trim() && !imageUrl}>
-              Save Note
+            <Button onClick={handleSubmit} className="w-full" disabled={isParsing || (!body.trim() && !imageUrl)}>
+              {isParsing ? "Parsing…" : "Save Note"}
             </Button>
           </div>
         </SheetContent>
