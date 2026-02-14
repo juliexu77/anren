@@ -12,7 +12,7 @@ interface Props {
 export function BottomNav({ activeTab, onTabChange, onFabClick }: Props) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="relative flex items-end justify-around px-6 pb-6 pt-3 bg-card/80 backdrop-blur-xl border-t border-border">
+      <div className="relative flex items-end justify-around px-6 pb-6 pt-3 bg-background/80 backdrop-blur-xl border-t border-white/10">
         {/* Brain Dump tab */}
         <button
           onClick={() => onTabChange("brain")}

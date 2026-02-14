@@ -6,88 +6,57 @@
 
 @layer base {
   :root {
-    --background: 30 20% 97%;
-    --foreground: 280 10% 15%;
+    --background: 160 25% 6%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 280 10% 15%;
+    --card: 160 20% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 280 10% 15%;
+    --popover: 160 20% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 350 60% 55%;
+    --primary: 160 55% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 30% 93%;
-    --secondary-foreground: 280 10% 25%;
+    --secondary: 160 15% 14%;
+    --secondary-foreground: 0 0% 85%;
 
-    --muted: 30 15% 93%;
-    --muted-foreground: 280 5% 50%;
+    --muted: 160 10% 14%;
+    --muted-foreground: 160 10% 55%;
 
-    --accent: 280 25% 92%;
-    --accent-foreground: 280 20% 30%;
+    --accent: 160 20% 16%;
+    --accent-foreground: 0 0% 90%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 90%;
-    --input: 30 15% 88%;
-    --ring: 350 60% 55%;
+    --border: 160 12% 16%;
+    --input: 160 12% 16%;
+    --ring: 160 55% 45%;
 
     --radius: 1rem;
 
-    --rose-gold: 350 45% 65%;
-    --rose-gold-foreground: 0 0% 100%;
-    --lavender: 270 30% 88%;
-    --sage: 150 20% 88%;
-    --peach: 20 60% 90%;
-    --sky: 200 40% 88%;
+    --emerald-glow: 160 60% 50%;
+    --emerald-deep: 160 30% 8%;
+    --celestial-1: 220 40% 12%;
+    --celestial-2: 260 30% 10%;
+    --celestial-3: 160 25% 8%;
+    --gold-accent: 45 70% 60%;
+    --teal-accent: 180 40% 40%;
+    --nebula: 280 25% 15%;
 
-    --glass: 0 0% 100% / 0.7;
-    --glass-border: 0 0% 100% / 0.5;
-    --glass-shadow: 280 20% 60% / 0.08;
+    --glass: 160 20% 10% / 0.6;
+    --glass-border: 160 30% 30% / 0.25;
+    --glass-shadow: 160 40% 20% / 0.15;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 280 15% 8%;
-    --foreground: 30 20% 95%;
-    --card: 280 15% 12%;
-    --card-foreground: 30 20% 95%;
-    --popover: 280 15% 12%;
-    --popover-foreground: 30 20% 95%;
-    --primary: 350 60% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 280 15% 18%;
-    --secondary-foreground: 30 20% 90%;
-    --muted: 280 10% 18%;
-    --muted-foreground: 30 10% 60%;
-    --accent: 280 20% 22%;
-    --accent-foreground: 30 20% 90%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 280 10% 20%;
-    --input: 280 10% 20%;
-    --ring: 350 60% 60%;
-    --glass: 280 15% 12% / 0.7;
-    --glass-border: 280 10% 20% / 0.5;
-    --glass-shadow: 280 20% 30% / 0.15;
-    --sidebar-background: 280 15% 10%;
-    --sidebar-foreground: 30 20% 90%;
-    --sidebar-primary: 350 60% 60%;
+    --sidebar-background: 160 25% 7%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 160 55% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 280 15% 15%;
-    --sidebar-accent-foreground: 30 20% 90%;
-    --sidebar-border: 280 10% 18%;
-    --sidebar-ring: 350 60% 60%;
+    --sidebar-accent: 160 20% 12%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 160 12% 16%;
+    --sidebar-ring: 160 55% 45%;
   }
 }
 
@@ -107,8 +76,52 @@
 }
 
 @layer components {
+  .celestial-bg {
+    position: relative;
+    background:
+      radial-gradient(ellipse at 20% 0%, hsl(160 40% 15% / 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(220 30% 15% / 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, hsl(280 20% 12% / 0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 10% 90%, hsl(160 30% 10% / 0.3) 0%, transparent 40%),
+      linear-gradient(180deg, hsl(160 25% 6%) 0%, hsl(220 20% 5%) 50%, hsl(260 15% 5%) 100%);
+  }
+
+  .celestial-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, hsl(0 0% 100% / 0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 35%, hsl(0 0% 100% / 0.3) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 40% 10%, hsl(0 0% 100% / 0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 55%, hsl(0 0% 100% / 0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 25%, hsl(0 0% 100% / 0.35) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 65%, hsl(0 0% 100% / 0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 75%, hsl(0 0% 100% / 0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 85%, hsl(0 0% 100% / 0.2) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 60% 90%, hsl(0 0% 100% / 0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 50%, hsl(160 60% 70% / 0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 45%, hsl(220 50% 70% / 0.2) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .celestial-bg > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .glass-card {
-    @apply bg-card/70 backdrop-blur-xl border border-white/50 shadow-lg;
+    @apply bg-card/60 backdrop-blur-xl border border-white/10 shadow-lg;
+    box-shadow:
+      0 4px 24px hsl(var(--glass-shadow)),
+      inset 0 1px 0 hsl(160 30% 40% / 0.08);
+  }
+
+  .glass-card:hover {
+    box-shadow:
+      0 8px 32px hsl(160 40% 30% / 0.2),
+      inset 0 1px 0 hsl(160 30% 40% / 0.12);
   }
 
   .category-pill {
@@ -117,5 +130,8 @@
 
   .fab-button {
     @apply w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center;
+    box-shadow:
+      0 4px 20px hsl(160 55% 45% / 0.35),
+      0 0 40px hsl(160 55% 45% / 0.15);
   }
 }

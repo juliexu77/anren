@@ -19,9 +19,9 @@ const Index = () => {
     filter === "all" ? cards : cards.filter((c) => c.category === filter);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen celestial-bg pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 bg-background/70 backdrop-blur-xl">
         <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
           {activeTab === "brain" ? "Mom Brain" : "Calendar"}
         </h1>
