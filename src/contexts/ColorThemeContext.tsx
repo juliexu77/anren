@@ -33,79 +33,79 @@ export const NEON_THEMES: NeonTheme[] = [
     id: 'stone-tea',
     name: 'Stone & Tea',
     description: 'Warm cream, quiet warmth',
-    bgPrimary: '38 35% 88%',
-    bgSecondary: '35 25% 82%',
-    accent1: '18 45% 45%',
-    accent2: '150 25% 40%',
-    textPrimary: '25 20% 18%',
-    textSecondary: '25 15% 35%',
-    textMuted: '25 12% 50%',
-    cardBg: '40 30% 97%',
-    cardBorder: '35 20% 85%',
-    divider: '35 15% 82%',
-    surface: '38 25% 92%',
-    surfaceMuted: '36 20% 88%',
-    baseHsl: '18 45% 45%',
-    accentHsl: '18 45% 45%',
-    secondaryHsl: '150 25% 40%',
-    foreground: '25 20% 18%',
-    foregroundSecondary: '25 15% 35%',
-    foregroundMuted: '25 12% 50%',
-    glowPrimary: 'rgba(180, 150, 120, 0.1)',
-    glowSecondary: 'rgba(120, 160, 130, 0.08)',
-    isLight: true,
+    bgPrimary: '18 35% 32%',
+    bgSecondary: '20 30% 26%',
+    accent1: '38 45% 70%',
+    accent2: '150 25% 55%',
+    textPrimary: '40 30% 95%',
+    textSecondary: '38 20% 80%',
+    textMuted: '35 15% 65%',
+    cardBg: '18 25% 22%',
+    cardBorder: '20 18% 28%',
+    divider: '20 15% 25%',
+    surface: '18 22% 26%',
+    surfaceMuted: '20 18% 24%',
+    baseHsl: '38 45% 70%',
+    accentHsl: '38 45% 70%',
+    secondaryHsl: '150 25% 55%',
+    foreground: '40 30% 95%',
+    foregroundSecondary: '38 20% 80%',
+    foregroundMuted: '35 15% 65%',
+    glowPrimary: 'rgba(180, 150, 120, 0.15)',
+    glowSecondary: 'rgba(120, 160, 130, 0.1)',
+    isLight: false,
   },
   {
     id: 'bamboo-mist',
     name: 'Bamboo Mist',
     description: 'Soft sage, forest calm',
-    bgPrimary: '140 20% 86%',
-    bgSecondary: '145 18% 80%',
-    accent1: '155 35% 38%',
-    accent2: '30 40% 48%',
-    textPrimary: '150 15% 15%',
-    textSecondary: '145 10% 32%',
-    textMuted: '140 8% 48%',
-    cardBg: '140 18% 96%',
-    cardBorder: '145 12% 83%',
-    divider: '140 10% 80%',
-    surface: '142 14% 91%',
-    surfaceMuted: '140 12% 87%',
-    baseHsl: '155 35% 38%',
-    accentHsl: '155 35% 38%',
-    secondaryHsl: '30 40% 48%',
-    foreground: '150 15% 15%',
-    foregroundSecondary: '145 10% 32%',
-    foregroundMuted: '140 8% 48%',
-    glowPrimary: 'rgba(100, 150, 120, 0.1)',
-    glowSecondary: 'rgba(180, 150, 100, 0.08)',
-    isLight: true,
+    bgPrimary: '150 30% 30%',
+    bgSecondary: '155 28% 24%',
+    accent1: '38 40% 68%',
+    accent2: '30 40% 60%',
+    textPrimary: '140 15% 95%',
+    textSecondary: '145 12% 78%',
+    textMuted: '140 10% 62%',
+    cardBg: '150 22% 22%',
+    cardBorder: '148 18% 28%',
+    divider: '148 15% 25%',
+    surface: '150 20% 26%',
+    surfaceMuted: '148 18% 24%',
+    baseHsl: '38 40% 68%',
+    accentHsl: '38 40% 68%',
+    secondaryHsl: '30 40% 60%',
+    foreground: '140 15% 95%',
+    foregroundSecondary: '145 12% 78%',
+    foregroundMuted: '140 10% 62%',
+    glowPrimary: 'rgba(100, 150, 120, 0.15)',
+    glowSecondary: 'rgba(180, 150, 100, 0.1)',
+    isLight: false,
   },
   {
     id: 'clay-earth',
     name: 'Clay Earth',
     description: 'Terracotta warmth',
-    bgPrimary: '25 30% 86%',
-    bgSecondary: '20 25% 80%',
-    accent1: '12 50% 42%',
-    accent2: '35 45% 50%',
-    textPrimary: '20 25% 16%',
-    textSecondary: '18 18% 33%',
-    textMuted: '15 12% 48%',
-    cardBg: '28 28% 96%',
-    cardBorder: '22 18% 83%',
-    divider: '20 14% 80%',
-    surface: '24 22% 91%',
-    surfaceMuted: '22 18% 87%',
-    baseHsl: '12 50% 42%',
-    accentHsl: '12 50% 42%',
-    secondaryHsl: '35 45% 50%',
-    foreground: '20 25% 16%',
-    foregroundSecondary: '18 18% 33%',
-    foregroundMuted: '15 12% 48%',
-    glowPrimary: 'rgba(180, 120, 90, 0.1)',
-    glowSecondary: 'rgba(200, 170, 100, 0.08)',
-    isLight: true,
+    bgPrimary: '12 40% 30%',
+    bgSecondary: '15 35% 24%',
+    accent1: '35 50% 68%',
+    accent2: '25 40% 60%',
+    textPrimary: '28 25% 95%',
+    textSecondary: '22 18% 78%',
+    textMuted: '18 12% 62%',
+    cardBg: '12 30% 22%',
+    cardBorder: '14 22% 28%',
+    divider: '14 18% 25%',
+    surface: '12 28% 26%',
+    surfaceMuted: '14 22% 24%',
+    baseHsl: '35 50% 68%',
+    accentHsl: '35 50% 68%',
+    secondaryHsl: '25 40% 60%',
+    foreground: '28 25% 95%',
+    foregroundSecondary: '22 18% 78%',
+    foregroundMuted: '18 12% 62%',
+    glowPrimary: 'rgba(180, 120, 90, 0.15)',
+    glowSecondary: 'rgba(200, 170, 100, 0.1)',
+    isLight: false,
   },
   {
     id: 'ink-silk',
@@ -189,9 +189,9 @@ export const ColorThemeProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--card-foreground', currentTheme.textPrimary);
     root.style.setProperty('--popover-foreground', currentTheme.textPrimary);
     root.style.setProperty('--sidebar-foreground', currentTheme.textPrimary);
-    root.style.setProperty('--accent-foreground', currentTheme.isLight ? '40 30% 97%' : '35 15% 90%');
-    root.style.setProperty('--secondary-foreground', currentTheme.isLight ? '40 30% 97%' : '35 15% 90%');
-    root.style.setProperty('--primary-foreground', currentTheme.isLight ? '40 30% 97%' : '30 8% 12%');
+    root.style.setProperty('--accent-foreground', '35 15% 90%');
+    root.style.setProperty('--secondary-foreground', '35 15% 90%');
+    root.style.setProperty('--primary-foreground', '30 8% 12%');
 
     // Accents
     root.style.setProperty('--accent-1', currentTheme.accent1);
@@ -203,14 +203,9 @@ export const ColorThemeProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--sidebar-primary', currentTheme.accent1);
     root.style.setProperty('--sidebar-ring', currentTheme.accent1);
 
-    // Card shadows based on theme lightness
-    if (currentTheme.isLight) {
-      root.style.setProperty('--card-shadow', 'rgba(25, 20, 15, 0.06)');
-      root.style.setProperty('--card-shadow-hover', 'rgba(25, 20, 15, 0.12)');
-    } else {
-      root.style.setProperty('--card-shadow', 'rgba(0, 0, 0, 0.3)');
-      root.style.setProperty('--card-shadow-hover', 'rgba(0, 0, 0, 0.4)');
-    }
+    // Card shadows — all dark themes now
+    root.style.setProperty('--card-shadow', 'rgba(0, 0, 0, 0.3)');
+    root.style.setProperty('--card-shadow-hover', 'rgba(0, 0, 0, 0.4)');
 
     // Body background
     document.body.style.background = `hsl(${currentTheme.bgPrimary})`;

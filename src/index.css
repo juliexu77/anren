@@ -29,14 +29,14 @@
        ═══════════════════════════════════════════════════════════ */
     
     /* Background: Warm cream to soft stone */
-    --bg: 40 30% 95%;
-    --bg-bottom: 35 20% 90%;
-    --surface: 38 25% 92%;
-    --surface-muted: 36 20% 88%;
-    --text: 25 20% 18%;
-    --text-secondary: 25 15% 35%;
-    --text-muted: 25 12% 50%;
-    --divider: 35 15% 82%;
+    --bg: 18 35% 32%;
+    --bg-bottom: 20 30% 26%;
+    --surface: 18 22% 26%;
+    --surface-muted: 20 18% 24%;
+    --text: 40 30% 95%;
+    --text-secondary: 38 20% 80%;
+    --text-muted: 35 15% 65%;
+    --divider: 20 15% 25%;
     
     /* Card warmth */
     --card-ombre-1: 38 25% 92%;
@@ -45,8 +45,8 @@
     --card-ombre-4: 32 18% 86%;
     
     /* Accent: Warm terracotta + bamboo green */
-    --accent-1: 18 45% 45%;
-    --accent-2: 150 25% 40%;
+    --accent-1: 38 45% 70%;
+    --accent-2: 150 25% 55%;
     
     /* Gold accent */
     --gold: 38 50% 50%;
@@ -56,8 +56,8 @@
     --radial-glow: 30 30% 85%;
     
     /* Card elevation — soft paper/linen feel */
-    --card-bg: 40 30% 97%;
-    --card-border: 35 20% 85%;
+    --card-bg: 18 25% 22%;
+    --card-border: 20 18% 28%;
     --card-shadow: rgba(25, 20, 15, 0.06);
     --card-shadow-hover: rgba(25, 20, 15, 0.12);
     --card-radius: 16px;
