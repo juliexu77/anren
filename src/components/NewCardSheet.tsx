@@ -28,13 +28,13 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
   const [mode, setMode] = useState<CardSource>("text");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<CardCategory>("general");
+  const [category, setCategory] = useState<CardCategory>("finance");
   const [imageUrl, setImageUrl] = useState<string | undefined>();
 
   const reset = () => {
     setTitle("");
     setBody("");
-    setCategory("general");
+    setCategory("finance");
     setMode("text");
     setImageUrl(undefined);
   };
