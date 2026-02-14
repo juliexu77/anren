@@ -107,13 +107,13 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden" style={{ isolation: 'isolate' }}>
       {/* Dynamic gradient background */}
       <div
         className="fixed inset-0 pointer-events-none transition-colors duration-500"
         style={{
           background: `linear-gradient(180deg, hsl(${currentTheme.bgPrimary}) 0%, hsl(${currentTheme.bgSecondary}) 100%)`,
-          zIndex: -6,
+          zIndex: 0,
         }}
       />
 
@@ -122,7 +122,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
         <div
           className="fixed inset-0 pointer-events-none transition-opacity duration-500"
           style={{
-            zIndex: -5,
+            zIndex: 1,
             background: `
               radial-gradient(ellipse 60% 40% at 80% 20%, ${currentTheme.glowPrimary} 0%, transparent 60%),
               radial-gradient(ellipse 50% 35% at 20% 70%, ${currentTheme.glowSecondary} 0%, transparent 50%)
@@ -137,7 +137,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.5,
+              zIndex: 2,
               background: `
                 radial-gradient(ellipse 200% 15% at 50% 15%, ${currentTheme.glowSecondary} 0%, transparent 70%),
                 radial-gradient(ellipse 180% 12% at 45% 35%, ${currentTheme.glowPrimary} 0%, transparent 60%),
@@ -150,7 +150,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.4,
+              zIndex: 2,
               background: `
                 radial-gradient(circle at 15% 25%, ${currentTheme.glowPrimary} 0%, transparent 20%),
                 radial-gradient(circle at 85% 75%, ${currentTheme.glowPrimary} 0%, transparent 18%)
@@ -178,7 +178,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.4,
+              zIndex: 2,
               background: `
                 radial-gradient(circle at 20% 25%, ${currentTheme.glowPrimary} 0%, transparent 20%),
                 radial-gradient(circle at 80% 45%, ${currentTheme.glowSecondary} 0%, transparent 18%),
@@ -210,7 +210,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.4,
+              zIndex: 2,
               background: `
                 radial-gradient(circle at 50% 30%, ${currentTheme.glowPrimary} 0%, transparent 30%),
                 radial-gradient(circle at 40% 70%, ${currentTheme.glowSecondary} 0%, transparent 20%),
@@ -239,7 +239,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.4,
+              zIndex: 2,
               background: `
                 radial-gradient(circle at 25% 30%, ${currentTheme.glowPrimary} 0%, transparent 22%),
                 radial-gradient(circle at 75% 60%, ${currentTheme.glowSecondary} 0%, transparent 18%)
@@ -255,7 +255,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed pointer-events-none animate-fog-drift-1 inset-0"
             style={{
-              zIndex: -4.5,
+              zIndex: 2,
               background: 'linear-gradient(to bottom, transparent 0%, transparent 25%, rgba(190, 198, 210, 0.25) 45%, rgba(190, 198, 210, 0.2) 55%, rgba(190, 198, 210, 0.25) 75%, transparent 100%)',
               filter: 'blur(40px)',
               width: '200%',
@@ -267,7 +267,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed pointer-events-none animate-fog-drift-2 inset-0"
             style={{
-              zIndex: -4.3,
+              zIndex: 2,
               background: 'linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(180, 188, 200, 0.18) 50%, rgba(180, 188, 200, 0.15) 65%, rgba(180, 188, 200, 0.18) 85%, transparent 100%)',
               filter: 'blur(35px)',
               width: '200%',
@@ -283,7 +283,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          zIndex: -4,
+          zIndex: 3,
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           opacity: currentTheme.id === 'default' ? 0.015 : 0.03,
           mixBlendMode: 'overlay',
@@ -294,7 +294,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          zIndex: -3,
+          zIndex: 4,
           background: currentTheme.id === 'default'
             ? `radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.6) 100%)`
             : `radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, rgba(40, 10, 50, 0.5) 100%)`,
@@ -305,7 +305,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
       <div
         className="fixed inset-0 pointer-events-none overflow-hidden"
         style={{
-          zIndex: -2,
+          zIndex: 5,
           display: currentTheme.id === 'chinese-ink' ? 'none' : 'block',
         }}
       >
@@ -334,7 +334,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
       <div
         className="fixed inset-0 pointer-events-none transition-opacity duration-500"
         style={{
-          zIndex: -1,
+          zIndex: 6,
           opacity: currentTheme.id === 'chinese-ink' ? 0.6 : 1,
         }}
       >
