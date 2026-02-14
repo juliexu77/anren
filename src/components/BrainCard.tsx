@@ -1,4 +1,3 @@
-import { formatDistanceToNow } from "date-fns";
 import type { BrainCard as BrainCardType } from "@/types/card";
 import { CATEGORY_CONFIG } from "@/types/card";
 import { Camera, Mic, FileText } from "lucide-react";
@@ -21,7 +20,7 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
   return (
     <button
       onClick={onClick}
-      className="glass-card rounded-2xl p-4 text-left w-full animate-fade-in hover:shadow-xl transition-shadow"
+      className="glass-card rounded-2xl p-3 text-left w-full animate-fade-in hover:shadow-xl transition-shadow"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       {card.imageUrl && (
@@ -47,17 +46,13 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
       </div>
 
       {card.title && (
-        <h3 className="font-display text-base font-semibold leading-snug mb-1 text-foreground">
+        <h3 className="font-display text-sm font-semibold leading-snug mb-1 text-foreground">
           {card.title}
         </h3>
       )}
 
-      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
         {card.body}
-      </p>
-
-      <p className="text-xs text-muted-foreground/60 mt-3">
-        {formatDistanceToNow(new Date(card.createdAt), { addSuffix: true })}
       </p>
     </button>
   );
