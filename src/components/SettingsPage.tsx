@@ -17,35 +17,34 @@ export function SettingsPage() {
                 key={theme.id}
                 onClick={() => setTheme(theme.id)}
                 className={cn(
-                  "relative rounded-xl p-4 text-left transition-all duration-200",
+                  "relative rounded-2xl p-4 text-left transition-all duration-200",
                   "border",
                   isActive
-                    ? "border-[var(--glass-border)] shadow-[0_0_20px_var(--glass-shadow)]"
-                    : "border-[var(--glass-border-subtle)] hover:border-[var(--glass-border)]"
+                    ? "border-primary/40 shadow-md"
+                    : "border-border hover:border-primary/20 hover:shadow-sm"
                 )}
                 style={{
-                  background: 'linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end))',
-                  backdropFilter: 'blur(4px)',
+                  background: `hsl(${theme.cardBg})`,
                 }}
               >
                 {/* Color preview */}
                 <div className="flex gap-2 mb-3">
                   <div
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full border border-black/5"
                     style={{ background: `hsl(${theme.bgPrimary})` }}
                   />
                   <div
                     className="w-8 h-8 rounded-full"
-                    style={{ background: `hsl(${theme.accentHsl})` }}
+                    style={{ background: `hsl(${theme.accent1})` }}
                   />
                   <div
                     className="w-8 h-8 rounded-full"
-                    style={{ background: `hsl(${theme.secondaryHsl})` }}
+                    style={{ background: `hsl(${theme.accent2})` }}
                   />
                 </div>
 
-                <p className="text-sm font-semibold text-foreground">{theme.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{theme.description}</p>
+                <p className="text-sm font-medium" style={{ color: `hsl(${theme.textPrimary})` }}>{theme.name}</p>
+                <p className="text-xs mt-0.5" style={{ color: `hsl(${theme.textMuted})` }}>{theme.description}</p>
 
                 {isActive && (
                   <div className="absolute top-3 right-3">

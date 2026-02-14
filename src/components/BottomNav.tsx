@@ -1,4 +1,4 @@
-import { Brain, Calendar, Plus, Settings } from "lucide-react";
+import { Brain, Calendar, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TabId = "notes" | "calendar" | "settings";
@@ -11,8 +11,14 @@ interface Props {
 export function BottomNav({ activeTab, onTabChange }: Props) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="relative flex items-end justify-around px-6 pb-6 pt-3" style={{ background: 'var(--glass-backdrop)', backdropFilter: 'blur(16px)', borderTop: '1px solid var(--glass-border-subtle)' }}>
-        {/* Notes tab */}
+      <div
+        className="relative flex items-end justify-around px-6 pb-6 pt-3"
+        style={{
+          background: 'hsl(var(--bg) / 0.92)',
+          backdropFilter: 'blur(12px)',
+          borderTop: '1px solid hsl(var(--divider))',
+        }}
+      >
         <button
           onClick={() => onTabChange("notes")}
           className={cn(
@@ -24,7 +30,6 @@ export function BottomNav({ activeTab, onTabChange }: Props) {
           <span className="text-xs font-medium">Notes</span>
         </button>
 
-        {/* Calendar tab */}
         <button
           onClick={() => onTabChange("calendar")}
           className={cn(
@@ -36,7 +41,6 @@ export function BottomNav({ activeTab, onTabChange }: Props) {
           <span className="text-xs font-medium">Calendar</span>
         </button>
 
-        {/* Settings tab */}
         <button
           onClick={() => onTabChange("settings")}
           className={cn(
