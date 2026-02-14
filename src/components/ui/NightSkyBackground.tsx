@@ -131,19 +131,122 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
         />
       )}
 
-      {/* Moonlit Parlor glow */}
-      {currentTheme.id === 'default' && (
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{
-            zIndex: -4.5,
-            background: `
-              radial-gradient(ellipse 60% 45% at 75% 20%, ${currentTheme.glowPrimary} 0%, transparent 55%),
-              radial-gradient(ellipse 55% 50% at 25% 75%, ${currentTheme.glowSecondary} 0%, transparent 50%),
-              radial-gradient(circle at 50% 50%, ${currentTheme.glowPrimary} 0%, transparent 35%)
-            `,
-          }}
-        />
+      {/* Rosewood Gate - lacquered wood grain waves */}
+      {currentTheme.id === 'rosewood-den' && (
+        <>
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.5,
+              background: `
+                radial-gradient(ellipse 200% 15% at 50% 15%, ${currentTheme.glowSecondary} 0%, transparent 70%),
+                radial-gradient(ellipse 180% 12% at 45% 35%, ${currentTheme.glowPrimary} 0%, transparent 60%),
+                radial-gradient(ellipse 220% 18% at 55% 55%, ${currentTheme.glowSecondary} 0%, transparent 65%),
+                radial-gradient(ellipse 190% 14% at 48% 75%, ${currentTheme.glowPrimary} 0%, transparent 55%),
+                radial-gradient(ellipse 200% 16% at 52% 92%, ${currentTheme.glowSecondary} 0%, transparent 70%)
+              `,
+            }}
+          />
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.4,
+              background: `
+                radial-gradient(circle at 15% 25%, ${currentTheme.glowPrimary} 0%, transparent 20%),
+                radial-gradient(circle at 85% 75%, ${currentTheme.glowPrimary} 0%, transparent 18%)
+              `,
+            }}
+          />
+        </>
+      )}
+
+      {/* Jade Mist - horizontal mist bands */}
+      {currentTheme.id === 'chinese-jade' && (
+        <>
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.5,
+              background: `
+                radial-gradient(ellipse 150% 20% at 50% 10%, hsl(${currentTheme.bgSecondary}) 0%, transparent 70%),
+                radial-gradient(ellipse 180% 25% at 40% 40%, hsl(${currentTheme.bgPrimary} / 0.5) 0%, transparent 55%),
+                radial-gradient(ellipse 160% 22% at 60% 65%, hsl(${currentTheme.bgSecondary} / 0.6) 0%, transparent 60%),
+                radial-gradient(ellipse 140% 28% at 50% 90%, hsl(${currentTheme.bgSecondary} / 0.7) 0%, transparent 65%)
+              `,
+            }}
+          />
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.4,
+              background: `
+                radial-gradient(circle at 20% 25%, ${currentTheme.glowPrimary} 0%, transparent 20%),
+                radial-gradient(circle at 80% 45%, ${currentTheme.glowSecondary} 0%, transparent 18%),
+                radial-gradient(circle at 35% 75%, ${currentTheme.glowPrimary} 0%, transparent 22%)
+              `,
+            }}
+          />
+        </>
+      )}
+
+      {/* Peony - scattered petal circles */}
+      {currentTheme.id === 'chinese-plum' && (
+        <>
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.5,
+              background: `
+                radial-gradient(circle at 25% 15%, hsl(${currentTheme.bgSecondary}) 0%, transparent 18%),
+                radial-gradient(circle at 75% 20%, hsl(${currentTheme.bgSecondary} / 0.7) 0%, transparent 14%),
+                radial-gradient(circle at 15% 45%, hsl(${currentTheme.bgSecondary} / 0.8) 0%, transparent 16%),
+                radial-gradient(circle at 85% 50%, hsl(${currentTheme.bgSecondary} / 0.6) 0%, transparent 12%),
+                radial-gradient(circle at 30% 75%, hsl(${currentTheme.bgSecondary} / 0.9) 0%, transparent 20%),
+                radial-gradient(circle at 70% 80%, hsl(${currentTheme.bgSecondary} / 0.5) 0%, transparent 15%),
+                radial-gradient(circle at 50% 50%, hsl(${currentTheme.bgSecondary} / 0.4) 0%, transparent 22%)
+              `,
+            }}
+          />
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.4,
+              background: `
+                radial-gradient(circle at 50% 30%, ${currentTheme.glowPrimary} 0%, transparent 30%),
+                radial-gradient(circle at 40% 70%, ${currentTheme.glowSecondary} 0%, transparent 20%),
+                radial-gradient(circle at 60% 85%, ${currentTheme.glowSecondary} 0%, transparent 18%)
+              `,
+            }}
+          />
+        </>
+      )}
+
+      {/* Mustard Olive - warm earthy pools */}
+      {currentTheme.id === 'mustard-olive' && (
+        <>
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.5,
+              background: `
+                radial-gradient(ellipse 180% 20% at 50% 15%, ${currentTheme.glowPrimary} 0%, transparent 65%),
+                radial-gradient(ellipse 160% 18% at 35% 45%, ${currentTheme.glowSecondary} 0%, transparent 55%),
+                radial-gradient(ellipse 200% 22% at 65% 70%, ${currentTheme.glowPrimary} 0%, transparent 60%),
+                radial-gradient(ellipse 170% 25% at 50% 95%, ${currentTheme.glowSecondary} 0%, transparent 70%)
+              `,
+            }}
+          />
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              zIndex: -4.4,
+              background: `
+                radial-gradient(circle at 25% 30%, ${currentTheme.glowPrimary} 0%, transparent 22%),
+                radial-gradient(circle at 75% 60%, ${currentTheme.glowSecondary} 0%, transparent 18%)
+              `,
+            }}
+          />
+        </>
       )}
 
       {/* Silver Needle fog */}

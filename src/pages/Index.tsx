@@ -6,6 +6,7 @@ import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { BottomNav, type TabId } from "@/components/BottomNav";
 import { CalendarPlaceholder } from "@/components/CalendarPlaceholder";
+import { SettingsPage } from "@/components/SettingsPage";
 import type { BrainCard, CardCategory } from "@/types/card";
 
 const Index = () => {
@@ -18,28 +19,36 @@ const Index = () => {
   const filtered =
     filter === "all" ? cards : cards.filter((c) => c.category === filter);
 
+  const tabTitle: Record<TabId, string> = {
+    brain: "Mom Brain",
+    calendar: "Calendar",
+    settings: "Settings",
+  };
+
+  const tabSubtitle: Record<TabId, string> = {
+    brain: "Dump it, don't lose it ✨",
+    calendar: "Your schedule at a glance",
+    settings: "Personalize your experience",
+  };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 px-5 pt-12 pb-4">
         <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
-          {activeTab === "brain" ? "Mom Brain" : "Calendar"}
+          {tabTitle[activeTab]}
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          {activeTab === "brain"
-            ? "Dump it, don't lose it ✨"
-            : "Your schedule at a glance"}
+          {tabSubtitle[activeTab]}
         </p>
       </header>
 
       {activeTab === "brain" ? (
         <main className="px-4">
-          {/* Category filter */}
           <div className="mb-4">
             <CategoryFilter active={filter} onChange={setFilter} />
           </div>
 
-          {/* Card grid */}
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-5xl mb-4">🧠</p>
@@ -62,18 +71,18 @@ const Index = () => {
             </div>
           )}
         </main>
-      ) : (
+      ) : activeTab === "calendar" ? (
         <CalendarPlaceholder />
+      ) : (
+        <SettingsPage />
       )}
 
-      {/* Bottom nav */}
       <BottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onFabClick={() => setShowNew(true)}
       />
 
-      {/* Sheets */}
       <CardDetailSheet
         card={selectedCard}
         open={!!selectedCard}
