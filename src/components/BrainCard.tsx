@@ -23,21 +23,8 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
       className="glass-card rounded-2xl p-3 text-left w-full animate-fade-in hover:shadow-xl transition-shadow"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      {card.imageUrl && (
-        <div className="mb-3 rounded-xl overflow-hidden aspect-video bg-muted">
-          <img
-            src={card.imageUrl}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        </div>
-      )}
-
       <div className="flex items-center gap-2 mb-2">
-        <span
-          className={`category-pill ${cat.color} text-foreground/80`}
-        >
+        <span className={`category-pill ${cat.color} text-foreground/80`}>
           {cat.emoji} {cat.label}
         </span>
         <span className="text-muted-foreground ml-auto flex items-center gap-1">
@@ -45,13 +32,7 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
         </span>
       </div>
 
-      {card.title && (
-        <h3 className="font-display text-sm font-semibold leading-snug mb-1 text-foreground">
-          {card.title}
-        </h3>
-      )}
-
-      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+      <p className="text-xs text-muted-foreground line-clamp-4 leading-relaxed">
         {card.body}
       </p>
     </button>
