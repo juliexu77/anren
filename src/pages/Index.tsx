@@ -34,13 +34,10 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-40 px-5 pt-12 pb-4">
-        <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
+      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 text-center">
+        <h1 className="text-display-caps-sm text-foreground">
           {tabTitle[activeTab]}
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {tabSubtitle[activeTab]}
-        </p>
       </header>
 
       {activeTab === "brain" ? (
