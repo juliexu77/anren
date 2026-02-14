@@ -13,7 +13,11 @@ function loadCards(): BrainCard[] {
 }
 
 function saveCards(cards: BrainCard[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  } catch (e) {
+    console.warn("Failed to save cards to localStorage:", e);
+  }
 }
 
 export function useCards() {
