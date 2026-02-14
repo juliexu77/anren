@@ -166,7 +166,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.5,
+              zIndex: 2,
               background: `
                 radial-gradient(ellipse 150% 20% at 50% 10%, hsl(${currentTheme.bgSecondary}) 0%, transparent 70%),
                 radial-gradient(ellipse 180% 25% at 40% 40%, hsl(${currentTheme.bgPrimary} / 0.5) 0%, transparent 55%),
@@ -195,7 +195,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
           <div
             className="fixed inset-0 pointer-events-none"
             style={{
-              zIndex: -4.5,
+              zIndex: 2,
               background: `
                 radial-gradient(circle at 25% 15%, hsl(${currentTheme.bgSecondary}) 0%, transparent 18%),
                 radial-gradient(circle at 75% 20%, hsl(${currentTheme.bgSecondary} / 0.7) 0%, transparent 14%),
@@ -411,7 +411,7 @@ export const NightSkyBackground = ({ children, starCount = 400 }: NightSkyBackgr
       </div>
 
       {/* Content */}
-      <div className="relative z-0">
+      <div className="relative" style={{ zIndex: 10 }}>
         {children}
       </div>
     </div>
