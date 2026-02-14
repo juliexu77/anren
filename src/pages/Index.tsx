@@ -40,7 +40,7 @@ const Index = () => {
             <CategoryFilter active={filter} onChange={setFilter} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {/* Add new card placeholder */}
             <button
               onClick={() => setShowNew(true)}
