@@ -108,7 +108,6 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
       body: body.trim(),
       category,
       source: imageUrl ? "screenshot" : "text",
-      imageUrl,
     });
     reset();
     setSheetOpen(false);
