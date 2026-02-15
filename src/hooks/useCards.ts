@@ -34,7 +34,7 @@ export function useCards() {
       category?: CardCategory;
       source?: CardSource;
       imageUrl?: string;
-    }) => {
+    }): string => {
       const now = new Date().toISOString();
       const card: BrainCard = {
         id: crypto.randomUUID(),
@@ -47,7 +47,7 @@ export function useCards() {
         updatedAt: now,
       };
       setCards((prev) => [card, ...prev]);
-      return card;
+      return card.id;
     },
     []
   );
