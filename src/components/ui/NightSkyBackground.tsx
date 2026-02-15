@@ -16,8 +16,8 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.3,
-          mixBlendMode: 'overlay',
+          opacity: 0.25,
+          mixBlendMode: 'soft-light',
         }}
       />
 
