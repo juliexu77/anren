@@ -98,8 +98,7 @@ const Index = () => {
               const Icon = cat.icon;
               return (
                 <div key={catKey} className="flex gap-2">
-                  <div className="flex flex-col items-center pt-2" style={{ minWidth: '20px' }}>
-                    <Icon className="w-3.5 h-3.5 text-foreground/80 mb-1.5" />
+                  <div className="flex flex-col items-center pt-2" style={{ minWidth: '14px' }}>
                     <span className="text-[10px] text-foreground/90 font-semibold uppercase leading-[1.1] text-center tracking-[0.05em]" style={{ wordBreak: 'break-all', width: '10px' }}>
                       {cat.label}
                     </span>
