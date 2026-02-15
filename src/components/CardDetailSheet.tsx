@@ -46,7 +46,8 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Tap to edit…"
-          className="flex-1 mt-4 border-none bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base leading-relaxed p-0"
+          className="flex-1 mt-4 border-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base leading-relaxed p-0"
+          style={{ background: 'transparent', boxShadow: 'none' }}
         />
 
         <div className="flex gap-3 pt-4 border-t border-border">
