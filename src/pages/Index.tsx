@@ -113,14 +113,19 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-40 px-5 pt-12 pb-2">
-        <div className="flex items-center justify-between mb-2">
-          {/* Left: Notes / Calendar toggle */}
+        <div className="flex items-center justify-between">
+          {/* Left: view toggle */}
           <button
             onClick={() => setActiveView(activeView === "notes" ? "calendar" : "notes")}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
           >
             {activeView === "notes" ? <Calendar className="w-5 h-5" /> : <StickyNote className="w-5 h-5" />}
           </button>
+
+          {/* Center: ANREN */}
+          <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">
+            ANREN
+          </h1>
 
           {/* Right: Settings */}
           <button
@@ -133,10 +138,6 @@ const Index = () => {
             <Settings className="w-5 h-5" />
           </button>
         </div>
-
-        <h1 className="text-display-caps-sm text-foreground text-center tracking-[0.25em]">
-          ANREN
-        </h1>
       </header>
 
       {activeView === "notes" ? (
