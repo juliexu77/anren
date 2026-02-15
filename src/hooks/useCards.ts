@@ -110,6 +110,9 @@ export function useCards() {
   );
 
   const deleteCard = useCallback(async (id: string) => {
+    // Optimistically remove from UI
+    setCards((prev) => prev.filter((c) => c.id !== id));
+
     const { error } = await supabase
       .from("cards")
       .delete()
