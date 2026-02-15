@@ -1,6 +1,7 @@
+import { useState, useRef } from "react";
 import type { BrainCard } from "@/types/card";
 import { CATEGORY_CONFIG } from "@/types/card";
-import { GripVertical, Loader2 } from "lucide-react";
+import { GripVertical, Loader2, Trash2 } from "lucide-react";
 
 interface Props {
   card: BrainCard;
@@ -11,6 +12,7 @@ interface Props {
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent, targetCard: BrainCard) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function NoteRow({
@@ -22,38 +24,110 @@ export function NoteRow({
   onDragOver,
   onDragLeave,
   onDrop,
+  onDelete,
 }: Props) {
   const cat = CATEGORY_CONFIG[card.category];
   const Icon = cat.icon;
   const isParsing = card.body === "@@PARSING@@";
   const preview = isParsing ? "" : card.body.split("\n")[0].substring(0, 100);
 
+  const [offsetX, setOffsetX] = useState(0);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const startX = useRef(0);
+  const swiping = useRef(false);
+
+  const THRESHOLD = -80;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    swiping.current = true;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!swiping.current) return;
+    const diff = e.touches[0].clientX - startX.current;
+    // Only allow left swipe
+    if (diff < 0) {
+      setOffsetX(Math.max(diff, -120));
+    } else {
+      setOffsetX(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    swiping.current = false;
+    if (offsetX < THRESHOLD) {
+      setShowConfirm(true);
+      setOffsetX(-100);
+    } else {
+      setOffsetX(0);
+      setShowConfirm(false);
+    }
+  };
+
+  const handleConfirmDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.(card.id);
+  };
+
+  const handleCancelSwipe = () => {
+    setOffsetX(0);
+    setShowConfirm(false);
+  };
+
   return (
-    <div
-      draggable
-      onDragStart={(e) => onDragStart?.(e, card)}
-      onDragOver={(e) => { e.preventDefault(); onDragOver?.(e); }}
-      onDragLeave={(e) => onDragLeave?.(e)}
-      onDrop={(e) => { e.preventDefault(); onDrop?.(e, card); }}
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer animate-fade-in
-        ${isDragOver ? "ring-2 ring-primary bg-primary/10 scale-[1.02]" : "hover:bg-secondary/30"}
-      `}
-      style={{ animationDelay: `${index * 30}ms` }}
-    >
-      <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
-      {isParsing ? (
-        <Loader2 className="w-4 h-4 text-muted-foreground/60 shrink-0 animate-spin" />
-      ) : (
-        <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
-      )}
-      {isParsing ? (
-        <div className="flex-1 flex items-center gap-2">
-          <div className="h-3 rounded-full bg-muted-foreground/15 animate-pulse" style={{ width: '60%' }} />
-        </div>
-      ) : (
-        <p className="text-sm text-foreground/90 truncate flex-1">{preview || "Empty note"}</p>
-      )}
+    <div className="relative overflow-hidden rounded-lg" style={{ animationDelay: `${index * 30}ms` }}>
+      {/* Delete button behind */}
+      <div
+        className="absolute inset-y-0 right-0 flex items-center justify-end"
+        style={{ width: 100 }}
+      >
+        <button
+          onClick={showConfirm ? handleConfirmDelete : undefined}
+          className="h-full w-full flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-colors"
+          style={{
+            background: showConfirm ? 'hsl(0 72% 51%)' : 'hsl(0 72% 61%)',
+          }}
+        >
+          <Trash2 className="w-4 h-4" />
+          {showConfirm ? "Confirm" : "Delete"}
+        </button>
+      </div>
+
+      {/* Swipeable foreground */}
+      <div
+        draggable={!showConfirm}
+        onDragStart={(e) => onDragStart?.(e, card)}
+        onDragOver={(e) => { e.preventDefault(); onDragOver?.(e); }}
+        onDragLeave={(e) => onDragLeave?.(e)}
+        onDrop={(e) => { e.preventDefault(); onDrop?.(e, card); }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={showConfirm ? handleCancelSwipe : onClick}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer animate-fade-in relative
+          ${isDragOver ? "ring-2 ring-primary bg-primary/10 scale-[1.02]" : "hover:bg-secondary/30"}
+        `}
+        style={{
+          transform: `translateX(${offsetX}px)`,
+          transition: swiping.current ? 'none' : 'transform 0.3s ease',
+          background: 'hsl(var(--bg))',
+        }}
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
+        {isParsing ? (
+          <Loader2 className="w-4 h-4 text-muted-foreground/60 shrink-0 animate-spin" />
+        ) : (
+          <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+        )}
+        {isParsing ? (
+          <div className="flex-1 flex items-center gap-2">
+            <div className="h-3 rounded-full bg-muted-foreground/15 animate-pulse" style={{ width: '60%' }} />
+          </div>
+        ) : (
+          <p className="text-sm text-foreground/90 truncate flex-1">{preview || "Empty note"}</p>
+        )}
+      </div>
     </div>
   );
 }
