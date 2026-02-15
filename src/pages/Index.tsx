@@ -70,7 +70,7 @@ const Index = () => {
         }
       });
 
-      toast.success("Notes categorized! ✨");
+      toast.success("Notes categorized!");
     } catch (e: any) {
       console.error("AI sort error:", e);
       toast.error(e.message || "Failed to sort notes");
@@ -97,7 +97,7 @@ const Index = () => {
   const handleDrop = (_e: React.DragEvent, targetCard: BrainCard) => {
     if (draggedCard && draggedCard.id !== targetCard.id) {
       groupCards(draggedCard.id, targetCard.id);
-      toast.success("Notes grouped! 📎");
+      toast.success("Notes grouped!");
     }
     setDragOverId(null);
     setDraggedCard(null);

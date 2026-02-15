@@ -16,16 +16,17 @@ interface Props {
 
 export function BrainCardComponent({ card, onClick, index }: Props) {
   const cat = CATEGORY_CONFIG[card.category];
+  const Icon = cat.icon;
 
   return (
     <button
       onClick={onClick}
-      className="glass-card rounded-2xl p-3 text-left w-full animate-fade-in hover:shadow-xl transition-shadow"
+      className="glass-card rounded-lg p-3 text-left w-full animate-fade-in hover:shadow-xl transition-shadow"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span className={`category-pill ${cat.color} text-foreground/80`}>
-          {cat.emoji} {cat.label}
+        <span className={`category-pill ${cat.color} text-foreground/80 flex items-center gap-1.5`}>
+          <Icon className="w-3.5 h-3.5" /> {cat.label}
         </span>
         <span className="text-muted-foreground ml-auto flex items-center gap-1">
           {sourceIcons[card.source]}
