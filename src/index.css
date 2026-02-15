@@ -563,61 +563,6 @@
   animation: fade-in 0.4s ease-out both;
 }
 
-/* Water droplet animation */
-@keyframes water-drop {
-  0% {
-    transform: translateY(-5vh) scale(0.8);
-    opacity: 0;
-    border-radius: 50% 50% 50% 50%;
-  }
-  5% {
-    opacity: 0.6;
-    transform: translateY(0vh) scale(1);
-    border-radius: 40% 40% 50% 50%;
-  }
-  15% {
-    transform: translateY(15vh) scale(1, 1.3);
-    border-radius: 35% 35% 50% 50%;
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(60vh) scale(0.9, 1.4);
-    border-radius: 30% 30% 50% 50%;
-    opacity: 0.4;
-  }
-  80% {
-    transform: translateY(90vh) scale(1, 1.1);
-    border-radius: 40% 40% 50% 50%;
-    opacity: 0.3;
-  }
-  90% {
-    transform: translateY(97vh) scale(1.8, 0.4);
-    border-radius: 50%;
-    opacity: 0.2;
-  }
-  100% {
-    transform: translateY(100vh) scale(2.5, 0.1);
-    border-radius: 50%;
-    opacity: 0;
-  }
-}
-
-.rain-drip {
-  position: absolute;
-  top: 0;
-  width: 6px;
-  height: 9px;
-  border-radius: 40% 40% 50% 50%;
-  background: radial-gradient(
-    ellipse at 40% 30%,
-    hsl(var(--text-muted) / 0.3) 0%,
-    hsl(var(--text-muted) / 0.15) 50%,
-    hsl(var(--text-muted) / 0.05) 100%
-  );
-  box-shadow: inset 0 -1px 2px hsl(var(--text-muted) / 0.1),
-              0 1px 3px hsl(var(--text-muted) / 0.08);
-  animation: water-drop ease-in infinite;
-}
 
 @media all and (display-mode: standalone) {
   .standalone-header-boost { padding-top: max(3rem, calc(env(safe-area-inset-top) + 1.5rem)) !important; padding-bottom: 1rem !important; }
