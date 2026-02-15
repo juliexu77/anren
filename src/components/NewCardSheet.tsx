@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import type { CardCategory, CardSource } from "@/types/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   open: boolean;
@@ -13,10 +14,46 @@ interface Props {
     source?: CardSource;
     imageUrl?: string;
   }) => Promise<string> | string | void;
-  onUpdateCard?: (id: string, updates: { body?: string; summary?: string; category?: CardCategory }) => void;
+  onUpdateCard?: (id: string, updates: { title?: string; body?: string; summary?: string; category?: CardCategory }) => void;
+}
+
+async function uploadImageToStorage(userId: string, base64: string): Promise<string | null> {
+  try {
+    // Extract mime type and raw data
+    const match = base64.match(/^data:(image\/(\w+));base64,(.+)$/);
+    if (!match) return null;
+    const mimeType = match[1];
+    const ext = match[2];
+    const raw = match[3];
+
+    // Convert base64 to Uint8Array
+    const binary = atob(raw);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    const fileName = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("card-images")
+      .upload(fileName, bytes, { contentType: mimeType });
+
+    if (error) {
+      console.error("Image upload error:", error);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("card-images")
+      .getPublicUrl(fileName);
+
+    return urlData.publicUrl;
+  } catch (e) {
+    console.error("Image upload failed:", e);
+    return null;
+  }
 }
 
 export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const didPickRef = useRef(false);
 
@@ -35,7 +72,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
         console.error("Background parse error:", error || data?.error);
         toast.error("Couldn't parse image — edit the note manually");
         if (onUpdateCard) {
-          onUpdateCard(cardId, { body: "Failed to parse image" });
+          onUpdateCard(cardId, { body: "@@PARSE_FAILED@@" });
         }
         return;
       }
@@ -61,10 +98,19 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const base64 = ev.target?.result as string;
+
+      // Upload image to storage first so it persists
+      let imageUrl: string | undefined;
+      if (user) {
+        const url = await uploadImageToStorage(user.id, base64);
+        if (url) imageUrl = url;
+      }
+
       const cardId = await onAdd({
         title: "",
         body: "@@PARSING@@",
         source: "screenshot",
+        imageUrl,
       });
       if (cardId && typeof cardId === "string") {
         parseImageInBackground(base64, cardId);
