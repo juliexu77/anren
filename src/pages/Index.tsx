@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useCards } from "@/hooks/useCards";
-import { NoteRow } from "@/components/NoteRow";
+import { BrainCardComponent } from "@/components/BrainCard";
 import { GroupedCard } from "@/components/GroupedCard";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
@@ -8,7 +8,6 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
 import { Settings, PenSquare, Search, StickyNote, Calendar } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { BrainCard, CardCategory } from "@/types/card";
 
@@ -20,10 +19,7 @@ const Index = () => {
   const [filter, setFilter] = useState<CardCategory | "all">("all");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showNew, setShowNew] = useState(false);
-  
   const [searchQuery, setSearchQuery] = useState("");
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [draggedCard, setDraggedCard] = useState<BrainCard | null>(null);
 
   // Filter by category and search
   const filtered = useMemo(() => {
@@ -37,11 +33,10 @@ const Index = () => {
     return result;
   }, [cards, filter, searchQuery]);
 
-  // Split into ungrouped rows and grouped cards
+  // Split into ungrouped and grouped
   const { ungroupedCards, groups } = useMemo(() => {
     const ungrouped: BrainCard[] = [];
     const groupMap: Record<string, BrainCard[]> = {};
-
     filtered.forEach((card) => {
       if (card.groupId) {
         if (!groupMap[card.groupId]) groupMap[card.groupId] = [];
@@ -50,36 +45,8 @@ const Index = () => {
         ungrouped.push(card);
       }
     });
-
     return { ungroupedCards: ungrouped, groups: groupMap };
   }, [filtered]);
-
-
-  
-
-  // Drag & drop handlers
-  const handleDragStart = (_e: React.DragEvent, card: BrainCard) => {
-    setDraggedCard(card);
-  };
-
-  const handleDragOver = (_e: React.DragEvent, targetId: string) => {
-    if (draggedCard && draggedCard.id !== targetId) {
-      setDragOverId(targetId);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setDragOverId(null);
-  };
-
-  const handleDrop = (_e: React.DragEvent, targetCard: BrainCard) => {
-    if (draggedCard && draggedCard.id !== targetCard.id) {
-      groupCards(draggedCard.id, targetCard.id);
-      toast.success("Notes grouped!");
-    }
-    setDragOverId(null);
-    setDraggedCard(null);
-  };
 
   return (
     <div className="min-h-screen pb-20">
@@ -117,19 +84,14 @@ const Index = () => {
             <CategoryFilter active={filter} onChange={setFilter} />
           </div>
 
-          {/* Ungrouped notes as rows */}
-          <div className="space-y-1 mb-4">
+          {/* Cards grid */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
             {ungroupedCards.map((card, i) => (
-              <NoteRow
+              <BrainCardComponent
                 key={card.id}
                 card={card}
                 index={i}
                 onClick={() => setSelectedCard(card)}
-                isDragOver={dragOverId === card.id}
-                onDragStart={handleDragStart}
-                onDragOver={(e) => handleDragOver(e, card.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
                 onDelete={deleteCard}
               />
             ))}
