@@ -42,14 +42,12 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
           <SheetTitle className="font-display text-lg">Edit Note</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 mt-4">
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="What's on your mind?"
-            className="min-h-[250px] border-none bg-transparent resize-none focus-visible:ring-primary/30 text-base"
-          />
-        </div>
+        <Textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Tap to edit…"
+          className="flex-1 mt-4 border-none bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base leading-relaxed p-0"
+        />
 
         <div className="flex gap-3 pt-4 border-t border-border">
           <Button
