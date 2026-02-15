@@ -44,7 +44,7 @@ const Auth = () => {
           ANREN
         </h1>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
-          For women who carry a lot.
+          Where the mental load rests.
         </p>
       </div>
 
