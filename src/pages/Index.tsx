@@ -99,9 +99,11 @@ const Index = () => {
               return (
                 <div key={catKey} className="flex gap-2">
                   <div className="flex flex-col items-center pt-2" style={{ minWidth: '14px' }}>
-                    <span className="text-[10px] text-foreground/90 font-semibold uppercase leading-[1.1] text-center tracking-[0.05em]" style={{ wordBreak: 'break-all', width: '10px' }}>
-                      {cat.label}
-                    </span>
+                    <div className="flex flex-col items-center gap-[1px]">
+                      {cat.label.split('').map((letter, li) => (
+                        <span key={li} className="text-[10px] text-foreground/90 font-semibold uppercase leading-none">{letter}</span>
+                      ))}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 flex-1">
                     {catCards.map((card, i) => (
