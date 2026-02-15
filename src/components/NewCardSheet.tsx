@@ -41,6 +41,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       }
       if (onUpdateCard) {
         onUpdateCard(cardId, {
+          ...(data.title ? { title: data.title } : {}),
           body: data.body || "",
           summary: data.summary || "",
           ...(data.category ? { category: data.category } : {}),
