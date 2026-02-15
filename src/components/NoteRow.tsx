@@ -1,6 +1,6 @@
 import type { BrainCard } from "@/types/card";
 import { CATEGORY_CONFIG } from "@/types/card";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Loader2 } from "lucide-react";
 
 interface Props {
   card: BrainCard;
@@ -25,7 +25,8 @@ export function NoteRow({
 }: Props) {
   const cat = CATEGORY_CONFIG[card.category];
   const Icon = cat.icon;
-  const preview = card.body.split("\n")[0].substring(0, 100);
+  const isParsing = card.body === "@@PARSING@@";
+  const preview = isParsing ? "" : card.body.split("\n")[0].substring(0, 100);
 
   return (
     <div
@@ -41,8 +42,18 @@ export function NoteRow({
       style={{ animationDelay: `${index * 30}ms` }}
     >
       <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
-      <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
-      <p className="text-sm text-foreground/90 truncate flex-1">{preview || "Empty note"}</p>
+      {isParsing ? (
+        <Loader2 className="w-4 h-4 text-muted-foreground/60 shrink-0 animate-spin" />
+      ) : (
+        <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+      )}
+      {isParsing ? (
+        <div className="flex-1 flex items-center gap-2">
+          <div className="h-3 rounded-full bg-muted-foreground/15 animate-pulse" style={{ width: '60%' }} />
+        </div>
+      ) : (
+        <p className="text-sm text-foreground/90 truncate flex-1">{preview || "Empty note"}</p>
+      )}
     </div>
   );
 }
