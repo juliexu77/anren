@@ -44,13 +44,13 @@ export const CATEGORY_CONFIG: Record<
   { label: string; icon: LucideIcon; color: string }
 > = {
   finance: { label: "Finance", icon: Wallet, color: "bg-primary/10" },
-  childcare: { label: "Childcare", icon: Baby, color: "bg-secondary/10" },
-  extracurriculars: { label: "Extracurriculars", icon: Trophy, color: "bg-primary/8" },
-  doctor: { label: "Doctor Visits", icon: Stethoscope, color: "bg-secondary/10" },
-  "house-maintenance": { label: "House Maintenance", icon: Wrench, color: "bg-primary/10" },
-  "home-organization": { label: "Home Organization", icon: Home, color: "bg-secondary/8" },
-  "household-inventory": { label: "Household Inventory", icon: Package, color: "bg-primary/8" },
-  "kids-clothes": { label: "Kids Clothes", icon: Shirt, color: "bg-secondary/10" },
+  childcare: { label: "Kids", icon: Baby, color: "bg-secondary/10" },
+  extracurriculars: { label: "Activities", icon: Trophy, color: "bg-primary/8" },
+  doctor: { label: "Medical", icon: Stethoscope, color: "bg-secondary/10" },
+  "house-maintenance": { label: "Repairs", icon: Wrench, color: "bg-primary/10" },
+  "home-organization": { label: "Organize", icon: Home, color: "bg-secondary/8" },
+  "household-inventory": { label: "Inventory", icon: Package, color: "bg-primary/8" },
+  "kids-clothes": { label: "Clothes", icon: Shirt, color: "bg-secondary/10" },
   food: { label: "Food", icon: UtensilsCrossed, color: "bg-primary/10" },
   laundry: { label: "Laundry", icon: WashingMachine, color: "bg-muted" },
 };
