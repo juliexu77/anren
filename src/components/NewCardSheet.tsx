@@ -40,7 +40,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
         return;
       }
       const parts: string[] = [];
-      if (data.title) parts.push(data.title);
+      if (data.summary) parts.push(data.summary);
       if (data.body) parts.push(data.body);
       const parsedBody = parts.join("\n\n");
 
