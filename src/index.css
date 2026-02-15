@@ -205,7 +205,7 @@
 
   input:focus:not([type="checkbox"]):not([type="radio"]),
   textarea:focus {
-    background: hsl(40 30% 97%) !important;
+    background: hsl(var(--surface-muted)) !important;
     border-color: hsl(var(--accent-1) / 0.4);
     outline: none;
     box-shadow: 0 0 0 3px hsl(var(--accent-1) / 0.1);
