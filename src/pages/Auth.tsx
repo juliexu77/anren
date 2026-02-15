@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -15,17 +16,48 @@ const Auth = () => {
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-      extraParams: {
-        access_type: "offline",
-        prompt: "consent",
-        scope: "openid email profile https://www.googleapis.com/auth/calendar",
-      },
-    });
-    if (error) {
-      toast.error("Sign in failed. Please try again.");
-      console.error("OAuth error:", error);
+    const isCustomDomain =
+      !window.location.hostname.includes("lovable.app") &&
+      !window.location.hostname.includes("lovableproject.com");
+
+    if (isCustomDomain) {
+      // Bypass Lovable auth-bridge for custom domains
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
+          scopes: "openid email profile https://www.googleapis.com/auth/calendar",
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) {
+        toast.error("Sign in failed. Please try again.");
+        console.error("OAuth error:", error);
+        return;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } else {
+      // For Lovable domains, use managed auth-bridge
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+        extraParams: {
+          access_type: "offline",
+          prompt: "consent",
+          scope: "openid email profile https://www.googleapis.com/auth/calendar",
+        },
+      });
+      if (error) {
+        toast.error("Sign in failed. Please try again.");
+        console.error("OAuth error:", error);
+      }
     }
   };
 
