@@ -11,9 +11,9 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
       id: i,
       left: 10 + Math.random() * 80,
       delay: Math.random() * 20,
-      duration: 12 + Math.random() * 10,
-      size: 1.5 + Math.random() * 1.5,
-      opacity: 0.03 + Math.random() * 0.04,
+      duration: 14 + Math.random() * 12,
+      size: 5 + Math.random() * 4,
+      opacity: 0.05 + Math.random() * 0.06,
     }));
   }, []);
 
