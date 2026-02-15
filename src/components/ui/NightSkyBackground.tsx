@@ -25,10 +25,24 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
         style={{
           zIndex: 0,
           backgroundImage: `url("/images/clay-texture.jpg")`,
-          backgroundSize: '400px 400px',
+          backgroundSize: '500px 500px',
           backgroundRepeat: 'repeat',
-          opacity: 0.08,
+          opacity: 0.18,
           mixBlendMode: 'multiply',
+        }}
+      />
+
+      {/* Second texture layer — offset for depth */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 0,
+          backgroundImage: `url("/images/clay-texture.jpg")`,
+          backgroundSize: '700px 700px',
+          backgroundRepeat: 'repeat',
+          backgroundPosition: '150px 200px',
+          opacity: 0.06,
+          mixBlendMode: 'overlay',
         }}
       />
 
