@@ -41,10 +41,10 @@ const Auth = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="text-center mb-10">
         <h1 className="font-display text-4xl font-semibold text-foreground mb-2">
-          Mom Brain
+          Anren
         </h1>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
-          Your smart thought capture app. Catch half-formed thoughts and turn them into organized cards.
+          For women who carry a lot.
         </p>
       </div>
 
