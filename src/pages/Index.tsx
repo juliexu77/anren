@@ -92,7 +92,6 @@ const Index = () => {
                 card={card}
                 index={i}
                 onClick={() => setSelectedCard(card)}
-                onDelete={deleteCard}
               />
             ))}
           </div>
