@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import type { CardCategory, CardSource } from "@/types/card";
 import {
   Sheet,
@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { Camera, FileText, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,22 +27,10 @@ interface Props {
 
 export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
   const [body, setBody] = useState("");
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | undefined>();
+  const [textSheetOpen, setTextSheetOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const didPickRef = useRef(false);
 
-  useEffect(() => {
-    if (open && !sheetOpen) {
-      didPickRef.current = false;
-      fileInputRef.current?.click();
-    }
-  }, [open, sheetOpen]);
-
-  const reset = () => {
-    setBody("");
-    setImagePreview(undefined);
-  };
+  const reset = () => setBody("");
 
   const parseImageInBackground = (base64: string, cardId: string) => {
     supabase.functions.invoke("parse-image", {
@@ -57,9 +45,9 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       if (data.title) parts.push(data.title);
       if (data.body) parts.push(data.body);
       const parsedBody = parts.join("\n\n");
-      
+
       if (onUpdateCard) {
-        onUpdateCard(cardId, { 
+        onUpdateCard(cardId, {
           body: parsedBody,
           ...(data.category ? { category: data.category } : {}),
         });
@@ -70,15 +58,10 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      if (!didPickRef.current) onClose();
-      return;
-    }
-    didPickRef.current = true;
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const base64 = ev.target?.result as string;
-      // Save immediately with placeholder, parse in background
       const cardId = onAdd({
         title: "",
         body: "Parsing image...",
@@ -93,9 +76,9 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
     e.target.value = "";
   };
 
-  const openAsText = () => {
-    didPickRef.current = true;
-    setSheetOpen(true);
+  const handleVoice = () => {
+    toast("Voice capture coming soon");
+    onClose();
   };
 
   const handleSubmit = () => {
@@ -106,13 +89,13 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       source: "text",
     });
     reset();
-    setSheetOpen(false);
+    setTextSheetOpen(false);
     onClose();
   };
 
   const handleSheetClose = () => {
     reset();
-    setSheetOpen(false);
+    setTextSheetOpen(false);
     onClose();
   };
 
@@ -126,19 +109,43 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
         onChange={handleImageUpload}
       />
 
-      {open && !sheetOpen && (
-        <div className="fixed bottom-24 left-0 right-0 z-50 flex justify-center animate-fade-in">
-          <button
-            onClick={openAsText}
-            className="flex items-center gap-2 px-5 py-3 rounded-lg bg-secondary text-secondary-foreground shadow-lg backdrop-blur-sm"
-          >
-            <FileText className="w-4 h-4" />
-            <span className="text-sm font-medium">Or type a note instead</span>
-          </button>
-        </div>
-      )}
+      {/* Capture method picker */}
+      <Sheet open={open && !textSheetOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <SheetContent side="bottom" className="rounded-t-xl pb-10">
+          <SheetHeader>
+            <SheetTitle className="font-display text-lg">New note</SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-3 gap-3 mt-5">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center gap-2 py-5 rounded-lg transition-colors"
+              style={{ background: 'hsl(var(--surface))' }}
+            >
+              <Camera className="w-6 h-6 text-foreground/70" />
+              <span className="text-xs font-medium text-muted-foreground">Photo</span>
+            </button>
+            <button
+              onClick={() => { setTextSheetOpen(true); }}
+              className="flex flex-col items-center gap-2 py-5 rounded-lg transition-colors"
+              style={{ background: 'hsl(var(--surface))' }}
+            >
+              <FileText className="w-6 h-6 text-foreground/70" />
+              <span className="text-xs font-medium text-muted-foreground">Type</span>
+            </button>
+            <button
+              onClick={handleVoice}
+              className="flex flex-col items-center gap-2 py-5 rounded-lg transition-colors"
+              style={{ background: 'hsl(var(--surface))' }}
+            >
+              <Mic className="w-6 h-6 text-foreground/70" />
+              <span className="text-xs font-medium text-muted-foreground">Voice</span>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      <Sheet open={sheetOpen} onOpenChange={(o) => { if (!o) handleSheetClose(); }}>
+      {/* Text entry sheet */}
+      <Sheet open={textSheetOpen} onOpenChange={(o) => { if (!o) handleSheetClose(); }}>
         <SheetContent side="bottom" className="rounded-t-xl h-[60vh] flex flex-col">
           <SheetHeader>
             <SheetTitle className="font-display text-lg">Brain dump</SheetTitle>
