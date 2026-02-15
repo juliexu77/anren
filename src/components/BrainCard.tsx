@@ -27,6 +27,7 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
         <p className="text-xs text-muted-foreground/60 italic animate-pulse">Transcribing…</p>
       ) : (
         <p className="text-xs text-foreground/85 line-clamp-2 leading-relaxed">
+          {card.title && <><span className="font-bold">{card.title}</span>{" "}</>}
           {preview || "Empty note"}
         </p>
       )}
