@@ -130,7 +130,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
         <div className="fixed bottom-24 left-0 right-0 z-50 flex justify-center animate-fade-in">
           <button
             onClick={openAsText}
-            className="flex items-center gap-2 px-5 py-3 rounded-full bg-secondary text-secondary-foreground shadow-lg backdrop-blur-sm"
+            className="flex items-center gap-2 px-5 py-3 rounded-lg bg-secondary text-secondary-foreground shadow-lg backdrop-blur-sm"
           >
             <FileText className="w-4 h-4" />
             <span className="text-sm font-medium">Or type a note instead</span>
@@ -139,7 +139,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       )}
 
       <Sheet open={sheetOpen} onOpenChange={(o) => { if (!o) handleSheetClose(); }}>
-        <SheetContent side="bottom" className="rounded-t-3xl h-[60vh] flex flex-col">
+        <SheetContent side="bottom" className="rounded-t-xl h-[60vh] flex flex-col">
           <SheetHeader>
             <SheetTitle className="font-display text-lg">Brain dump</SheetTitle>
           </SheetHeader>

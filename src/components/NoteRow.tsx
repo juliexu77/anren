@@ -34,7 +34,7 @@ export function NoteRow({
       onDragLeave={(e) => onDragLeave?.(e)}
       onDrop={(e) => { e.preventDefault(); onDrop?.(e, card); }}
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer animate-fade-in
+      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer animate-fade-in
         ${isDragOver ? "ring-2 ring-primary bg-primary/10 scale-[1.02]" : "hover:bg-secondary/30"}
       `}
       style={{ animationDelay: `${index * 30}ms` }}

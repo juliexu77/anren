@@ -60,7 +60,7 @@
     --card-border: 20 18% 28%;
     --card-shadow: rgba(25, 20, 15, 0.06);
     --card-shadow-hover: rgba(25, 20, 15, 0.12);
-    --card-radius: 16px;
+    --card-radius: 8px;
     
     /* Transitions */
     --transition-smooth: all 200ms ease-in-out;
@@ -88,7 +88,7 @@
     --border: var(--divider);
     --input: var(--surface-muted);
     --ring: var(--accent-1);
-    --radius: 16px;
+    --radius: 8px;
     
     /* Icon opacity */
     --icon-opacity: 0.75;

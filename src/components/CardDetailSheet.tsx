@@ -37,7 +37,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[70vh] flex flex-col">
+      <SheetContent side="bottom" className="rounded-t-xl h-[70vh] flex flex-col">
         <SheetHeader>
           <SheetTitle className="font-display text-lg">Edit Note</SheetTitle>
         </SheetHeader>

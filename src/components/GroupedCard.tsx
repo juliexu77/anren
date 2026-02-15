@@ -13,7 +13,7 @@ export function GroupedCard({ cards, onClick, onUngroup }: Props) {
   const groupId = cards[0].groupId;
 
   return (
-    <div className="glass-card rounded-2xl p-3 space-y-1 animate-fade-in">
+    <div className="glass-card rounded-lg p-3 space-y-1 animate-fade-in">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-muted-foreground font-medium">
           {cards.length} notes grouped
