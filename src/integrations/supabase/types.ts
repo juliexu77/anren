@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      cards: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          image_url: string | null
+          source: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          source?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          source?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

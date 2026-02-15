@@ -20,7 +20,8 @@ interface Props {
     body: string;
     category?: CardCategory;
     source?: CardSource;
-  }) => string | void;
+    imageUrl?: string;
+  }) => Promise<string> | string | void;
   onUpdateCard?: (id: string, updates: { body?: string; category?: CardCategory }) => void;
 }
 
