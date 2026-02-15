@@ -72,6 +72,17 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
         </button>
       </div>
 
+      {/* Attached image */}
+      {card.imageUrl && (
+        <div className="px-5 pt-2">
+          <img
+            src={card.imageUrl}
+            alt="Attachment"
+            className="w-full rounded-xl border border-border/30 max-h-72 object-contain bg-black/5"
+          />
+        </div>
+      )}
+
       {/* Content — tap to edit, no container */}
       <div className="flex-1 px-5 pt-4 pb-8 overflow-y-auto" onClick={!isEditing ? handleTapToEdit : undefined}>
         {isEditing ? (
