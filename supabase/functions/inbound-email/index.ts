@@ -6,30 +6,103 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple MIME body extractor — pulls plain text from raw MIME message
+function extractBodyFromMime(raw: string): string {
+  // Try to find plain text part
+  const boundaryMatch = raw.match(/boundary="?([^"\r\n;]+)"?/i);
+  if (boundaryMatch) {
+    const boundary = boundaryMatch[1];
+    const parts = raw.split("--" + boundary);
+    for (const part of parts) {
+      if (part.includes("Content-Type: text/plain")) {
+        // Extract content after double newline
+        const bodyStart = part.indexOf("\r\n\r\n") ?? part.indexOf("\n\n");
+        if (bodyStart !== -1) {
+          let body = part.substring(bodyStart + (part.includes("\r\n\r\n") ? 4 : 2));
+          // Remove trailing boundary markers
+          body = body.replace(/--\s*$/, "").trim();
+          // Handle quoted-printable encoding
+          if (part.includes("Content-Transfer-Encoding: quoted-printable")) {
+            body = body.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
+              String.fromCharCode(parseInt(hex, 16))
+            );
+          }
+          // Handle base64 encoding
+          if (part.includes("Content-Transfer-Encoding: base64")) {
+            try {
+              body = atob(body.replace(/\s/g, ""));
+            } catch { /* keep as-is */ }
+          }
+          return body.trim();
+        }
+      }
+    }
+  }
+  
+  // No multipart — try raw body after headers
+  const headerEnd = raw.indexOf("\r\n\r\n") ?? raw.indexOf("\n\n");
+  if (headerEnd !== -1) {
+    return raw.substring(headerEnd + 4).trim();
+  }
+  
+  return raw;
+}
+
+// Extract sender email from MIME headers
+function extractFromEmail(raw: string): string {
+  const fromMatch = raw.match(/^From:\s*(.+)$/im);
+  if (fromMatch) {
+    const emailMatch = fromMatch[1].match(/<(.+?)>/);
+    return emailMatch ? emailMatch[1] : fromMatch[1].trim();
+  }
+  return "";
+}
+
+// Extract subject from MIME headers
+function extractSubject(raw: string): string {
+  const subjectMatch = raw.match(/^Subject:\s*(.+)$/im);
+  return subjectMatch ? subjectMatch[1].trim() : "Email Note";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // SendGrid sends multipart/form-data POST
     const contentType = req.headers.get("content-type") || "";
-    if (!contentType.includes("multipart/form-data") && !contentType.includes("application/x-www-form-urlencoded")) {
+    
+    let senderEmail = "";
+    let subject = "Email Note";
+    let noteBody = "";
+
+    if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
+      const formData = await req.formData();
+      
+      // Check if raw MIME email is present (SendGrid "Send Raw" mode)
+      const rawEmail = formData.get("email") as string;
+      
+      if (rawEmail) {
+        console.log("Processing raw MIME email");
+        senderEmail = extractFromEmail(rawEmail);
+        subject = extractSubject(rawEmail);
+        noteBody = extractBodyFromMime(rawEmail);
+      } else {
+        // Standard parsed fields
+        const from = (formData.get("from") as string) || "";
+        subject = (formData.get("subject") as string) || "Email Note";
+        const text = (formData.get("text") as string) || "";
+        const html = (formData.get("html") as string) || "";
+        
+        senderEmail = from.match(/<(.+?)>/)?.[1] || from.trim();
+        noteBody = text || html.replace(/<[^>]*>/g, "");
+      }
+    } else {
       throw new Error("Invalid content type: " + contentType);
     }
 
-    const formData = await req.formData();
-
-    const to = (formData.get("to") as string) || "";
-    const from = (formData.get("from") as string) || "";
-    const subject = (formData.get("subject") as string) || "Forwarded Note";
-    const text = (formData.get("text") as string) || "";
-    const html = (formData.get("html") as string) || "";
-
-    console.log("Inbound email from:", from, "subject:", subject);
-
-    // Extract sender email to find user
-    const senderEmail = from.match(/<(.+?)>/)?.[1] || from.trim();
+    console.log("Inbound email from:", senderEmail, "subject:", subject);
+    console.log("Body length:", noteBody.length);
 
     // Use service role to bypass RLS
     const supabase = createClient(
@@ -42,20 +115,17 @@ serve(async (req) => {
       .from("profiles")
       .select("user_id")
       .eq("email", senderEmail)
-      .single();
+      .maybeSingle();
 
     if (profileError || !profile) {
       console.error("No user found for email:", senderEmail);
-      // Return 200 so SendGrid doesn't retry
       return new Response(JSON.stringify({ message: "No matching user" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Clean body text - prefer plain text, strip forwarding headers
-    let noteBody = text || html.replace(/<[^>]*>/g, "");
-    // Remove common forwarding prefixes
+    // Clean body text
     noteBody = noteBody.replace(/^-+ ?Forwarded message ?-+\n/im, "").trim();
 
     // Create the card
@@ -80,7 +150,6 @@ serve(async (req) => {
     });
   } catch (e: any) {
     console.error("inbound-email error:", e);
-    // Return 200 to prevent SendGrid retries on permanent errors
     return new Response(JSON.stringify({ error: e.message }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
