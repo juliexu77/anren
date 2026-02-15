@@ -72,7 +72,7 @@ serve(async (req) => {
               },
               {
                 type: "text",
-                text: `Analyze this image and extract useful information. This could be a receipt, screenshot, school notice, medical form, recipe, shopping list, calendar event, to-do list, or anything related to household management. Extract a short title, detailed body, and the best matching workstream from: ${workstreams.join(", ")}. Be concise but capture all important details.`
+                text: `Analyze this image and extract useful information. This could be a receipt, screenshot, school notice, medical form, recipe, shopping list, calendar event, to-do list, or anything related to household management. Extract a short title, detailed body, and the best matching workstream from: ${workstreams.join(", ")}. Be concise but capture all important details. IMPORTANT: Always include any dates, deadlines, due dates, appointment times, or event dates found in the image — put them prominently at the start of the body text.`
               }
             ]
           }
