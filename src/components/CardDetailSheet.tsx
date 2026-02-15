@@ -47,7 +47,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="What's on your mind?"
-            className="min-h-[250px] border-none bg-secondary/50 resize-none focus-visible:ring-primary/30 text-base"
+            className="min-h-[250px] border-none bg-transparent resize-none focus-visible:ring-primary/30 text-base"
           />
         </div>
 
