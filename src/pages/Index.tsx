@@ -8,7 +8,7 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { BottomNav, type TabId } from "@/components/BottomNav";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Plus, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Sparkles, Loader2, Settings, PenSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, CardCategory } from "@/types/card";
@@ -105,10 +105,16 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
-      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 text-center">
+      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 flex items-center justify-between">
         <h1 className="text-display-caps-sm text-foreground">
           {tabTitle[activeTab]}
         </h1>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
       </header>
 
       {activeTab === "notes" ? (
@@ -134,15 +140,8 @@ const Index = () => {
             ))}
           </div>
 
-          {/* Action buttons row */}
+          {/* AI Sort button — inline */}
           <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => setShowNew(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60 flex-1"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="text-xs font-medium">New Note</span>
-            </button>
             <button
               onClick={handleAISort}
               disabled={isSorting}
@@ -180,6 +179,21 @@ const Index = () => {
         <GoogleCalendarView />
       ) : (
         <SettingsPage />
+      )}
+
+      {/* Floating compose button — bottom right */}
+      {activeTab === "notes" && (
+        <button
+          onClick={() => setShowNew(true)}
+          className="fixed bottom-20 right-5 z-50 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+          style={{
+            background: 'hsl(var(--text-muted) / 0.2)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid hsl(var(--divider) / 0.3)',
+          }}
+        >
+          <PenSquare className="w-5 h-5 text-foreground/70" />
+        </button>
       )}
 
       <BottomNav
