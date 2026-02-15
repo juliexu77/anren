@@ -96,7 +96,7 @@ const Index = () => {
               const cat = CATEGORY_CONFIG[catKey];
               const Icon = cat.icon;
               return (
-                <div key={catKey} className="flex gap-2" style={{ minHeight: '88px' }}>
+                <div key={catKey} className="flex gap-2" style={{ height: '88px' }}>
                   <div className="flex flex-col items-center pt-2" style={{ minWidth: '20px' }}>
                     <div className="flex flex-col items-center gap-[1px]">
                       {cat.label.split('').map((letter, li) => (
@@ -104,7 +104,7 @@ const Index = () => {
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 flex-1">
+                  <div className="grid grid-cols-2 gap-3 flex-1 overflow-hidden">
                     {catCards.map((card, i) => (
                       <BrainCardComponent
                         key={card.id}
