@@ -138,7 +138,7 @@ const Index = () => {
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setShowNew(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60 flex-1"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60 flex-1"
             >
               <Plus className="w-4 h-4" />
               <span className="text-xs font-medium">New Note</span>
@@ -146,7 +146,7 @@ const Index = () => {
             <button
               onClick={handleAISort}
               disabled={isSorting}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
             >
               {isSorting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

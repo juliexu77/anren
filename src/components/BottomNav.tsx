@@ -12,7 +12,7 @@ export function BottomNav({ activeTab, onTabChange }: Props) {
   return (
     <nav className="fixed bottom-4 left-0 right-0 z-50 px-5">
       <div
-        className="flex items-center justify-around py-3 rounded-full mx-auto max-w-md"
+        className="flex items-center justify-around py-3 rounded-xl mx-auto max-w-md"
         style={{
           background: 'hsl(var(--bg) / 0.45)',
           backdropFilter: 'blur(20px) saturate(1.4)',
