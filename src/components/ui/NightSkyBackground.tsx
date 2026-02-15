@@ -13,8 +13,9 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
         style={{
           zIndex: 0,
           backgroundImage: `url("/images/parchment-texture.jpg")`,
-          backgroundSize: '512px 512px',
-          backgroundRepeat: 'repeat',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           opacity: 0.18,
           mixBlendMode: 'multiply',
         }}
