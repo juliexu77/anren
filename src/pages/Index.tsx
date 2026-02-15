@@ -159,6 +159,7 @@ const Index = () => {
                 onDragOver={(e) => handleDragOver(e, card.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onDelete={deleteCard}
               />
             ))}
           </div>
