@@ -7,19 +7,17 @@ import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Settings, PenSquare, Search, StickyNote, Calendar, Camera, Type, Mic } from "lucide-react";
+import { Settings, Search, StickyNote, Calendar, Camera, Type, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BrainCard, CardCategory } from "@/types/card";
 
 type ViewId = "notes" | "calendar" | "settings";
-type ComposeMode = "photo" | "type" | "voice" | null;
 
 const Index = () => {
   const { cards, addCard, updateCard, deleteCard, groupCards, ungroupCards } = useCards();
   const [activeView, setActiveView] = useState<ViewId>("notes");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
-  const [composeMode, setComposeMode] = useState<ComposeMode>(null);
-  const [showComposeMenu, setShowComposeMenu] = useState(false);
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter by search only
@@ -165,9 +163,14 @@ const Index = () => {
               className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm"
             />
           </div>
-          <div className="relative">
+          {[
+            { action: () => setShowPhotoPicker(true), icon: Camera, label: "Photo" },
+            { action: () => {}, icon: Type, label: "Type" },
+            { action: () => {}, icon: Mic, label: "Voice" },
+          ].map(({ action, icon: BtnIcon, label }) => (
             <button
-              onClick={() => setShowComposeMenu(!showComposeMenu)}
+              key={label}
+              onClick={action}
               className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform hover:scale-105"
               style={{
                 background: 'hsl(var(--text-muted) / 0.2)',
@@ -175,38 +178,9 @@ const Index = () => {
                 border: '1px solid hsl(var(--divider) / 0.3)',
               }}
             >
-              <PenSquare className="w-5 h-5 text-foreground/70" />
+              <BtnIcon className="w-5 h-5 text-foreground/70" />
             </button>
-
-            {showComposeMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowComposeMenu(false)} />
-                <div
-                  className="absolute bottom-14 right-0 z-50 rounded-xl py-2 min-w-[140px] shadow-lg"
-                  style={{
-                    background: 'hsl(var(--card-bg) / 0.95)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid hsl(var(--divider) / 0.3)',
-                  }}
-                >
-                  {[
-                    { mode: "photo" as const, icon: Camera, label: "Photo" },
-                    { mode: "type" as const, icon: Type, label: "Type" },
-                    { mode: "voice" as const, icon: Mic, label: "Voice" },
-                  ].map(({ mode, icon: MIcon, label }) => (
-                    <button
-                      key={mode}
-                      onClick={() => { setComposeMode(mode); setShowComposeMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-foreground/5 transition-colors"
-                    >
-                      <MIcon className="w-4 h-4" />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          ))}
         </div>
       )}
 
@@ -219,8 +193,8 @@ const Index = () => {
       />
 
       <NewCardSheet
-        open={composeMode === "photo"}
-        onClose={() => setComposeMode(null)}
+        open={showPhotoPicker}
+        onClose={() => setShowPhotoPicker(false)}
         onAdd={addCard}
         onUpdateCard={updateCard}
       />
