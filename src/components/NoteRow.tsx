@@ -29,7 +29,8 @@ export function NoteRow({
   const cat = CATEGORY_CONFIG[card.category];
   const Icon = cat.icon;
   const isParsing = card.body === "@@PARSING@@";
-  const preview = isParsing ? "" : card.body.split("\n")[0].substring(0, 100);
+  const isFailed = card.body === "@@PARSE_FAILED@@";
+  const preview = (isParsing || isFailed) ? "" : card.body.split("\n")[0].substring(0, 100);
 
   const [offsetX, setOffsetX] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
