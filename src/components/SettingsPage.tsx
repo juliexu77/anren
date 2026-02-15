@@ -1,12 +1,31 @@
 import { useColorTheme } from "@/contexts/ColorThemeContext";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function SettingsPage() {
   const { currentTheme, setTheme, themes } = useColorTheme();
+  const { user, signOut } = useAuth();
 
   return (
-    <main className="px-5 pb-8">
+    <main className="px-5 pb-8 space-y-8">
+      {/* Account */}
+      <section>
+        <h2 className="text-section-header text-muted-foreground mb-4">Account</h2>
+        <div className="rounded-2xl border border-border p-4 flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
+            <p className="text-xs text-muted-foreground">Signed in with Google</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={signOut} className="shrink-0">
+            <LogOut className="w-4 h-4 mr-1.5" />
+            Sign out
+          </Button>
+        </div>
+      </section>
+
+      {/* Theme */}
       <section>
         <h2 className="text-section-header text-muted-foreground mb-4">Theme</h2>
         <div className="grid grid-cols-2 gap-3">
@@ -23,29 +42,15 @@ export function SettingsPage() {
                     ? "border-primary/40 shadow-md"
                     : "border-border hover:border-primary/20 hover:shadow-sm"
                 )}
-                style={{
-                  background: `hsl(${theme.cardBg})`,
-                }}
+                style={{ background: `hsl(${theme.cardBg})` }}
               >
-                {/* Color preview */}
                 <div className="flex gap-2 mb-3">
-                  <div
-                    className="w-8 h-8 rounded-full border border-black/5"
-                    style={{ background: `hsl(${theme.bgPrimary})` }}
-                  />
-                  <div
-                    className="w-8 h-8 rounded-full"
-                    style={{ background: `hsl(${theme.accent1})` }}
-                  />
-                  <div
-                    className="w-8 h-8 rounded-full"
-                    style={{ background: `hsl(${theme.accent2})` }}
-                  />
+                  <div className="w-8 h-8 rounded-full border border-black/5" style={{ background: `hsl(${theme.bgPrimary})` }} />
+                  <div className="w-8 h-8 rounded-full" style={{ background: `hsl(${theme.accent1})` }} />
+                  <div className="w-8 h-8 rounded-full" style={{ background: `hsl(${theme.accent2})` }} />
                 </div>
-
                 <p className="text-sm font-medium" style={{ color: `hsl(${theme.textPrimary})` }}>{theme.name}</p>
                 <p className="text-xs mt-0.5" style={{ color: `hsl(${theme.textMuted})` }}>{theme.description}</p>
-
                 {isActive && (
                   <div className="absolute top-3 right-3">
                     <Check className="w-4 h-4 text-primary" />
