@@ -1,10 +1,22 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 
 interface NightSkyBackgroundProps {
   children: ReactNode;
 }
 
 export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
+  // Generate random raindrop positions once
+  const drops = useMemo(() => {
+    return Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 8,
+      duration: 4 + Math.random() * 6,
+      size: 1 + Math.random() * 2,
+      opacity: 0.04 + Math.random() * 0.06,
+    }));
+  }, []);
+
   return (
     <div className="relative min-h-screen">
       {/* Clay texture overlay */}
@@ -30,6 +42,23 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
           mixBlendMode: 'multiply',
         }}
       />
+
+      {/* Rain drips layer */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        {drops.map((drop) => (
+          <div
+            key={drop.id}
+            className="rain-drip"
+            style={{
+              left: `${drop.left}%`,
+              animationDelay: `${drop.delay}s`,
+              animationDuration: `${drop.duration}s`,
+              width: `${drop.size}px`,
+              opacity: drop.opacity,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Warm ambient glow — top */}
       <div

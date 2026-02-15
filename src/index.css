@@ -563,6 +563,44 @@
   animation: fade-in 0.4s ease-out both;
 }
 
+/* Rain drip animation */
+@keyframes rain-drip {
+  0% {
+    transform: translateY(-10vh) scaleY(0.6);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(95vh) scaleY(1);
+  }
+  85% {
+    opacity: 0.3;
+    transform: translateY(100vh) scaleY(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(105vh) scaleY(0);
+  }
+}
+
+.rain-drip {
+  position: absolute;
+  top: 0;
+  height: 60px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    hsl(var(--text-muted) / 0.15) 30%,
+    hsl(var(--text-muted) / 0.25) 70%,
+    transparent 100%
+  );
+  animation: rain-drip linear infinite;
+}
+
 @media all and (display-mode: standalone) {
   .standalone-header-boost { padding-top: max(3rem, calc(env(safe-area-inset-top) + 1.5rem)) !important; padding-bottom: 1rem !important; }
   .standalone-content-boost { padding-top: 1.5rem; padding-bottom: 2rem; }
