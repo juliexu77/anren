@@ -8,15 +8,23 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check initial session first
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth event:", event, "provider_token:", !!session?.provider_token, "provider_refresh_token:", !!session?.provider_refresh_token);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
         // Capture Google OAuth tokens on sign-in
         if (
-          (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
+          (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") &&
           session?.provider_token &&
           session?.user
         ) {
@@ -29,24 +37,18 @@ export function useAuth() {
           if (session.provider_refresh_token) {
             updateData.google_refresh_token = session.provider_refresh_token;
           }
-          // Don't await to avoid blocking auth flow
+          console.log("Saving Google tokens to profile...", Object.keys(updateData));
           supabase
             .from("profiles")
             .update(updateData)
             .eq("user_id", session.user.id)
             .then(({ error }) => {
               if (error) console.error("Failed to save Google tokens:", error);
-              else console.log("Google tokens saved to profile");
+              else console.log("Google tokens saved to profile successfully");
             });
         }
       }
     );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
