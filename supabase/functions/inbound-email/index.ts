@@ -82,7 +82,7 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
               type: "object",
               properties: {
                 title: { type: "string", description: "Short title (5-10 words max)" },
-                summary: { type: "string", description: "A concise 1-line summary (max 80 chars) with the most important details — include dates, amounts, deadlines, or links if present. This is what users see on the card preview." },
+                summary: { type: "string", description: "Ultra-short summary (max 50 chars). Key action + deadline. Example: 'Sage enrollment due 2/15/2026'" },
                 body: { type: "string", description: "Key action items or full details in 1-3 short sentences. Include any URLs/links from the email." },
                 category: { type: "string", enum: workstreams, description: "Best matching workstream" }
               },
