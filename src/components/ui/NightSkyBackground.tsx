@@ -7,13 +7,13 @@ interface NightSkyBackgroundProps {
 export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
   // Generate random raindrop positions once
   const drops = useMemo(() => {
-    return Array.from({ length: 18 }, (_, i) => ({
+    return Array.from({ length: 5 }, (_, i) => ({
       id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 8,
-      duration: 4 + Math.random() * 6,
-      size: 1 + Math.random() * 2,
-      opacity: 0.04 + Math.random() * 0.06,
+      left: 10 + Math.random() * 80,
+      delay: Math.random() * 20,
+      duration: 12 + Math.random() * 10,
+      size: 1.5 + Math.random() * 1.5,
+      opacity: 0.03 + Math.random() * 0.04,
     }));
   }, []);
 
