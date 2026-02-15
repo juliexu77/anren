@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
+import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Trash2, ExternalLink } from "lucide-react";
@@ -22,12 +23,77 @@ export function GoogleCalendarView() {
   const [newStartTime, setNewStartTime] = useState("09:00");
   const [newEndTime, setNewEndTime] = useState("10:00");
   const [creating, setCreating] = useState(false);
+  const [calendarConnected, setCalendarConnected] = useState<boolean | null>(null);
+  const [connecting, setConnecting] = useState(false);
 
+  // Check if Google Calendar is connected
   useEffect(() => {
-    const start = startOfMonth(selectedDate);
-    const end = endOfMonth(selectedDate);
-    fetchEvents(start.toISOString(), end.toISOString());
-  }, [selectedDate, fetchEvents]);
+    const checkConnection = async () => {
+      try {
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+        if (!token) return;
+
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-auth-callback?action=check-status`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+          }
+        );
+        const result = await res.json();
+        setCalendarConnected(result.connected);
+      } catch {
+        setCalendarConnected(false);
+      }
+    };
+    checkConnection();
+  }, []);
+
+  const handleConnect = useCallback(async () => {
+    setConnecting(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+
+      const redirectUri = `${window.location.origin}/google-callback`;
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-auth-callback?action=get-auth-url`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ redirectUri }),
+        }
+      );
+
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+
+      // Redirect to Google consent screen
+      window.location.href = result.url;
+    } catch (e: any) {
+      console.error("Connect error:", e);
+      setConnecting(false);
+    }
+  }, []);
+
+  // Fetch events when connected
+  useEffect(() => {
+    if (calendarConnected) {
+      const start = startOfMonth(selectedDate);
+      const end = endOfMonth(selectedDate);
+      fetchEvents(start.toISOString(), end.toISOString());
+    }
+  }, [selectedDate, fetchEvents, calendarConnected]);
 
   const eventsForDate = events.filter((e) => {
     const eventDate = e.start.dateTime
@@ -61,7 +127,6 @@ export function GoogleCalendarView() {
       setShowCreate(false);
       setNewTitle("");
       setNewDesc("");
-      // Refresh events
       const start = startOfMonth(selectedDate);
       const end = endOfMonth(selectedDate);
       fetchEvents(start.toISOString(), end.toISOString());
@@ -69,6 +134,29 @@ export function GoogleCalendarView() {
       setCreating(false);
     }
   };
+
+  // Show connect screen if not connected
+  if (calendarConnected === null) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!calendarConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
+        <p className="text-sm text-muted-foreground text-center">
+          Connect your Google Calendar to view and manage events.
+        </p>
+        <Button onClick={handleConnect} disabled={connecting} className="rounded-full">
+          {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          Connect Google Calendar
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pb-8">
