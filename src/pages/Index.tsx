@@ -5,7 +5,7 @@ import { CategoryFilter } from "@/components/CategoryFilter";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { BottomNav, type TabId } from "@/components/BottomNav";
-import { CalendarPlaceholder } from "@/components/CalendarPlaceholder";
+import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
 import { Plus, Sparkles, Loader2 } from "lucide-react";
 import { CATEGORY_CONFIG } from "@/types/card";
@@ -151,7 +151,7 @@ const Index = () => {
           )}
         </main>
       ) : activeTab === "calendar" ? (
-        <CalendarPlaceholder />
+        <GoogleCalendarView />
       ) : (
         <SettingsPage />
       )}
