@@ -1,4 +1,4 @@
-import { Brain, Calendar, Settings } from "lucide-react";
+import { Brain, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TabId = "notes" | "calendar" | "settings";
@@ -40,17 +40,6 @@ export function BottomNav({ activeTab, onTabChange }: Props) {
         >
           <Calendar className="w-4 h-4" />
           <span className="text-[10px] font-medium">Calendar</span>
-        </button>
-
-        <button
-          onClick={() => onTabChange("settings")}
-          className={cn(
-            "flex flex-col items-center gap-0.5 transition-colors",
-            activeTab === "settings" ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <Settings className="w-4 h-4" />
-          <span className="text-[10px] font-medium">Settings</span>
         </button>
       </div>
     </nav>
