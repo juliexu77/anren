@@ -31,7 +31,7 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           opacity: 0.25,
-          mixBlendMode: 'soft-light',
+          mixBlendMode: 'overlay',
         }}
       />
 
