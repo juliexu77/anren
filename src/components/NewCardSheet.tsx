@@ -60,9 +60,9 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const base64 = ev.target?.result as string;
-      const cardId = onAdd({
+      const cardId = await onAdd({
         title: "",
         body: "Parsing image...",
         source: "screenshot",
