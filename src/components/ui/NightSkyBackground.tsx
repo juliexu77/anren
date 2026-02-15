@@ -19,30 +19,26 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
 
   return (
     <div className="relative min-h-screen">
-      {/* Clay texture overlay — primary */}
+      {/* Clay pot texture — full cover */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           zIndex: 0,
           backgroundImage: `url("/images/clay-texture.jpg")`,
-          backgroundSize: '500px 500px',
-          backgroundRepeat: 'repeat',
-          opacity: 0.35,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.3,
           mixBlendMode: 'soft-light',
         }}
       />
 
-      {/* Second texture layer — offset for depth */}
+      {/* Warm tint layer to blend texture with bg */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           zIndex: 0,
-          backgroundImage: `url("/images/clay-texture.jpg")`,
-          backgroundSize: '700px 700px',
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '150px 200px',
-          opacity: 0.15,
-          mixBlendMode: 'overlay',
+          background: 'hsl(var(--bg) / 0.4)',
         }}
       />
 
