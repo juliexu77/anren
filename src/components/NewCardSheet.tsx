@@ -13,7 +13,7 @@ interface Props {
     source?: CardSource;
     imageUrl?: string;
   }) => Promise<string> | string | void;
-  onUpdateCard?: (id: string, updates: { body?: string; category?: CardCategory }) => void;
+  onUpdateCard?: (id: string, updates: { body?: string; summary?: string; category?: CardCategory }) => void;
 }
 
 export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
@@ -39,14 +39,10 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
         }
         return;
       }
-      const parts: string[] = [];
-      if (data.summary) parts.push(data.summary);
-      if (data.body) parts.push(data.body);
-      const parsedBody = parts.join("\n\n");
-
       if (onUpdateCard) {
         onUpdateCard(cardId, {
-          body: parsedBody,
+          body: data.body || "",
+          summary: data.summary || "",
           ...(data.category ? { category: data.category } : {}),
         });
       }

@@ -31,6 +31,7 @@ export function useCards() {
           (data || []).map((row: any) => ({
             id: row.id,
             title: row.title,
+            summary: row.summary || "",
             body: row.body,
             category: row.category as CardCategory,
             source: row.source as CardSource,
@@ -78,6 +79,7 @@ export function useCards() {
       const optimisticCard: BrainCard = {
         id: tempId,
         title: data.title,
+        summary: "",
         body: data.body,
         category: data.category ?? "finance",
         source: data.source ?? "text",
@@ -118,9 +120,10 @@ export function useCards() {
   );
 
   const updateCard = useCallback(
-    async (id: string, updates: Partial<Pick<BrainCard, "title" | "body" | "category">>) => {
+    async (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category">>) => {
       const dbUpdates: Record<string, any> = {};
       if (updates.title !== undefined) dbUpdates.title = updates.title;
+      if (updates.summary !== undefined) dbUpdates.summary = updates.summary;
       if (updates.body !== undefined) dbUpdates.body = updates.body;
       if (updates.category !== undefined) dbUpdates.category = updates.category;
 

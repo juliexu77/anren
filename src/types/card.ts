@@ -29,6 +29,7 @@ export type CardSource = "text" | "screenshot" | "voice";
 export interface BrainCard {
   id: string;
   title: string;
+  summary: string;
   body: string;
   category: CardCategory;
   source: CardSource;
