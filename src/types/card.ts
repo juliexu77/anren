@@ -19,6 +19,7 @@ export interface BrainCard {
   category: CardCategory;
   source: CardSource;
   imageUrl?: string;
+  groupId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

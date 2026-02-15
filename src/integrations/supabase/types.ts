@@ -19,6 +19,7 @@ export type Database = {
           body: string
           category: string
           created_at: string
+          group_id: string | null
           id: string
           image_url: string | null
           source: string
@@ -30,6 +31,7 @@ export type Database = {
           body?: string
           category?: string
           created_at?: string
+          group_id?: string | null
           id?: string
           image_url?: string | null
           source?: string
@@ -41,6 +43,7 @@ export type Database = {
           body?: string
           category?: string
           created_at?: string
+          group_id?: string | null
           id?: string
           image_url?: string | null
           source?: string

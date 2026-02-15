@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCards } from "@/hooks/useCards";
-import { BrainCardComponent } from "@/components/BrainCard";
+import { NoteRow } from "@/components/NoteRow";
+import { GroupedCard } from "@/components/GroupedCard";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
@@ -8,22 +9,39 @@ import { BottomNav, type TabId } from "@/components/BottomNav";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
 import { Plus, Sparkles, Loader2 } from "lucide-react";
-import { CATEGORY_CONFIG } from "@/types/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, CardCategory } from "@/types/card";
 
 const Index = () => {
-  const { cards, addCard, updateCard, deleteCard } = useCards();
+  const { cards, addCard, updateCard, deleteCard, groupCards, ungroupCards } = useCards();
   const [activeTab, setActiveTab] = useState<TabId>("notes");
   const [filter, setFilter] = useState<CardCategory | "all">("all");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const [groupedByWorkstream, setGroupedByWorkstream] = useState(false);
   const [isSorting, setIsSorting] = useState(false);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [draggedCard, setDraggedCard] = useState<BrainCard | null>(null);
 
   const filtered =
     filter === "all" ? cards : cards.filter((c) => c.category === filter);
+
+  // Split into ungrouped rows and grouped cards
+  const { ungroupedCards, groups } = useMemo(() => {
+    const ungrouped: BrainCard[] = [];
+    const groupMap: Record<string, BrainCard[]> = {};
+
+    filtered.forEach((card) => {
+      if (card.groupId) {
+        if (!groupMap[card.groupId]) groupMap[card.groupId] = [];
+        groupMap[card.groupId].push(card);
+      } else {
+        ungrouped.push(card);
+      }
+    });
+
+    return { ungroupedCards: ungrouped, groups: groupMap };
+  }, [filtered]);
 
   const tabTitle: Record<TabId, string> = {
     notes: "Notes",
@@ -52,9 +70,7 @@ const Index = () => {
         }
       });
 
-      setGroupedByWorkstream(true);
-      setFilter("all");
-      toast.success("Notes organized by workstream! ✨");
+      toast.success("Notes categorized! ✨");
     } catch (e: any) {
       console.error("AI sort error:", e);
       toast.error(e.message || "Failed to sort notes");
@@ -63,14 +79,28 @@ const Index = () => {
     }
   };
 
-  // Group cards by workstream for grouped view
-  const groupedCards = () => {
-    const groups: Record<string, BrainCard[]> = {};
-    filtered.forEach((card) => {
-      if (!groups[card.category]) groups[card.category] = [];
-      groups[card.category].push(card);
-    });
-    return groups;
+  // Drag & drop handlers
+  const handleDragStart = (_e: React.DragEvent, card: BrainCard) => {
+    setDraggedCard(card);
+  };
+
+  const handleDragOver = (_e: React.DragEvent, targetId: string) => {
+    if (draggedCard && draggedCard.id !== targetId) {
+      setDragOverId(targetId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverId(null);
+  };
+
+  const handleDrop = (_e: React.DragEvent, targetCard: BrainCard) => {
+    if (draggedCard && draggedCard.id !== targetCard.id) {
+      groupCards(draggedCard.id, targetCard.id);
+      toast.success("Notes grouped! 📎");
+    }
+    setDragOverId(null);
+    setDraggedCard(null);
   };
 
   return (
@@ -84,77 +114,65 @@ const Index = () => {
       {activeTab === "notes" ? (
         <main className="px-4">
           <div className="mb-4">
-            <CategoryFilter active={filter} onChange={(cat) => { setFilter(cat); if (cat !== "all") setGroupedByWorkstream(false); }} />
+            <CategoryFilter active={filter} onChange={setFilter} />
           </div>
 
-          {groupedByWorkstream && filter === "all" ? (
-            // Grouped view by workstream
-            <div className="space-y-6">
-              {Object.entries(groupedCards()).map(([category, catCards]) => {
-                const cat = CATEGORY_CONFIG[category as CardCategory];
-                if (!cat) return null;
-                return (
-                  <div key={category}>
-                    <h2 className="text-sm font-semibold text-foreground/80 mb-2 flex items-center gap-2">
-                      <span>{cat.emoji}</span>
-                      <span>{cat.label}</span>
-                      <span className="text-muted-foreground font-normal">({catCards.length})</span>
-                    </h2>
-                    <div className="grid grid-cols-3 gap-2">
-                      {catCards.map((card, i) => (
-                        <BrainCardComponent
-                          key={card.id}
-                          card={card}
-                          index={i}
-                          onClick={() => setSelectedCard(card)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              {/* Add New Note button at end of grouped view */}
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => setShowNew(true)}
-                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
-                >
-                  <Plus className="w-8 h-8 mb-1" />
-                  <span className="text-xs font-medium">New Note</span>
-                </button>
+          {/* Ungrouped notes as rows */}
+          <div className="space-y-1 mb-4">
+            {ungroupedCards.map((card, i) => (
+              <NoteRow
+                key={card.id}
+                card={card}
+                index={i}
+                onClick={() => setSelectedCard(card)}
+                isDragOver={dragOverId === card.id}
+                onDragStart={handleDragStart}
+                onDragOver={(e) => handleDragOver(e, card.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              />
+            ))}
+          </div>
+
+          {/* Action buttons row */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setShowNew(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60 flex-1"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-xs font-medium">New Note</span>
+            </button>
+            <button
+              onClick={handleAISort}
+              disabled={isSorting}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
+            >
+              {isSorting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              <span className="text-xs font-medium">Sort</span>
+            </button>
+          </div>
+
+          {/* Grouped cards section */}
+          {Object.keys(groups).length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Grouped
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(groups).map(([groupId, groupCards]) => (
+                  <GroupedCard
+                    key={groupId}
+                    cards={groupCards}
+                    onClick={(card) => setSelectedCard(card)}
+                    onUngroup={ungroupCards}
+                  />
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {filtered.map((card, i) => (
-                <BrainCardComponent
-                  key={card.id}
-                  card={card}
-                  index={i}
-                  onClick={() => setSelectedCard(card)}
-                />
-              ))}
-
-              <button
-                onClick={() => setShowNew(true)}
-                className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
-              >
-                <Plus className="w-8 h-8 mb-1" />
-                <span className="text-xs font-medium">New Note</span>
-              </button>
-
-              <button
-                onClick={handleAISort}
-                disabled={isSorting}
-                className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
-              >
-                {isSorting ? (
-                  <Loader2 className="w-6 h-6 mb-1 animate-spin" />
-                ) : (
-                  <Sparkles className="w-6 h-6 mb-1" />
-                )}
-                <span className="text-xs font-medium">Sort</span>
-              </button>
             </div>
           )}
         </main>
