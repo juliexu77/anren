@@ -1,0 +1,1 @@
+ALTER TABLE public.cards ADD COLUMN group_id uuid DEFAULT NULL;

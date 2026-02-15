@@ -35,6 +35,7 @@ export function useCards() {
             category: row.category as CardCategory,
             source: row.source as CardSource,
             imageUrl: row.image_url,
+            groupId: row.group_id,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
           }))
@@ -97,14 +98,63 @@ export function useCards() {
 
   const updateCard = useCallback(
     async (id: string, updates: Partial<Pick<BrainCard, "title" | "body" | "category">>) => {
+      const dbUpdates: Record<string, any> = {};
+      if (updates.title !== undefined) dbUpdates.title = updates.title;
+      if (updates.body !== undefined) dbUpdates.body = updates.body;
+      if (updates.category !== undefined) dbUpdates.category = updates.category;
+
       const { error } = await supabase
         .from("cards")
-        .update(updates)
+        .update(dbUpdates)
         .eq("id", id);
 
       if (error) {
         console.error("Failed to update card:", error);
       }
+    },
+    []
+  );
+
+  const groupCards = useCallback(
+    async (cardId1: string, cardId2: string) => {
+      // Check if either card already has a group
+      const card1 = cards.find((c) => c.id === cardId1);
+      const card2 = cards.find((c) => c.id === cardId2);
+      if (!card1 || !card2) return;
+
+      const groupId = card1.groupId || card2.groupId || crypto.randomUUID();
+
+      // Optimistic update
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === cardId1 || c.id === cardId2 || c.groupId === groupId
+            ? { ...c, groupId }
+            : c
+        )
+      );
+
+      const { error } = await supabase
+        .from("cards")
+        .update({ group_id: groupId })
+        .in("id", [cardId1, cardId2]);
+
+      if (error) console.error("Failed to group cards:", error);
+    },
+    [cards]
+  );
+
+  const ungroupCards = useCallback(
+    async (groupId: string) => {
+      setCards((prev) =>
+        prev.map((c) => (c.groupId === groupId ? { ...c, groupId: null } : c))
+      );
+
+      const { error } = await supabase
+        .from("cards")
+        .update({ group_id: null })
+        .eq("group_id", groupId);
+
+      if (error) console.error("Failed to ungroup cards:", error);
     },
     []
   );
@@ -123,5 +173,5 @@ export function useCards() {
     }
   }, []);
 
-  return { cards, loading, addCard, updateCard, deleteCard };
+  return { cards, loading, addCard, updateCard, deleteCard, groupCards, ungroupCards };
 }
