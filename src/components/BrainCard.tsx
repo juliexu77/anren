@@ -23,13 +23,6 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
         animationDelay: `${index * 40}ms`,
       }}
     >
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <Icon className="w-3 h-3 text-muted-foreground/60" />
-        <span className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider">
-          {cat.label}
-        </span>
-      </div>
-
       {isParsing ? (
         <p className="text-xs text-muted-foreground/60 italic animate-pulse">Transcribing…</p>
       ) : (

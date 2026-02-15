@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useCards } from "@/hooks/useCards";
 import { BrainCardComponent } from "@/components/BrainCard";
 import { GroupedCard } from "@/components/GroupedCard";
-import { CategoryFilter } from "@/components/CategoryFilter";
+import { CATEGORY_CONFIG } from "@/types/card";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
@@ -16,22 +16,31 @@ type ViewId = "notes" | "calendar" | "settings";
 const Index = () => {
   const { cards, addCard, updateCard, deleteCard, groupCards, ungroupCards } = useCards();
   const [activeView, setActiveView] = useState<ViewId>("notes");
-  const [filter, setFilter] = useState<CardCategory | "all">("all");
+  // removed category filter state
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter by category and search
+  // Filter by search only
   const filtered = useMemo(() => {
-    let result = filter === "all" ? cards : cards.filter((c) => c.category === filter);
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (c) => c.title.toLowerCase().includes(q) || c.body.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [cards, filter, searchQuery]);
+    if (!searchQuery.trim()) return cards;
+    const q = searchQuery.toLowerCase();
+    return cards.filter(
+      (c) => c.title.toLowerCase().includes(q) || c.body.toLowerCase().includes(q)
+    );
+  }, [cards, searchQuery]);
+
+  // Group cards by category (only categories that have cards)
+  const cardsByCategory = useMemo(() => {
+    const map: Partial<Record<CardCategory, BrainCard[]>> = {};
+    filtered.forEach((card) => {
+      if (!card.groupId) {
+        if (!map[card.category]) map[card.category] = [];
+        map[card.category]!.push(card);
+      }
+    });
+    return map;
+  }, [filtered]);
 
   // Split into ungrouped and grouped
   const { ungroupedCards, groups } = useMemo(() => {
@@ -80,22 +89,35 @@ const Index = () => {
 
       {activeView === "notes" ? (
         <main className="px-4">
-          <div className="mb-4">
-            <CategoryFilter active={filter} onChange={setFilter} />
+          {/* Cards grouped by category */}
+          <div className="space-y-5 mb-4">
+            {(Object.keys(CATEGORY_CONFIG) as CardCategory[]).map((catKey) => {
+              const catCards = cardsByCategory[catKey];
+              if (!catCards || catCards.length === 0) return null;
+              const cat = CATEGORY_CONFIG[catKey];
+              const Icon = cat.icon;
+              return (
+                <div key={catKey}>
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground/60" />
+                    <span className="text-[11px] text-muted-foreground/70 font-medium uppercase tracking-wider">
+                      {cat.label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {catCards.map((card, i) => (
+                      <BrainCardComponent
+                        key={card.id}
+                        card={card}
+                        index={i}
+                        onClick={() => setSelectedCard(card)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          {/* Cards grid */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            {ungroupedCards.map((card, i) => (
-              <BrainCardComponent
-                key={card.id}
-                card={card}
-                index={i}
-                onClick={() => setSelectedCard(card)}
-              />
-            ))}
-          </div>
-
 
 
 
