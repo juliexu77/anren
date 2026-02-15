@@ -7,7 +7,7 @@ import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Settings, Search, StickyNote, Calendar, Camera, Type, Mic } from "lucide-react";
+import { Settings, Search, StickyNote, Calendar, Camera, Type, Mic, PenSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BrainCard, CardCategory } from "@/types/card";
 
@@ -18,6 +18,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState<ViewId>("notes");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [showComposeMenu, setShowComposeMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter by search only
@@ -163,14 +164,9 @@ const Index = () => {
               className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm"
             />
           </div>
-          {[
-            { action: () => setShowPhotoPicker(true), icon: Camera, label: "Photo" },
-            { action: () => {}, icon: Type, label: "Type" },
-            { action: () => {}, icon: Mic, label: "Voice" },
-          ].map(({ action, icon: BtnIcon, label }) => (
+          <div className="relative">
             <button
-              key={label}
-              onClick={action}
+              onClick={() => setShowComposeMenu(!showComposeMenu)}
               className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform hover:scale-105"
               style={{
                 background: 'hsl(var(--text-muted) / 0.2)',
@@ -178,9 +174,38 @@ const Index = () => {
                 border: '1px solid hsl(var(--divider) / 0.3)',
               }}
             >
-              <BtnIcon className="w-5 h-5 text-foreground/70" />
+              <PenSquare className="w-5 h-5 text-foreground/70" />
             </button>
-          ))}
+
+            {showComposeMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowComposeMenu(false)} />
+                <div
+                  className="absolute bottom-14 right-0 z-50 rounded-xl py-2 min-w-[140px] shadow-lg"
+                  style={{
+                    background: 'hsl(var(--card-bg) / 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid hsl(var(--divider) / 0.3)',
+                  }}
+                >
+                  {[
+                    { action: () => { setShowPhotoPicker(true); setShowComposeMenu(false); }, icon: Camera, label: "Photo" },
+                    { action: () => { setShowComposeMenu(false); }, icon: Type, label: "Type" },
+                    { action: () => { setShowComposeMenu(false); }, icon: Mic, label: "Voice" },
+                  ].map(({ action, icon: MIcon, label }) => (
+                    <button
+                      key={label}
+                      onClick={action}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-foreground/5 transition-colors"
+                    >
+                      <MIcon className="w-4 h-4" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
