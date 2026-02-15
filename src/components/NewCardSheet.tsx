@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { FileText, Loader2, Sparkles } from "lucide-react";
+import { FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,13 +20,13 @@ interface Props {
     body: string;
     category?: CardCategory;
     source?: CardSource;
-  }) => void;
+  }) => string | void;
+  onUpdateCard?: (id: string, updates: { body?: string; category?: CardCategory }) => void;
 }
 
-export function NewCardSheet({ open, onClose, onAdd }: Props) {
+export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
   const [body, setBody] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [isParsing, setIsParsing] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const didPickRef = useRef(false);
@@ -41,31 +41,30 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
   const reset = () => {
     setBody("");
     setImagePreview(undefined);
-    setIsParsing(false);
   };
 
-  const parseImageWithAI = async (base64: string) => {
-    setIsParsing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("parse-image", {
-        body: { imageBase64: base64 },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      // Combine title and body into one note body
+  const parseImageInBackground = (base64: string, cardId: string) => {
+    supabase.functions.invoke("parse-image", {
+      body: { imageBase64: base64 },
+    }).then(({ data, error }) => {
+      if (error || data?.error) {
+        console.error("Background parse error:", error || data?.error);
+        toast.error("Couldn't parse image — edit the note manually");
+        return;
+      }
       const parts: string[] = [];
       if (data.title) parts.push(data.title);
       if (data.body) parts.push(data.body);
-      setBody(parts.join("\n\n"));
+      const parsedBody = parts.join("\n\n");
+      
+      if (onUpdateCard) {
+        onUpdateCard(cardId, { 
+          body: parsedBody,
+          ...(data.category ? { category: data.category } : {}),
+        });
+      }
       toast.success("Image parsed! ✨");
-    } catch (e: any) {
-      console.error("AI parse error:", e);
-      toast.error(e.message || "Failed to parse image");
-    } finally {
-      setIsParsing(false);
-    }
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,9 +77,16 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const base64 = ev.target?.result as string;
-      setImagePreview(base64);
-      setSheetOpen(true);
-      parseImageWithAI(base64);
+      // Save immediately with placeholder, parse in background
+      const cardId = onAdd({
+        title: "",
+        body: "📷 Parsing image…",
+        source: "screenshot",
+      });
+      if (cardId && typeof cardId === "string") {
+        parseImageInBackground(base64, cardId);
+      }
+      onClose();
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -96,7 +102,7 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
     onAdd({
       title: "",
       body: body.trim(),
-      source: imagePreview ? "screenshot" : "text",
+      source: "text",
     });
     reset();
     setSheetOpen(false);
@@ -134,45 +140,22 @@ export function NewCardSheet({ open, onClose, onAdd }: Props) {
       <Sheet open={sheetOpen} onOpenChange={(o) => { if (!o) handleSheetClose(); }}>
         <SheetContent side="bottom" className="rounded-t-3xl h-[60vh] flex flex-col">
           <SheetHeader>
-            <SheetTitle className="font-display text-lg">
-              {isParsing ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <Sparkles className="w-4 h-4" />
-                  Reading image…
-                </span>
-              ) : (
-                "Brain dump"
-              )}
-            </SheetTitle>
+            <SheetTitle className="font-display text-lg">Brain dump</SheetTitle>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto space-y-4 mt-4">
-            {imagePreview && isParsing && (
-              <div className="rounded-xl overflow-hidden aspect-video bg-muted relative">
-                <img src={imagePreview} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-background/60 flex items-center justify-center backdrop-blur-sm">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <span className="text-sm text-foreground font-medium">AI is reading…</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder={isParsing ? "Extracting info…" : "Jot it down — incomplete is fine…"}
+              placeholder="Jot it down — incomplete is fine…"
               className="min-h-[160px] border-none bg-secondary/50 resize-none focus-visible:ring-primary/30 text-base"
-              autoFocus={!imagePreview}
-              disabled={isParsing}
+              autoFocus
             />
           </div>
 
           <div className="pt-4 border-t border-border">
-            <Button onClick={handleSubmit} className="w-full" disabled={isParsing || !body.trim()}>
-              {isParsing ? "Parsing…" : "Save"}
+            <Button onClick={handleSubmit} className="w-full" disabled={!body.trim()}>
+              Save
             </Button>
           </div>
         </SheetContent>

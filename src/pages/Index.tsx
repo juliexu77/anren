@@ -173,6 +173,7 @@ const Index = () => {
         open={showNew}
         onClose={() => setShowNew(false)}
         onAdd={addCard}
+        onUpdateCard={updateCard}
       />
     </div>
   );
