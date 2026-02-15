@@ -97,14 +97,22 @@ const Index = () => {
               const cat = CATEGORY_CONFIG[catKey];
               const Icon = cat.icon;
               return (
-                <div key={catKey}>
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <Icon className="w-3.5 h-3.5 text-muted-foreground/60" />
-                    <span className="text-[11px] text-muted-foreground/70 font-medium uppercase tracking-wider">
+                <div key={catKey} className="flex gap-2">
+                  <div className="flex flex-col items-center pt-2" style={{ minWidth: '20px' }}>
+                    <Icon className="w-3.5 h-3.5 text-foreground/80 mb-1.5" />
+                    <span
+                      className="text-[10px] text-foreground/90 font-semibold uppercase tracking-[0.15em]"
+                      style={{
+                        writingMode: 'vertical-rl',
+                        textOrientation: 'mixed',
+                        transform: 'rotate(180deg)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {cat.label}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 flex-1">
                     {catCards.map((card, i) => (
                       <BrainCardComponent
                         key={card.id}
