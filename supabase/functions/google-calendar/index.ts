@@ -7,6 +7,81 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+async function getValidGoogleToken(supabase: any, userId: string): Promise<string> {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("google_access_token, google_refresh_token, google_token_expires_at")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !profile) {
+    throw new Error("No Google tokens found. Please sign out and sign in again with Google.");
+  }
+
+  const { google_access_token, google_refresh_token, google_token_expires_at } = profile;
+
+  if (!google_access_token) {
+    throw new Error("No Google access token. Please sign out and sign in again.");
+  }
+
+  // Check if token is expired (with 5 min buffer)
+  const expiresAt = google_token_expires_at ? new Date(google_token_expires_at).getTime() : 0;
+  const isExpired = Date.now() > expiresAt - 5 * 60 * 1000;
+
+  if (!isExpired) {
+    return google_access_token;
+  }
+
+  // Token expired, try to refresh
+  if (!google_refresh_token) {
+    throw new Error("Token expired and no refresh token available. Please sign out and sign in again.");
+  }
+
+  const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
+  const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
+
+  if (!clientId || !clientSecret) {
+    throw new Error("Google OAuth not configured on server.");
+  }
+
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: google_refresh_token,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!tokenRes.ok) {
+    const errText = await tokenRes.text();
+    console.error("Token refresh failed:", errText);
+    throw new Error("Failed to refresh Google token. Please sign out and sign in again.");
+  }
+
+  const tokenData = await tokenRes.json();
+  const newAccessToken = tokenData.access_token;
+  const expiresIn = tokenData.expires_in || 3600;
+
+  // Save refreshed token using service role client
+  const serviceClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  await serviceClient
+    .from("profiles")
+    .update({
+      google_access_token: newAccessToken,
+      google_token_expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
+    })
+    .eq("user_id", userId);
+
+  return newAccessToken;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,16 +100,8 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) throw new Error("Unauthorized");
 
-    // Get the provider token from the session
-    const { data: { session } } = await supabase.auth.getSession();
-    const providerToken = session?.provider_token;
-
-    if (!providerToken) {
-      return new Response(
-        JSON.stringify({ error: "No Google token found. Please sign in again with Google." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Get valid Google token from profiles (with auto-refresh)
+    const providerToken = await getValidGoogleToken(supabase, user.id);
 
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
