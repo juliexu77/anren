@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 export type CardCategory =
+  | "uncategorized"
   | "finance"
   | "childcare"
   | "extracurriculars"
@@ -43,6 +44,7 @@ export const CATEGORY_CONFIG: Record<
   CardCategory,
   { label: string; icon: LucideIcon; color: string }
 > = {
+  uncategorized: { label: "New", icon: Package, color: "bg-muted" },
   finance: { label: "Finance", icon: Wallet, color: "bg-primary/10" },
   childcare: { label: "Kids", icon: Baby, color: "bg-secondary/10" },
   extracurriculars: { label: "Activities", icon: Trophy, color: "bg-primary/8" },

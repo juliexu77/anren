@@ -94,7 +94,7 @@ export function useCards() {
         title: data.title,
         summary: "",
         body: data.body,
-        category: data.category ?? "finance",
+        category: data.category ?? "uncategorized",
         source: data.source ?? "text",
         imageUrl: data.imageUrl ?? null,
         groupId: null,
@@ -109,7 +109,7 @@ export function useCards() {
           user_id: user.id,
           title: data.title,
           body: data.body,
-          category: data.category ?? "finance",
+          category: data.category ?? "uncategorized",
           source: data.source ?? "text",
           image_url: data.imageUrl,
         })
