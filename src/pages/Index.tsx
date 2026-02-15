@@ -111,7 +111,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen pb-8">
+    <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-40 px-5 pt-12 pb-2 flex items-center justify-between">
         {/* Left: Notes / Calendar toggle */}
         <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: 'hsl(var(--surface))' }}>
@@ -155,18 +155,6 @@ const Index = () => {
 
       {activeView === "notes" ? (
         <main className="px-4">
-          {/* Search bar */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm"
-            />
-          </div>
-
           <div className="mb-4">
             <CategoryFilter active={filter} onChange={setFilter} />
           </div>
@@ -229,19 +217,35 @@ const Index = () => {
         <SettingsPage />
       )}
 
-      {/* Floating compose button — bottom right */}
+      {/* Bottom toolbar — search + compose (Apple Notes style) */}
       {activeView === "notes" && (
-        <button
-          onClick={() => setShowNew(true)}
-          className="fixed bottom-6 right-5 z-50 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-2 flex items-center gap-3"
           style={{
-            background: 'hsl(var(--text-muted) / 0.2)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid hsl(var(--divider) / 0.3)',
+            background: 'linear-gradient(to top, hsl(var(--bg)) 60%, transparent)',
           }}
         >
-          <PenSquare className="w-5 h-5 text-foreground/70" />
-        </button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm"
+            />
+          </div>
+          <button
+            onClick={() => setShowNew(true)}
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform hover:scale-105"
+            style={{
+              background: 'hsl(var(--text-muted) / 0.2)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid hsl(var(--divider) / 0.3)',
+            }}
+          >
+            <PenSquare className="w-5 h-5 text-foreground/70" />
+          </button>
+        </div>
       )}
 
       <CardDetailSheet
