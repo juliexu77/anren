@@ -97,13 +97,9 @@ const Index = () => {
               const cat = CATEGORY_CONFIG[catKey];
               const Icon = cat.icon;
               return (
-                <div key={catKey} className="flex gap-2">
-                  <div className="flex flex-col items-center pt-2" style={{ minWidth: '14px' }}>
-                    <div className="flex flex-col items-center gap-[1px]">
-                      {cat.label.split('').map((letter, li) => (
-                        <span key={li} className="text-[10px] text-foreground/90 font-semibold uppercase leading-none">{letter}</span>
-                      ))}
-                    </div>
+                <div key={catKey} className="flex gap-2" style={{ minHeight: '88px' }}>
+                  <div className="flex flex-col items-center justify-center" style={{ minWidth: '20px' }}>
+                    <Icon className="w-3.5 h-3.5 text-foreground/50" />
                   </div>
                   <div className="grid grid-cols-2 gap-3 flex-1">
                     {catCards.map((card, i) => (
