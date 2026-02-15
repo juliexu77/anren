@@ -1,25 +1,13 @@
-import { ReactNode, useMemo } from "react";
+import { ReactNode } from "react";
 
 interface NightSkyBackgroundProps {
   children: ReactNode;
 }
 
 export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
-  // Generate random raindrop positions once
-  const drops = useMemo(() => {
-    return Array.from({ length: 5 }, (_, i) => ({
-      id: i,
-      left: 10 + Math.random() * 80,
-      delay: Math.random() * 20,
-      duration: 14 + Math.random() * 12,
-      size: 5 + Math.random() * 4,
-      opacity: 0.05 + Math.random() * 0.06,
-    }));
-  }, []);
-
   return (
     <div className="relative min-h-screen">
-      {/* Clay pot texture — full cover */}
+      {/* Earthy wash texture */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -28,54 +16,35 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.3,
+          opacity: 0.25,
           mixBlendMode: 'soft-light',
         }}
       />
 
-      {/* Warm tint layer to blend texture with bg */}
+      {/* Fine sand grain — SVG noise */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           zIndex: 0,
-          background: 'hsl(var(--bg) / 0.4)',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")`,
+          backgroundSize: '256px 256px',
+          opacity: 0.045,
+          mixBlendMode: 'overlay',
         }}
       />
 
-      {/* Subtle noise grain on top */}
+      {/* Patchy fog — multiple radial gradients scattered */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
           zIndex: 0,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          opacity: 0.02,
-          mixBlendMode: 'multiply',
-        }}
-      />
-
-      {/* Rain drips layer */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        {drops.map((drop) => (
-          <div
-            key={drop.id}
-            className="rain-drip"
-            style={{
-              left: `${drop.left}%`,
-              animationDelay: `${drop.delay}s`,
-              animationDuration: `${drop.duration}s`,
-              width: `${drop.size}px`,
-              opacity: drop.opacity,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Warm ambient glow — top */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          zIndex: 0,
-          background: `radial-gradient(ellipse 80% 50% at 50% 0%, hsl(35 30% 88% / 0.5) 0%, transparent 70%)`,
+          background: `
+            radial-gradient(ellipse 60% 40% at 15% 20%, hsl(35 25% 80% / 0.35) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 35% at 80% 15%, hsl(30 20% 75% / 0.25) 0%, transparent 65%),
+            radial-gradient(ellipse 70% 30% at 50% 60%, hsl(25 20% 70% / 0.15) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 50% at 90% 75%, hsl(35 25% 78% / 0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 55% 35% at 25% 85%, hsl(30 18% 72% / 0.18) 0%, transparent 60%)
+          `,
         }}
       />
 
