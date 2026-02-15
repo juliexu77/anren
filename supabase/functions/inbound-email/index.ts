@@ -82,7 +82,7 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
               type: "object",
               properties: {
                 title: { type: "string", description: "Short title (5-10 words max)" },
-                body: { type: "string", description: "Key action items or summary in 1-3 short sentences. No forwarding headers, signatures, or links." },
+                body: { type: "string", description: "Key action items or summary in 1-3 short sentences. ALWAYS include specific dates/deadlines and any URLs/links from the email. No forwarding headers or signatures." },
                 category: { type: "string", enum: workstreams, description: "Best matching workstream" }
               },
               required: ["title", "body", "category"]
@@ -93,7 +93,7 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
         messages: [
           {
             role: "user",
-            content: `Parse this forwarded email into a concise actionable note. Extract only the key info — what needs to be done, by when, for whom.\n\nSubject: ${subject}\n\nBody:\n${body.substring(0, 2000)}`
+            content: `Parse this forwarded email into a concise actionable note. Extract only the key info — what needs to be done, by when, for whom. IMPORTANT: Always include specific dates/deadlines and preserve any URLs or links from the email body.\n\nSubject: ${subject}\n\nBody:\n${body.substring(0, 2000)}`
           }
         ],
       }),
