@@ -11,7 +11,7 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
   const cat = CATEGORY_CONFIG[card.category];
   const Icon = cat.icon;
   const isParsing = card.body === "@@PARSING@@";
-  const preview = isParsing ? "" : (card.summary || card.body.split("\n")[0].substring(0, 80));
+  const preview = isParsing ? "" : (card.summary || card.body.split("\n")[0]).substring(0, 60);
 
   return (
     <button
@@ -26,7 +26,7 @@ export function BrainCardComponent({ card, onClick, index }: Props) {
       {isParsing ? (
         <p className="text-xs text-muted-foreground/60 italic animate-pulse">Transcribing…</p>
       ) : (
-        <p className="text-xs text-foreground/85 line-clamp-3 leading-relaxed">
+        <p className="text-xs text-foreground/85 line-clamp-2 leading-relaxed">
           {preview || "Empty note"}
         </p>
       )}

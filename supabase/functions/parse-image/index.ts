@@ -50,7 +50,7 @@ serve(async (req) => {
               type: "object",
               properties: {
                 title: { type: "string", description: "Short descriptive title (max 60 chars)" },
-                summary: { type: "string", description: "A concise 1-line summary (max 80 chars) with the most important details — include dates, amounts, or deadlines if present. This is what users see on the card preview." },
+                summary: { type: "string", description: "Ultra-short summary (max 50 chars). Key action + deadline. Example: 'Sage enrollment due 2/15/2026'" },
                 body: { type: "string", description: "Detailed extracted information" },
                 category: { type: "string", enum: workstreams, description: "Best matching workstream" }
               },
