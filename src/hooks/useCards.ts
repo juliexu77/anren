@@ -27,20 +27,33 @@ export function useCards() {
       if (error) {
         console.error("Failed to fetch cards:", error);
       } else {
-        setCards(
-          (data || []).map((row: any) => ({
-            id: row.id,
-            title: row.title,
-            summary: row.summary || "",
-            body: row.body,
-            category: row.category as CardCategory,
-            source: row.source as CardSource,
-            imageUrl: row.image_url,
-            groupId: row.group_id,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-          }))
-        );
+        const mapped = (data || []).map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          summary: row.summary || "",
+          body: row.body,
+          category: row.category as CardCategory,
+          source: row.source as CardSource,
+          imageUrl: row.image_url,
+          groupId: row.group_id,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+
+        // Auto-fail cards stuck in parsing for >2 minutes
+        const now = Date.now();
+        const staleIds: string[] = [];
+        mapped.forEach((c) => {
+          if (c.body === "@@PARSING@@" && now - new Date(c.createdAt).getTime() > 2 * 60 * 1000) {
+            staleIds.push(c.id);
+            c.body = "@@PARSE_FAILED@@";
+          }
+        });
+        if (staleIds.length > 0) {
+          supabase.from("cards").update({ body: "@@PARSE_FAILED@@" }).in("id", staleIds).then();
+        }
+
+        setCards(mapped);
       }
       setLoading(false);
     };
