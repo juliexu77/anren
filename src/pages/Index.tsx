@@ -83,22 +83,8 @@ const Index = () => {
 
       {activeTab === "notes" ? (
         <main className="px-4">
-          <div className="mb-4 flex items-center gap-2">
-            <div className="flex-1 overflow-x-auto">
-              <CategoryFilter active={filter} onChange={(cat) => { setFilter(cat); if (cat !== "all") setGroupedByWorkstream(false); }} />
-            </div>
-            <button
-              onClick={handleAISort}
-              disabled={isSorting}
-              className="flex items-center gap-1.5 category-pill bg-primary text-primary-foreground shrink-0"
-            >
-              {isSorting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              Sort
-            </button>
+          <div className="mb-4">
+            <CategoryFilter active={filter} onChange={(cat) => { setFilter(cat); if (cat !== "all") setGroupedByWorkstream(false); }} />
           </div>
 
           {groupedByWorkstream && filter === "all" ? (
@@ -131,14 +117,6 @@ const Index = () => {
           ) : (
             // Standard grid view
             <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setShowNew(true)}
-                className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
-              >
-                <Plus className="w-8 h-8 mb-1" />
-                <span className="text-xs font-medium">New Note</span>
-              </button>
-
               {filtered.map((card, i) => (
                 <BrainCardComponent
                   key={card.id}
@@ -147,6 +125,27 @@ const Index = () => {
                   onClick={() => setSelectedCard(card)}
                 />
               ))}
+
+              <button
+                onClick={() => setShowNew(true)}
+                className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
+              >
+                <Plus className="w-8 h-8 mb-1" />
+                <span className="text-xs font-medium">New Note</span>
+              </button>
+
+              <button
+                onClick={handleAISort}
+                disabled={isSorting}
+                className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
+              >
+                {isSorting ? (
+                  <Loader2 className="w-6 h-6 mb-1 animate-spin" />
+                ) : (
+                  <Sparkles className="w-6 h-6 mb-1" />
+                )}
+                <span className="text-xs font-medium">Sort</span>
+              </button>
             </div>
           )}
         </main>
