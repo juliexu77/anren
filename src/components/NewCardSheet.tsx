@@ -64,7 +64,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
           ...(data.category ? { category: data.category } : {}),
         });
       }
-      toast.success("Image parsed! ✨");
+      toast.success("Image parsed!");
     });
   };
 
@@ -81,7 +81,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       // Save immediately with placeholder, parse in background
       const cardId = onAdd({
         title: "",
-        body: "📷 Parsing image…",
+        body: "Parsing image...",
         source: "screenshot",
       });
       if (cardId && typeof cardId === "string") {

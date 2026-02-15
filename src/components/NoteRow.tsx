@@ -24,6 +24,7 @@ export function NoteRow({
   onDrop,
 }: Props) {
   const cat = CATEGORY_CONFIG[card.category];
+  const Icon = cat.icon;
   const preview = card.body.split("\n")[0].substring(0, 100);
 
   return (
@@ -40,7 +41,7 @@ export function NoteRow({
       style={{ animationDelay: `${index * 30}ms` }}
     >
       <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
-      <span className="text-sm shrink-0">{cat.emoji}</span>
+      <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
       <p className="text-sm text-foreground/90 truncate flex-1">{preview || "Empty note"}</p>
     </div>
   );

@@ -29,6 +29,7 @@ export function GroupedCard({ cards, onClick, onUngroup }: Props) {
       </div>
       {cards.map((card) => {
         const cat = CATEGORY_CONFIG[card.category];
+        const Icon = cat.icon;
         const preview = card.body.split("\n")[0].substring(0, 80);
         return (
           <button
@@ -36,7 +37,7 @@ export function GroupedCard({ cards, onClick, onUngroup }: Props) {
             onClick={() => onClick(card)}
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-secondary/30 transition-colors flex items-center gap-2"
           >
-            <span className="text-sm shrink-0">{cat.emoji}</span>
+            <Icon className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
             <p className="text-xs text-foreground/80 truncate flex-1">{preview || "Empty note"}</p>
           </button>
         );
