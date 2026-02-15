@@ -113,9 +113,18 @@ const Index = () => {
                   </div>
                 );
               })}
+              {/* Add New Note button at end of grouped view */}
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setShowNew(true)}
+                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 py-10 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
+                >
+                  <Plus className="w-8 h-8 mb-1" />
+                  <span className="text-xs font-medium">New Note</span>
+                </button>
+              </div>
             </div>
           ) : (
-            // Standard grid view
             <div className="grid grid-cols-3 gap-2">
               {filtered.map((card, i) => (
                 <BrainCardComponent
