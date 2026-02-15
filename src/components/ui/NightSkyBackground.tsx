@@ -19,7 +19,7 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
 
   return (
     <div className="relative min-h-screen">
-      {/* Clay texture overlay */}
+      {/* Clay texture overlay — primary */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -27,8 +27,8 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
           backgroundImage: `url("/images/clay-texture.jpg")`,
           backgroundSize: '500px 500px',
           backgroundRepeat: 'repeat',
-          opacity: 0.18,
-          mixBlendMode: 'multiply',
+          opacity: 0.35,
+          mixBlendMode: 'soft-light',
         }}
       />
 
@@ -41,7 +41,7 @@ export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
           backgroundSize: '700px 700px',
           backgroundRepeat: 'repeat',
           backgroundPosition: '150px 200px',
-          opacity: 0.06,
+          opacity: 0.15,
           mixBlendMode: 'overlay',
         }}
       />
