@@ -41,7 +41,7 @@ const Auth = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="text-center mb-10">
         <h1 className="font-display text-4xl font-semibold text-foreground mb-2">
-          Anren
+          ANREN
         </h1>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
           For women who carry a lot.
