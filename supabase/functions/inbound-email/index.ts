@@ -6,49 +6,36 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple MIME body extractor — pulls plain text from raw MIME message
+// Simple MIME body extractor
 function extractBodyFromMime(raw: string): string {
-  // Try to find plain text part
   const boundaryMatch = raw.match(/boundary="?([^"\r\n;]+)"?/i);
   if (boundaryMatch) {
     const boundary = boundaryMatch[1];
     const parts = raw.split("--" + boundary);
     for (const part of parts) {
       if (part.includes("Content-Type: text/plain")) {
-        // Extract content after double newline
         const bodyStart = part.indexOf("\r\n\r\n") ?? part.indexOf("\n\n");
         if (bodyStart !== -1) {
           let body = part.substring(bodyStart + (part.includes("\r\n\r\n") ? 4 : 2));
-          // Remove trailing boundary markers
           body = body.replace(/--\s*$/, "").trim();
-          // Handle quoted-printable encoding
           if (part.includes("Content-Transfer-Encoding: quoted-printable")) {
             body = body.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
               String.fromCharCode(parseInt(hex, 16))
             );
           }
-          // Handle base64 encoding
           if (part.includes("Content-Transfer-Encoding: base64")) {
-            try {
-              body = atob(body.replace(/\s/g, ""));
-            } catch { /* keep as-is */ }
+            try { body = atob(body.replace(/\s/g, "")); } catch { /* keep as-is */ }
           }
           return body.trim();
         }
       }
     }
   }
-  
-  // No multipart — try raw body after headers
   const headerEnd = raw.indexOf("\r\n\r\n") ?? raw.indexOf("\n\n");
-  if (headerEnd !== -1) {
-    return raw.substring(headerEnd + 4).trim();
-  }
-  
+  if (headerEnd !== -1) return raw.substring(headerEnd + 4).trim();
   return raw;
 }
 
-// Extract sender email from MIME headers
 function extractFromEmail(raw: string): string {
   const fromMatch = raw.match(/^From:\s*(.+)$/im);
   if (fromMatch) {
@@ -58,10 +45,79 @@ function extractFromEmail(raw: string): string {
   return "";
 }
 
-// Extract subject from MIME headers
 function extractSubject(raw: string): string {
   const subjectMatch = raw.match(/^Subject:\s*(.+)$/im);
   return subjectMatch ? subjectMatch[1].trim() : "Email Note";
+}
+
+// Use AI to parse the email into a concise note
+async function parseEmailWithAI(subject: string, body: string): Promise<{ title: string; body: string; category: string }> {
+  const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!ANTHROPIC_API_KEY) {
+    return { title: subject, body, category: "finance" };
+  }
+
+  const workstreams = [
+    "finance", "childcare", "extracurriculars", "doctor",
+    "house-maintenance", "home-organization", "household-inventory",
+    "kids-clothes", "food", "laundry"
+  ];
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 512,
+        tools: [
+          {
+            name: "create_note",
+            description: "Create a concise note from an email",
+            input_schema: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Short title (5-10 words max)" },
+                body: { type: "string", description: "Key action items or summary in 1-3 short sentences. No forwarding headers, signatures, or links." },
+                category: { type: "string", enum: workstreams, description: "Best matching workstream" }
+              },
+              required: ["title", "body", "category"]
+            }
+          }
+        ],
+        tool_choice: { type: "tool", name: "create_note" },
+        messages: [
+          {
+            role: "user",
+            content: `Parse this forwarded email into a concise actionable note. Extract only the key info — what needs to be done, by when, for whom.\n\nSubject: ${subject}\n\nBody:\n${body.substring(0, 2000)}`
+          }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("AI parse failed:", response.status);
+      return { title: subject, body, category: "finance" };
+    }
+
+    const data = await response.json();
+    const toolUse = data.content?.find((b: any) => b.type === "tool_use");
+    if (toolUse?.input) {
+      return {
+        title: toolUse.input.title || subject,
+        body: toolUse.input.body || body,
+        category: toolUse.input.category || "finance",
+      };
+    }
+  } catch (e) {
+    console.error("AI parse error:", e);
+  }
+
+  return { title: subject, body, category: "finance" };
 }
 
 serve(async (req) => {
@@ -74,43 +130,36 @@ serve(async (req) => {
     
     let senderEmail = "";
     let subject = "Email Note";
-    let noteBody = "";
+    let rawBody = "";
 
     if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
       const formData = await req.formData();
-      
-      // Check if raw MIME email is present (SendGrid "Send Raw" mode)
       const rawEmail = formData.get("email") as string;
       
       if (rawEmail) {
         console.log("Processing raw MIME email");
         senderEmail = extractFromEmail(rawEmail);
         subject = extractSubject(rawEmail);
-        noteBody = extractBodyFromMime(rawEmail);
+        rawBody = extractBodyFromMime(rawEmail);
       } else {
-        // Standard parsed fields
         const from = (formData.get("from") as string) || "";
         subject = (formData.get("subject") as string) || "Email Note";
         const text = (formData.get("text") as string) || "";
         const html = (formData.get("html") as string) || "";
-        
         senderEmail = from.match(/<(.+?)>/)?.[1] || from.trim();
-        noteBody = text || html.replace(/<[^>]*>/g, "");
+        rawBody = text || html.replace(/<[^>]*>/g, "");
       }
     } else {
       throw new Error("Invalid content type: " + contentType);
     }
 
     console.log("Inbound email from:", senderEmail, "subject:", subject);
-    console.log("Body length:", noteBody.length);
 
-    // Use service role to bypass RLS
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Find user by email in profiles
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("user_id")
@@ -125,15 +174,16 @@ serve(async (req) => {
       });
     }
 
-    // Clean body text
-    noteBody = noteBody.replace(/^-+ ?Forwarded message ?-+\n/im, "").trim();
+    // AI-parse the email into a concise note
+    const cleanSubject = subject.replace(/^(Fwd?|Re): ?/i, "").trim();
+    const parsed = await parseEmailWithAI(cleanSubject, rawBody);
+    console.log("AI parsed:", parsed.title, "| category:", parsed.category);
 
-    // Create the card
     const { error: insertError } = await supabase.from("cards").insert({
       user_id: profile.user_id,
-      title: subject.replace(/^(Fwd?|Re): ?/i, "").trim() || "Email Note",
-      body: noteBody,
-      category: "finance",
+      title: parsed.title,
+      body: parsed.body,
+      category: parsed.category,
       source: "text",
     });
 
@@ -148,9 +198,9 @@ serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e: any) {
+  } catch (e) {
     console.error("inbound-email error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
