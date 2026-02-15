@@ -115,30 +115,12 @@ const Index = () => {
       <header className="sticky top-0 z-40 px-5 pt-12 pb-2">
         <div className="flex items-center justify-between mb-2">
           {/* Left: Notes / Calendar toggle */}
-          <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: 'hsl(var(--surface))' }}>
-            <button
-              onClick={() => setActiveView("notes")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                activeView === "notes"
-                  ? "bg-primary/20 text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <StickyNote className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setActiveView("calendar")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                activeView === "calendar"
-                  ? "bg-primary/20 text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Calendar className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => setActiveView(activeView === "notes" ? "calendar" : "notes")}
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {activeView === "notes" ? <Calendar className="w-5 h-5" /> : <StickyNote className="w-5 h-5" />}
+          </button>
 
           {/* Right: Settings */}
           <button
