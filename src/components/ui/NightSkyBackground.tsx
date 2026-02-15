@@ -7,6 +7,19 @@ interface NightSkyBackgroundProps {
 export const NightSkyBackground = ({ children }: NightSkyBackgroundProps) => {
   return (
     <div className="relative min-h-screen">
+      {/* Parchment texture */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 0,
+          backgroundImage: `url("/images/parchment-texture.jpg")`,
+          backgroundSize: '512px 512px',
+          backgroundRepeat: 'repeat',
+          opacity: 0.18,
+          mixBlendMode: 'multiply',
+        }}
+      />
+
       {/* Earthy wash texture */}
       <div
         className="fixed inset-0 pointer-events-none"
