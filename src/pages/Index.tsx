@@ -5,26 +5,38 @@ import { GroupedCard } from "@/components/GroupedCard";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
-import { BottomNav, type TabId } from "@/components/BottomNav";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Plus, Sparkles, Loader2, Settings, PenSquare } from "lucide-react";
+import { Sparkles, Loader2, Settings, PenSquare, Search, Brain, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { BrainCard, CardCategory } from "@/types/card";
+
+type ViewId = "notes" | "calendar" | "settings";
 
 const Index = () => {
   const { cards, addCard, updateCard, deleteCard, groupCards, ungroupCards } = useCards();
-  const [activeTab, setActiveTab] = useState<TabId>("notes");
+  const [activeView, setActiveView] = useState<ViewId>("notes");
   const [filter, setFilter] = useState<CardCategory | "all">("all");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [isSorting, setIsSorting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggedCard, setDraggedCard] = useState<BrainCard | null>(null);
 
-  const filtered =
-    filter === "all" ? cards : cards.filter((c) => c.category === filter);
+  // Filter by category and search
+  const filtered = useMemo(() => {
+    let result = filter === "all" ? cards : cards.filter((c) => c.category === filter);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (c) => c.title.toLowerCase().includes(q) || c.body.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [cards, filter, searchQuery]);
 
   // Split into ungrouped rows and grouped cards
   const { ungroupedCards, groups } = useMemo(() => {
@@ -43,11 +55,6 @@ const Index = () => {
     return { ungroupedCards: ungrouped, groups: groupMap };
   }, [filtered]);
 
-  const tabTitle: Record<TabId, string> = {
-    notes: "Notes",
-    calendar: "Calendar",
-    settings: "Settings",
-  };
 
   const handleAISort = async () => {
     if (cards.length === 0) {
@@ -104,21 +111,62 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24">
-      <header className="sticky top-0 z-40 px-5 pt-12 pb-4 flex items-center justify-between">
-        <h1 className="text-display-caps-sm text-foreground">
-          {tabTitle[activeTab]}
-        </h1>
+    <div className="min-h-screen pb-8">
+      <header className="sticky top-0 z-40 px-5 pt-12 pb-2 flex items-center justify-between">
+        {/* Left: Notes / Calendar toggle */}
+        <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: 'hsl(var(--surface))' }}>
+          <button
+            onClick={() => setActiveView("notes")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+              activeView === "notes"
+                ? "bg-primary/20 text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Brain className="w-3.5 h-3.5" />
+            Notes
+          </button>
+          <button
+            onClick={() => setActiveView("calendar")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+              activeView === "calendar"
+                ? "bg-primary/20 text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Calendar
+          </button>
+        </div>
+
+        {/* Right: Settings */}
         <button
-          onClick={() => setActiveTab("settings")}
-          className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setActiveView("settings")}
+          className={cn(
+            "p-2 rounded-lg transition-colors",
+            activeView === "settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+          )}
         >
           <Settings className="w-5 h-5" />
         </button>
       </header>
 
-      {activeTab === "notes" ? (
+      {activeView === "notes" ? (
         <main className="px-4">
+          {/* Search bar */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm"
+            />
+          </div>
+
           <div className="mb-4">
             <CategoryFilter active={filter} onChange={setFilter} />
           </div>
@@ -175,17 +223,17 @@ const Index = () => {
             </div>
           )}
         </main>
-      ) : activeTab === "calendar" ? (
+      ) : activeView === "calendar" ? (
         <GoogleCalendarView />
       ) : (
         <SettingsPage />
       )}
 
       {/* Floating compose button — bottom right */}
-      {activeTab === "notes" && (
+      {activeView === "notes" && (
         <button
           onClick={() => setShowNew(true)}
-          className="fixed bottom-20 right-5 z-50 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+          className="fixed bottom-6 right-5 z-50 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105"
           style={{
             background: 'hsl(var(--text-muted) / 0.2)',
             backdropFilter: 'blur(12px)',
@@ -195,11 +243,6 @@ const Index = () => {
           <PenSquare className="w-5 h-5 text-foreground/70" />
         </button>
       )}
-
-      <BottomNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <CardDetailSheet
         card={selectedCard}
