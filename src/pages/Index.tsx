@@ -7,8 +7,7 @@ import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Sparkles, Loader2, Settings, PenSquare, Search, StickyNote, Calendar } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Settings, PenSquare, Search, StickyNote, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { BrainCard, CardCategory } from "@/types/card";
@@ -21,7 +20,7 @@ const Index = () => {
   const [filter, setFilter] = useState<CardCategory | "all">("all");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const [isSorting, setIsSorting] = useState(false);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [draggedCard, setDraggedCard] = useState<BrainCard | null>(null);
@@ -56,35 +55,7 @@ const Index = () => {
   }, [filtered]);
 
 
-  const handleAISort = async () => {
-    if (cards.length === 0) {
-      toast("No notes to sort!");
-      return;
-    }
-    setIsSorting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("sort-cards", {
-        body: { cards: cards.map((c) => ({ title: c.title, body: c.body })) },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const assignments = data.assignments as { index: number; category: CardCategory }[];
-      assignments.forEach(({ index, category }) => {
-        if (cards[index] && category) {
-          updateCard(cards[index].id, { category });
-        }
-      });
-
-      toast.success("Notes categorized!");
-    } catch (e: any) {
-      console.error("AI sort error:", e);
-      toast.error(e.message || "Failed to sort notes");
-    } finally {
-      setIsSorting(false);
-    }
-  };
+  
 
   // Drag & drop handlers
   const handleDragStart = (_e: React.DragEvent, card: BrainCard) => {
@@ -164,21 +135,8 @@ const Index = () => {
             ))}
           </div>
 
-          {/* AI Sort button — inline */}
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={handleAISort}
-              disabled={isSorting}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground/50 transition-colors hover:border-primary/40 hover:text-primary/60"
-            >
-              {isSorting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              <span className="text-xs font-medium">Sort</span>
-            </button>
-          </div>
+
+
 
           {/* Grouped cards section */}
           {Object.keys(groups).length > 0 && (
