@@ -7,7 +7,7 @@ import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Sparkles, Loader2, Settings, PenSquare, Search, Brain, Calendar } from "lucide-react";
+import { Sparkles, Loader2, Settings, PenSquare, Search, StickyNote, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -118,26 +118,24 @@ const Index = () => {
           <button
             onClick={() => setActiveView("notes")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+              "p-2 rounded-md transition-colors",
               activeView === "notes"
                 ? "bg-primary/20 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Brain className="w-3.5 h-3.5" />
-            Notes
+            <StickyNote className="w-4 h-4" />
           </button>
           <button
             onClick={() => setActiveView("calendar")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+              "p-2 rounded-md transition-colors",
               activeView === "calendar"
                 ? "bg-primary/20 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            Calendar
+            <Calendar className="w-4 h-4" />
           </button>
         </div>
 
