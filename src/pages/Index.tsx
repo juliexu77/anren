@@ -129,7 +129,7 @@ const Index = () => {
 
           {/* Right: Settings */}
           <button
-            onClick={() => setActiveView("settings")}
+            onClick={() => setActiveView(activeView === "settings" ? "notes" : "settings")}
             className={cn(
               "p-2 rounded-lg transition-colors",
               activeView === "settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
