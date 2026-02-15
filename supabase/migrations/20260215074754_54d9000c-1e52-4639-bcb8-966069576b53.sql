@@ -1,0 +1,1 @@
+ALTER TABLE public.cards ADD COLUMN summary text NOT NULL DEFAULT '';

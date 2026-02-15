@@ -23,6 +23,7 @@ export type Database = {
           id: string
           image_url: string | null
           source: string
+          summary: string
           title: string
           updated_at: string
           user_id: string
@@ -35,6 +36,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           source?: string
+          summary?: string
           title?: string
           updated_at?: string
           user_id: string
@@ -47,6 +49,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           source?: string
+          summary?: string
           title?: string
           updated_at?: string
           user_id?: string

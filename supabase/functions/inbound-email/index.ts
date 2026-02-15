@@ -51,10 +51,10 @@ function extractSubject(raw: string): string {
 }
 
 // Use AI to parse the email into a concise note
-async function parseEmailWithAI(subject: string, body: string): Promise<{ title: string; body: string; category: string }> {
+async function parseEmailWithAI(subject: string, body: string): Promise<{ title: string; summary: string; body: string; category: string }> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   if (!ANTHROPIC_API_KEY) {
-    return { title: subject, body, category: "finance" };
+    return { title: subject, summary: "", body, category: "finance" };
   }
 
   const workstreams = [
@@ -82,10 +82,11 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
               type: "object",
               properties: {
                 title: { type: "string", description: "Short title (5-10 words max)" },
-                body: { type: "string", description: "Key action items or summary in 1-3 short sentences. ALWAYS include specific dates/deadlines and any URLs/links from the email. No forwarding headers or signatures." },
+                summary: { type: "string", description: "A concise 1-line summary (max 80 chars) with the most important details — include dates, amounts, deadlines, or links if present. This is what users see on the card preview." },
+                body: { type: "string", description: "Key action items or full details in 1-3 short sentences. Include any URLs/links from the email." },
                 category: { type: "string", enum: workstreams, description: "Best matching workstream" }
               },
-              required: ["title", "body", "category"]
+              required: ["title", "summary", "body", "category"]
             }
           }
         ],
@@ -101,7 +102,7 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
 
     if (!response.ok) {
       console.error("AI parse failed:", response.status);
-      return { title: subject, body, category: "finance" };
+      return { title: subject, summary: "", body, category: "finance" };
     }
 
     const data = await response.json();
@@ -109,6 +110,7 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
     if (toolUse?.input) {
       return {
         title: toolUse.input.title || subject,
+        summary: toolUse.input.summary || "",
         body: toolUse.input.body || body,
         category: toolUse.input.category || "finance",
       };
@@ -117,7 +119,7 @@ async function parseEmailWithAI(subject: string, body: string): Promise<{ title:
     console.error("AI parse error:", e);
   }
 
-  return { title: subject, body, category: "finance" };
+  return { title: subject, summary: "", body, category: "finance" };
 }
 
 serve(async (req) => {
@@ -182,6 +184,7 @@ serve(async (req) => {
     const { error: insertError } = await supabase.from("cards").insert({
       user_id: profile.user_id,
       title: parsed.title,
+      summary: parsed.summary,
       body: parsed.body,
       category: parsed.category,
       source: "text",
