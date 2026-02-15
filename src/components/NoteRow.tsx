@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { BrainCard } from "@/types/card";
 import { CATEGORY_CONFIG } from "@/types/card";
-import { GripVertical, Loader2, Trash2 } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 
 interface Props {
   card: BrainCard;
@@ -114,16 +114,14 @@ export function NoteRow({
           background: 'hsl(var(--bg))',
         }}
       >
-        <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
-        {isParsing ? (
-          <Loader2 className="w-4 h-4 text-muted-foreground/60 shrink-0 animate-spin" />
-        ) : (
-          <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+        {!isParsing && (
+          <>
+            <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab active:cursor-grabbing" />
+            <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+          </>
         )}
         {isParsing ? (
-          <div className="flex-1 flex items-center gap-2">
-            <div className="h-3 rounded-full bg-muted-foreground/15 animate-pulse" style={{ width: '60%' }} />
-          </div>
+          <p className="text-xs text-muted-foreground/60 italic flex-1 animate-pulse">Transcribing details…</p>
         ) : (
           <p className="text-sm text-foreground/90 truncate flex-1">{preview || "Empty note"}</p>
         )}

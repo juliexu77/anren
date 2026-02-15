@@ -73,6 +73,21 @@ export function useCards() {
     }): Promise<string> => {
       if (!user) return "";
 
+      // Optimistic: add to UI immediately
+      const tempId = crypto.randomUUID();
+      const optimisticCard: BrainCard = {
+        id: tempId,
+        title: data.title,
+        body: data.body,
+        category: data.category ?? "finance",
+        source: data.source ?? "text",
+        imageUrl: data.imageUrl ?? null,
+        groupId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setCards((prev) => [optimisticCard, ...prev]);
+
       const { data: inserted, error } = await supabase
         .from("cards")
         .insert({
@@ -88,8 +103,14 @@ export function useCards() {
 
       if (error) {
         console.error("Failed to add card:", error);
+        setCards((prev) => prev.filter((c) => c.id !== tempId));
         return "";
       }
+
+      // Replace temp id with real id
+      setCards((prev) =>
+        prev.map((c) => (c.id === tempId ? { ...c, id: inserted.id } : c))
+      );
 
       return inserted.id;
     },
