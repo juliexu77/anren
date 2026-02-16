@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.google-auth-callback]
 verify_jwt = false
+
+[functions.extract-event-details]
+verify_jwt = false
+
+[functions.classify-note]
+verify_jwt = false
+
+[functions.transcribe-voice]
+verify_jwt = false
