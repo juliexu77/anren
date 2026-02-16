@@ -134,6 +134,11 @@ export function useCards() {
 
   const updateCard = useCallback(
     async (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category">>) => {
+      // Optimistic local update
+      setCards((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
+      );
+
       const dbUpdates: Record<string, any> = {};
       if (updates.title !== undefined) dbUpdates.title = updates.title;
       if (updates.summary !== undefined) dbUpdates.summary = updates.summary;
