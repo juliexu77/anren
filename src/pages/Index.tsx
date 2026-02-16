@@ -5,10 +5,13 @@ import { GroupedCard } from "@/components/GroupedCard";
 import { CATEGORY_CONFIG } from "@/types/card";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
 import { Settings, Search, StickyNote, Calendar, Camera, Type, Mic, PenSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { BrainCard, CardCategory } from "@/types/card";
 
 type ViewId = "notes" | "calendar" | "settings";
@@ -19,6 +22,7 @@ const Index = () => {
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showComposeMenu, setShowComposeMenu] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter by search only
@@ -187,7 +191,7 @@ const Index = () => {
                   {[
                     { action: () => { setShowPhotoPicker(true); setShowComposeMenu(false); }, icon: Camera, label: "Photo" },
                     { action: async () => { setShowComposeMenu(false); const id = await addCard({ title: "", body: "" }); if (id) { const newCard = { id, title: "", summary: "", body: "", category: "uncategorized" as CardCategory, source: "text" as const, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }; setSelectedCard(newCard); } }, icon: Type, label: "Type" },
-                    { action: () => { setShowComposeMenu(false); }, icon: Mic, label: "Voice" },
+                    { action: () => { setShowVoiceRecorder(true); setShowComposeMenu(false); }, icon: Mic, label: "Voice" },
                   ].map(({ action, icon: MIcon, label }) => (
                     <button
                       key={label}
@@ -218,6 +222,37 @@ const Index = () => {
         onClose={() => setShowPhotoPicker(false)}
         onAdd={addCard}
         onUpdateCard={updateCard}
+      />
+
+      <VoiceRecorder
+        open={showVoiceRecorder}
+        onClose={() => setShowVoiceRecorder(false)}
+        onRecordingComplete={async (audioBase64, mimeType) => {
+          setShowVoiceRecorder(false);
+          const cardId = await addCard({
+            title: "",
+            body: "@@PARSING@@",
+            source: "voice",
+          });
+          if (!cardId) return;
+          toast.info("Transcribing voice note...");
+          const { data, error } = await supabase.functions.invoke("transcribe-voice", {
+            body: { audioBase64, mimeType },
+          });
+          if (error || !data || data.error) {
+            console.error("Transcribe error:", error || data?.error);
+            toast.error("Couldn't transcribe — edit the note manually");
+            updateCard(cardId, { body: "@@PARSE_FAILED@@" });
+            return;
+          }
+          updateCard(cardId, {
+            title: data.title || "",
+            body: data.body || "",
+            summary: data.summary || "",
+            category: data.category || "uncategorized",
+          });
+          toast.success("Voice note processed!");
+        }}
       />
     </div>
   );
