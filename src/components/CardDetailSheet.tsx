@@ -3,12 +3,14 @@ import type { BrainCard, CardCategory } from "@/types/card";
 import { CATEGORY_CONFIG } from "@/types/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, ChevronLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   card: BrainCard | null;
   open: boolean;
   onClose: () => void;
-  onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "body" | "category">>) => void;
+  onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category">>) => void;
   onDelete: (id: string) => void;
 }
 
@@ -41,9 +43,38 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
   };
 
   const handleClose = () => {
-    if (body !== card.body) {
+    const bodyChanged = body !== card.body;
+    if (bodyChanged) {
       onUpdate(card.id, { body });
     }
+
+    // Auto-classify if card is uncategorized and has content
+    const needsClassification =
+      card.source === "text" &&
+      card.category === "uncategorized" &&
+      (body.trim() || card.title.trim());
+
+    if (needsClassification || (bodyChanged && card.source === "text")) {
+      const noteBody = body || card.body;
+      const noteTitle = card.title;
+      supabase.functions
+        .invoke("classify-note", { body: { title: noteTitle, body: noteBody } })
+        .then(({ data, error }) => {
+          if (error || !data || data.error) {
+            console.error("Classify error:", error || data?.error);
+            return;
+          }
+          const updates: Partial<Pick<BrainCard, "title" | "summary" | "category">> = {};
+          if (data.category) updates.category = data.category;
+          if (data.summary) updates.summary = data.summary;
+          if (!noteTitle && data.title) updates.title = data.title;
+          if (Object.keys(updates).length > 0) {
+            onUpdate(card.id, updates);
+            toast.success("Note categorized!");
+          }
+        });
+    }
+
     onClose();
   };
 
