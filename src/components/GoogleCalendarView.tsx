@@ -1,10 +1,21 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { supabase } from "@/integrations/supabase/client";
+import { CalendarHeader, type CalendarViewMode } from "@/components/calendar/CalendarHeader";
+import { CalendarTimeGrid } from "@/components/calendar/CalendarTimeGrid";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Trash2, ExternalLink } from "lucide-react";
-import { format, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
+import {
+  format,
+  addDays,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfDay,
+  isSameDay,
+  parseISO,
+} from "date-fns";
 import {
   Sheet,
   SheetContent,
@@ -16,8 +27,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function GoogleCalendarView() {
   const { events, loading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("day");
   const [showCreate, setShowCreate] = useState(false);
+  const [showMiniCal, setShowMiniCal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newStartTime, setNewStartTime] = useState("09:00");
@@ -77,8 +91,6 @@ export function GoogleCalendarView() {
 
       const result = await res.json();
       if (result.error) throw new Error(result.error);
-
-      // Redirect to Google consent screen
       window.location.href = result.url;
     } catch (e: any) {
       console.error("Connect error:", e);
@@ -86,37 +98,43 @@ export function GoogleCalendarView() {
     }
   }, []);
 
-  // Fetch events when connected
+  // Compute visible date range
+  const visibleDates = useMemo(() => {
+    if (viewMode === "day") return [currentDate];
+    if (viewMode === "3day") return [currentDate, addDays(currentDate, 1), addDays(currentDate, 2)];
+    // week
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  }, [currentDate, viewMode]);
+
+  // Fetch events for visible range (with buffer)
   useEffect(() => {
     if (calendarConnected) {
-      const start = startOfMonth(selectedDate);
-      const end = endOfMonth(selectedDate);
-      fetchEvents(start.toISOString(), end.toISOString());
+      const first = visibleDates[0];
+      const last = visibleDates[visibleDates.length - 1];
+      const timeMin = subDays(first, 1).toISOString();
+      const timeMax = addDays(last, 2).toISOString();
+      fetchEvents(timeMin, timeMax);
     }
-  }, [selectedDate, fetchEvents, calendarConnected]);
+  }, [currentDate, viewMode, fetchEvents, calendarConnected]);
 
-  const eventsForDate = events.filter((e) => {
-    const eventDate = e.start.dateTime
-      ? parseISO(e.start.dateTime)
-      : e.start.date
-        ? parseISO(e.start.date)
-        : null;
-    return eventDate && isSameDay(eventDate, selectedDate);
-  });
+  const handlePrev = () => {
+    const step = viewMode === "day" ? 1 : viewMode === "3day" ? 3 : 7;
+    setCurrentDate((d) => subDays(d, step));
+  };
 
-  const datesWithEvents = events.map((e) => {
-    return e.start.dateTime
-      ? parseISO(e.start.dateTime)
-      : e.start.date
-        ? parseISO(e.start.date)
-        : null;
-  }).filter(Boolean) as Date[];
+  const handleNext = () => {
+    const step = viewMode === "day" ? 1 : viewMode === "3day" ? 3 : 7;
+    setCurrentDate((d) => addDays(d, step));
+  };
+
+  const handleToday = () => setCurrentDate(new Date());
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
     setCreating(true);
     try {
-      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const dateStr = format(currentDate, "yyyy-MM-dd");
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       await createEvent({
         summary: newTitle,
@@ -127,15 +145,16 @@ export function GoogleCalendarView() {
       setShowCreate(false);
       setNewTitle("");
       setNewDesc("");
-      const start = startOfMonth(selectedDate);
-      const end = endOfMonth(selectedDate);
-      fetchEvents(start.toISOString(), end.toISOString());
+      // Refetch
+      const first = visibleDates[0];
+      const last = visibleDates[visibleDates.length - 1];
+      fetchEvents(subDays(first, 1).toISOString(), addDays(last, 2).toISOString());
     } finally {
       setCreating(false);
     }
   };
 
-  // Show connect screen if not connected
+  // Loading state
   if (calendarConnected === null) {
     return (
       <div className="flex justify-center py-12">
@@ -144,6 +163,7 @@ export function GoogleCalendarView() {
     );
   }
 
+  // Not connected
   if (!calendarConnected) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 gap-4">
@@ -159,79 +179,130 @@ export function GoogleCalendarView() {
   }
 
   return (
-    <div className="px-4 pb-8">
-      {/* Calendar picker */}
-      <div className="flex justify-center mb-4">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={(d) => d && setSelectedDate(d)}
-          modifiers={{ hasEvent: datesWithEvents }}
-          modifiersClassNames={{ hasEvent: "bg-primary/20 font-bold" }}
-          className="rounded-2xl border border-border p-3"
-        />
-      </div>
+    <div className="flex flex-col" style={{ height: "calc(100vh - 80px)" }}>
+      <CalendarHeader
+        currentDate={currentDate}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onPrev={handlePrev}
+        onNext={handleNext}
+        onToday={handleToday}
+        onTitleClick={() => setShowMiniCal(true)}
+      />
 
-      {/* Selected date header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-foreground">
-          {format(selectedDate, "EEEE, MMM d")}
-        </h3>
-        <Button size="sm" variant="outline" onClick={() => setShowCreate(true)} className="rounded-full">
-          <Plus className="w-4 h-4 mr-1" />
-          Event
-        </Button>
-      </div>
+      {/* Day label for single day view */}
+      {viewMode === "day" && (
+        <div className="px-4 pb-1 pl-16">
+          <p className="text-[10px] text-muted-foreground uppercase">
+            {format(currentDate, "EEEE")}
+          </p>
+          <p
+            className={`text-xl font-semibold ${
+              isSameDay(currentDate, new Date())
+                ? "text-primary"
+                : "text-foreground"
+            }`}
+          >
+            {format(currentDate, "d")}
+          </p>
+        </div>
+      )}
 
-      {/* Events list */}
-      {loading ? (
-        <div className="flex justify-center py-8">
+      {loading && events.length === 0 ? (
+        <div className="flex justify-center py-12 flex-1">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
-      ) : eventsForDate.length === 0 ? (
-        <p className="text-muted-foreground text-sm text-center py-8">No events this day</p>
       ) : (
-        <div className="space-y-2">
-          {eventsForDate.map((event) => (
-            <div
-              key={event.id}
-              className="rounded-xl p-3 border border-border bg-card"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{event.summary}</p>
-                  {event.start.dateTime && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(parseISO(event.start.dateTime), "h:mm a")}
-                      {event.end.dateTime && ` – ${format(parseISO(event.end.dateTime), "h:mm a")}`}
-                    </p>
-                  )}
-                  {event.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
-                  )}
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  {event.htmlLink && (
-                    <a href={event.htmlLink} target="_blank" rel="noopener noreferrer">
-                      <Button size="icon" variant="ghost" className="h-7 w-7">
-                        <ExternalLink className="w-3.5 h-3.5" />
+        <CalendarTimeGrid
+          dates={visibleDates}
+          events={events}
+          onEventClick={setSelectedEvent}
+        />
+      )}
+
+      {/* FAB */}
+      <button
+        onClick={() => setShowCreate(true)}
+        className="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center transition-transform hover:scale-105"
+        style={{
+          background: "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))",
+        }}
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      {/* Mini calendar picker sheet */}
+      <Sheet open={showMiniCal} onOpenChange={setShowMiniCal}>
+        <SheetContent side="bottom" className="rounded-t-3xl">
+          <div className="flex justify-center pb-4">
+            <Calendar
+              mode="single"
+              selected={currentDate}
+              onSelect={(d) => {
+                if (d) {
+                  setCurrentDate(d);
+                  setShowMiniCal(false);
+                }
+              }}
+              className="rounded-2xl"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Event detail sheet */}
+      <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+        <SheetContent side="bottom" className="rounded-t-3xl">
+          {selectedEvent && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="font-display text-lg">{selectedEvent.summary}</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-3">
+                {selectedEvent.start.dateTime && (
+                  <p className="text-sm text-muted-foreground">
+                    {format(parseISO(selectedEvent.start.dateTime), "EEEE, MMM d · h:mm a")}
+                    {selectedEvent.end.dateTime &&
+                      ` – ${format(parseISO(selectedEvent.end.dateTime), "h:mm a")}`}
+                  </p>
+                )}
+                {selectedEvent.start.date && !selectedEvent.start.dateTime && (
+                  <p className="text-sm text-muted-foreground">All day</p>
+                )}
+                {selectedEvent.description && (
+                  <p className="text-sm text-muted-foreground">{selectedEvent.description}</p>
+                )}
+                <div className="flex gap-2 pt-2">
+                  {selectedEvent.htmlLink && (
+                    <a href={selectedEvent.htmlLink} target="_blank" rel="noopener noreferrer" className="flex-1">
+                      <Button variant="outline" className="w-full rounded-full" size="sm">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Open in Google
                       </Button>
                     </a>
                   )}
                   <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-destructive"
-                    onClick={() => deleteEvent(event.id)}
+                    variant="destructive"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={async () => {
+                      await deleteEvent(selectedEvent.id);
+                      setSelectedEvent(null);
+                      const first = visibleDates[0];
+                      const last = visibleDates[visibleDates.length - 1];
+                      fetchEvents(subDays(first, 1).toISOString(), addDays(last, 2).toISOString());
+                    }}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Create Event Sheet */}
       <Sheet open={showCreate} onOpenChange={setShowCreate}>
@@ -271,6 +342,9 @@ export function GoogleCalendarView() {
                 />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              {format(currentDate, "EEEE, MMMM d, yyyy")}
+            </p>
             <Button
               className="w-full"
               onClick={handleCreate}
