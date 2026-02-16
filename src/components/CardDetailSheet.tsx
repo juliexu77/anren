@@ -212,7 +212,6 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
               ref={textareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              onBlur={handleSave}
               className="w-full h-full bg-transparent border-none outline-none resize-none text-base leading-relaxed text-foreground/90 placeholder:text-muted-foreground/40"
               placeholder="Tap to write…"
             />
@@ -222,6 +221,15 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             </p>
           )}
         </div>
+
+        {/* Save button */}
+        {isEditing && (
+          <div className="px-5 pb-6 pt-2">
+            <Button className="w-full" onClick={handleSave}>
+              Save
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Create Event Sheet */}
