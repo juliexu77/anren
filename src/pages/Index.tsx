@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { BrainCardComponent } from "@/components/BrainCard";
 import { GroupedCard } from "@/components/GroupedCard";
@@ -18,12 +19,25 @@ type ViewId = "notes" | "calendar" | "settings";
 
 const Index = () => {
   const { cards, addCard, updateCard, deleteCard, groupCards, ungroupCards } = useCards();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeView, setActiveView] = useState<ViewId>("notes");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showComposeMenu, setShowComposeMenu] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Handle deep link: ?openCard=<id>
+  useEffect(() => {
+    const openCardId = searchParams.get("openCard");
+    if (openCardId && cards.length > 0) {
+      const found = cards.find((c) => c.id === openCardId);
+      if (found) {
+        setSelectedCard(found);
+      }
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, cards, setSearchParams]);
 
   // Filter by search only
   const filtered = useMemo(() => {

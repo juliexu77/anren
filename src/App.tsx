@@ -13,6 +13,7 @@ import GoogleCallback from "./pages/GoogleCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import CardDeepLink from "./pages/CardDeepLink";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/google-callback" element={<ProtectedRoute><GoogleCallback /></ProtectedRoute>} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/card/:cardId" element={<ProtectedRoute><CardDeepLink /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
