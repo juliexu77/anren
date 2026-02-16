@@ -190,7 +190,7 @@ const Index = () => {
                 >
                   {[
                     { action: () => { setShowPhotoPicker(true); setShowComposeMenu(false); }, icon: Camera, label: "Photo" },
-                    { action: () => { setShowComposeMenu(false); }, icon: Type, label: "Type" },
+                    { action: async () => { setShowComposeMenu(false); const id = await addCard({ title: "", body: "" }); if (id) { const newCard = { id, title: "", summary: "", body: "", category: "uncategorized" as CardCategory, source: "text" as const, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }; setSelectedCard(newCard); } }, icon: Type, label: "Type" },
                     { action: () => { setShowComposeMenu(false); }, icon: Mic, label: "Voice" },
                   ].map(({ action, icon: MIcon, label }) => (
                     <button
