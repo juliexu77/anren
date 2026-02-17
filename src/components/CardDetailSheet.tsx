@@ -62,6 +62,22 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
   const handleSave = () => {
     onUpdate(card.id, { body });
     setIsEditing(false);
+
+    // Re-classify and regenerate summary
+    const noteBody = body || card.body;
+    const noteTitle = card.title;
+    supabase.functions
+      .invoke("classify-note", { body: { title: noteTitle, body: noteBody } })
+      .then(({ data, error }) => {
+        if (error || !data || data.error) return;
+        const updates: Partial<Pick<BrainCard, "title" | "summary" | "category">> = {};
+        if (data.category) updates.category = data.category;
+        if (data.summary) updates.summary = data.summary;
+        if (!noteTitle && data.title) updates.title = data.title;
+        if (Object.keys(updates).length > 0) {
+          onUpdate(card.id, updates);
+        }
+      });
   };
 
   const handleClose = () => {
