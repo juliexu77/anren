@@ -164,56 +164,57 @@ const Index = () => {
         <SettingsPage />
       )}
 
-      {/* ─── Bottom Nav ─── */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-3"
-        style={{ background: "linear-gradient(to top, hsl(var(--bg)) 70%, transparent)" }}
-      >
-        <div className="flex items-center gap-3">
+      {/* ─── Bottom Nav — split pill style ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-7 pt-3 pointer-events-none">
+        <div className="flex items-end gap-2.5 pointer-events-auto">
           {/* Left pill: nav tabs */}
           <div
-            className="flex items-center rounded-2xl px-1 py-1 flex-1"
+            className="flex items-center rounded-[22px] p-[5px]"
             style={{
-              background: "hsl(var(--surface) / 0.8)",
-              border: "1px solid hsl(var(--divider) / 0.4)",
-              backdropFilter: "blur(12px)",
+              background: "hsl(var(--surface) / 0.55)",
+              border: "1px solid hsl(var(--divider) / 0.25)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 hsl(var(--text) / 0.04)",
             }}
           >
-            {navTabs.map(({ id, icon: TabIcon, label }) => {
+            {navTabs.map(({ id, icon: TabIcon }) => {
               const isActive = activeView === id;
               return (
                 <button
                   key={id}
                   onClick={() => setActiveView(id)}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all duration-200",
+                    "flex items-center justify-center w-[52px] h-[42px] rounded-[17px] transition-all duration-200",
                     isActive
                       ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground/70"
+                      : "text-muted-foreground/60 hover:text-muted-foreground"
                   )}
                   style={isActive ? {
-                    background: "hsl(var(--card-bg) / 0.9)",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                    background: "hsl(var(--card-bg) / 0.7)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 hsl(var(--text) / 0.06)",
                   } : undefined}
                 >
-                  <TabIcon className="w-[18px] h-[18px]" />
+                  <TabIcon className="w-[20px] h-[20px]" />
                 </button>
               );
             })}
           </div>
 
-          {/* Right: compose + button */}
+          {/* Right pill: compose + button */}
           <div className="relative">
             <button
               onClick={() => setShowComposeMenu(!showComposeMenu)}
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform hover:scale-105 active:scale-95"
+              className="flex items-center justify-center w-[52px] h-[52px] rounded-[22px] shrink-0 transition-transform hover:scale-105 active:scale-95"
               style={{
-                background: "hsl(var(--surface) / 0.8)",
-                border: "1px solid hsl(var(--divider) / 0.4)",
-                backdropFilter: "blur(12px)",
+                background: "hsl(var(--surface) / 0.55)",
+                border: "1px solid hsl(var(--divider) / 0.25)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 hsl(var(--text) / 0.04)",
               }}
             >
-              <Plus className="w-5 h-5 text-foreground/80" />
+              <Plus className="w-[22px] h-[22px] text-foreground/80" />
             </button>
 
             {showComposeMenu && (
