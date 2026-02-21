@@ -209,7 +209,7 @@ const Index = () => {
 
       {/* ─── Bottom Nav — split pill style ─── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-7 pt-3 pointer-events-none">
-        <div className="flex items-end gap-2.5 pointer-events-auto">
+        <div className="flex items-end gap-2.5 pointer-events-auto w-full">
           {/* Left pill: nav tabs */}
           <div
             className="flex items-center rounded-[22px] p-[5px]"
@@ -243,6 +243,8 @@ const Index = () => {
               );
             })}
           </div>
+
+          <div className="flex-1" />
 
           {/* Right pill: compose + button */}
           <div className="relative">
