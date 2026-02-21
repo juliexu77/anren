@@ -1,41 +1,45 @@
 import { useState, useRef } from "react";
 import type { Person } from "@/hooks/usePeople";
-import { toast } from "sonner";
+
+interface BirthdayInfo {
+  date: string;
+  daysUntil: number;
+}
 
 interface Props {
   person: Person;
+  birthday?: BirthdayInfo;
   onUpdateDraft: (id: string, draft: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onClick: () => void;
+  index: number;
 }
 
-export function PersonCard({ person, onUpdateDraft, onDelete }: Props) {
-  const [draft, setDraft] = useState(person.draftMessage);
-  const [dirty, setDirty] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleSave = async () => {
-    await onUpdateDraft(person.id, draft);
-    setDirty(false);
-    setEditing(false);
-    toast.success("Saved");
+export function PersonCard({ person, birthday, onUpdateDraft, onDelete, onClick, index }: Props) {
+  const formatBirthday = (info: BirthdayInfo) => {
+    if (info.daysUntil === 0) return "🎂 Today!";
+    if (info.daysUntil === 1) return "🎂 Tomorrow";
+    if (info.daysUntil <= 7) return `🎂 In ${info.daysUntil} days`;
+    if (info.daysUntil <= 30) return `🎂 In ${Math.ceil(info.daysUntil / 7)} weeks`;
+    const d = new Date(info.date);
+    return `🎂 ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
   };
 
   return (
-    <div
-      className="rounded-lg px-5 flex flex-col justify-center"
+    <button
+      onClick={onClick}
+      className="relative w-full text-left rounded-lg p-3 animate-fade-in transition-shadow hover:shadow-lg overflow-hidden"
       style={{
-        height: "80px",
-        background: "hsl(var(--card-bg))",
-        border: "1px solid hsl(var(--divider) / 0.12)",
+        background: "hsl(var(--card-bg) / 0.6)",
+        border: "1px solid hsl(var(--divider) / 0.3)",
+        animationDelay: `${index * 40}ms`,
       }}
     >
-      {/* Name */}
       <p
         className="font-display truncate"
         style={{
-          fontSize: "18px",
-          lineHeight: "22px",
+          fontSize: "16px",
+          lineHeight: "20px",
           fontWeight: 400,
           color: "hsl(var(--text))",
         }}
@@ -43,40 +47,33 @@ export function PersonCard({ person, onUpdateDraft, onDelete }: Props) {
         {person.name}
       </p>
 
-      {/* Draft field — inline, single line */}
-      {editing ? (
-        <input
-          ref={inputRef}
-          autoFocus
-          value={draft}
-          onChange={(e) => { setDraft(e.target.value); setDirty(true); }}
-          onBlur={() => { if (dirty) handleSave(); else setEditing(false); }}
-          onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
-          placeholder="Draft a message..."
-          className="mt-1 w-full bg-transparent outline-none truncate"
-          style={{
-            fontSize: "13px",
-            lineHeight: "18px",
-            fontWeight: 400,
-            color: "hsl(var(--text) / 0.5)",
-            border: "none",
-            padding: 0,
-          }}
-        />
-      ) : (
+      {birthday && (
         <p
-          onClick={() => setEditing(true)}
-          className="mt-1 truncate cursor-text"
+          className="mt-1"
           style={{
-            fontSize: "13px",
-            lineHeight: "18px",
-            fontWeight: 400,
+            fontSize: "11px",
+            lineHeight: "14px",
+            color: birthday.daysUntil <= 7
+              ? "hsl(var(--primary))"
+              : "hsl(var(--text) / 0.45)",
+          }}
+        >
+          {formatBirthday(birthday)}
+        </p>
+      )}
+
+      {person.draftMessage && !birthday && (
+        <p
+          className="mt-1 truncate"
+          style={{
+            fontSize: "11px",
+            lineHeight: "14px",
             color: "hsl(var(--text) / 0.4)",
           }}
         >
-          {draft || "Draft a message..."}
+          {person.draftMessage}
         </p>
       )}
-    </div>
+    </button>
   );
 }

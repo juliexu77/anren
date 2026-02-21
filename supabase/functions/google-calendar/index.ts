@@ -24,7 +24,6 @@ async function getValidGoogleToken(supabase: any, userId: string): Promise<strin
     throw new Error("No Google access token. Please sign out and sign in again.");
   }
 
-  // Check if token is expired (with 5 min buffer)
   const expiresAt = google_token_expires_at ? new Date(google_token_expires_at).getTime() : 0;
   const isExpired = Date.now() > expiresAt - 5 * 60 * 1000;
 
@@ -32,7 +31,6 @@ async function getValidGoogleToken(supabase: any, userId: string): Promise<strin
     return google_access_token;
   }
 
-  // Token expired, try to refresh
   if (!google_refresh_token) {
     throw new Error("Token expired and no refresh token available. Please sign out and sign in again.");
   }
@@ -65,7 +63,6 @@ async function getValidGoogleToken(supabase: any, userId: string): Promise<strin
   const newAccessToken = tokenData.access_token;
   const expiresIn = tokenData.expires_in || 3600;
 
-  // Save refreshed token using service role client
   const serviceClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -100,7 +97,6 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) throw new Error("Unauthorized");
 
-    // Get valid Google token from profiles (with auto-refresh)
     const providerToken = await getValidGoogleToken(supabase, user.id);
 
     const url = new URL(req.url);
@@ -123,6 +119,40 @@ serve(async (req) => {
 
       const calData = await calRes.json();
       return new Response(JSON.stringify({ events: calData.items || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "birthdays") {
+      // Query the Google Contacts birthday calendar for the next year
+      const now = new Date();
+      const timeMin = now.toISOString();
+      const timeMax = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Google's built-in contacts birthday calendar
+      const calendarId = encodeURIComponent("addressbook#contacts@group.v.calendar.google.com");
+
+      const calRes = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=250`,
+        { headers: { Authorization: `Bearer ${providerToken}` } }
+      );
+
+      if (!calRes.ok) {
+        // Birthday calendar may not exist or be accessible — return empty
+        console.error("Birthday calendar error:", calRes.status, await calRes.text());
+        return new Response(JSON.stringify({ birthdays: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const calData = await calRes.json();
+      const birthdays = (calData.items || []).map((item: any) => ({
+        name: (item.summary || "").replace("'s birthday", "").replace("'s Birthday", "").trim(),
+        date: item.start?.date || item.start?.dateTime || "",
+        summary: item.summary || "",
+      }));
+
+      return new Response(JSON.stringify({ birthdays }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
