@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useColorTheme } from "@/contexts/ColorThemeContext";
 import { useAuth } from "@/hooks/useAuth";
+import { usePeople } from "@/hooks/usePeople";
 import { cn } from "@/lib/utils";
-import { Check, LogOut } from "lucide-react";
+import { Check, LogOut, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ContactImportSheet } from "@/components/ContactImportSheet";
 
 export function SettingsPage() {
   const { currentTheme, setTheme, themes } = useColorTheme();
   const { user, signOut } = useAuth();
+  const { people, addPerson } = usePeople();
+  const [showImport, setShowImport] = useState(false);
 
   return (
     <main className="px-5 pb-8 space-y-8">
@@ -23,6 +28,21 @@ export function SettingsPage() {
             Sign out
           </Button>
         </div>
+      </section>
+
+      {/* Import Contacts */}
+      <section>
+        <h2 className="text-section-header text-muted-foreground mb-4">People</h2>
+        <button
+          onClick={() => setShowImport(true)}
+          className="w-full text-left rounded-2xl border border-border p-4 flex items-center gap-3 transition-colors hover:bg-foreground/5"
+        >
+          <UserPlus className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Import from Contacts</p>
+            <p className="text-xs text-muted-foreground">Add people from your iPhone contact book</p>
+          </div>
+        </button>
       </section>
 
       {/* Theme */}
@@ -61,6 +81,17 @@ export function SettingsPage() {
           })}
         </div>
       </section>
+
+      <ContactImportSheet
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onImport={async (contacts) => {
+          for (const c of contacts) {
+            await addPerson({ name: c.name, email: c.email, phone: c.phone });
+          }
+        }}
+        existingNames={people.map((p) => p.name)}
+      />
     </main>
   );
 }
