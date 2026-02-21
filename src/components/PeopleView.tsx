@@ -2,39 +2,67 @@ import { useState } from "react";
 import { usePeople } from "@/hooks/usePeople";
 import { PersonCard } from "@/components/PersonCard";
 import { ContactImportSheet } from "@/components/ContactImportSheet";
-import { UserPlus } from "lucide-react";
 
 export function PeopleView() {
   const { people, addPerson, updateDraft, deletePerson } = usePeople();
   const [showImport, setShowImport] = useState(false);
 
   return (
-    <div className="px-4 pt-2 pb-24">
-      {/* Import button */}
-      <button
-        onClick={() => setShowImport(true)}
-        className="w-full flex items-center justify-center gap-2 py-3 mb-6 rounded-xl text-caption"
+    <div className="px-4 pt-2 pb-28">
+      {/* Section header */}
+      <h2
+        className="font-display mb-1"
         style={{
-          background: "hsl(var(--surface))",
-          border: "1px solid hsl(var(--divider))",
-          color: "hsl(var(--text-secondary))",
+          fontSize: "32px",
+          lineHeight: "36px",
+          fontWeight: 400,
+          color: "hsl(var(--text))",
         }}
       >
-        <UserPlus className="w-4 h-4" />
+        Your People
+      </h2>
+
+      {/* Import link */}
+      <button
+        onClick={() => setShowImport(true)}
+        className="mb-6 mt-1"
+        style={{
+          fontSize: "13px",
+          lineHeight: "18px",
+          fontWeight: 400,
+          color: "hsl(var(--text) / 0.5)",
+          background: "none",
+          border: "none",
+          padding: 0,
+        }}
+      >
         Add from contacts
       </button>
 
       {people.length === 0 ? (
-        <div className="text-center pt-16">
-          <p className="text-h3 font-display text-foreground/60 mb-2">
-            Your circle is empty
+        <div className="pt-16">
+          <p
+            className="font-display"
+            style={{
+              fontSize: "24px",
+              fontWeight: 400,
+              color: "hsl(var(--text) / 0.4)",
+            }}
+          >
+            No one here yet
           </p>
-          <p className="text-caption text-muted-foreground">
+          <p
+            className="mt-2"
+            style={{
+              fontSize: "13px",
+              color: "hsl(var(--text) / 0.35)",
+            }}
+          >
             Add people you want to stay connected with
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {people.map((person) => (
             <PersonCard
               key={person.id}

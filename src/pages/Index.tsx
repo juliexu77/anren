@@ -9,19 +9,22 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
+import { HubView } from "@/components/HubView";
 import { PeopleView } from "@/components/PeopleView";
+import { usePeople } from "@/hooks/usePeople";
 import { Settings, Search, Home, Users, Calendar, Camera, Type, Mic, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, CardCategory } from "@/types/card";
 
-type ViewId = "home" | "people" | "calendar" | "settings";
+type ViewId = "hub" | "home" | "people" | "calendar" | "settings";
 
 const Index = () => {
   const { cards, addCard, updateCard, deleteCard, groupCards, ungroupCards } = useCards();
+  const { people } = usePeople();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeView, setActiveView] = useState<ViewId>("home");
+  const [activeView, setActiveView] = useState<ViewId>("hub");
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showComposeMenu, setShowComposeMenu] = useState(false);
@@ -71,22 +74,54 @@ const Index = () => {
     return { groups: groupMap };
   }, [filtered]);
 
+  // Surface data for hub cards
+  const firstPendingTitle = cards.find((c) => c.title && c.body !== "@@PARSING@@")?.title || "";
+  const peopleNames = people.map((p) => p.name);
+
   const navTabs: { id: ViewId; icon: typeof Home; label: string }[] = [
     { id: "home", icon: Home, label: "Home" },
     { id: "people", icon: Users, label: "People" },
     { id: "calendar", icon: Calendar, label: "Calendar" },
   ];
 
+  // Map nav tab clicks — if on hub or settings, go to that tab's view
+  const handleNavTab = (id: ViewId) => {
+    if (id === "home" && activeView === "home") {
+      setActiveView("hub");
+    } else {
+      setActiveView(id);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24">
       <header className="sticky top-0 z-40 px-5 pt-12 pb-2">
         <div className="flex items-center justify-between">
-          <div className="w-9" />
+          {/* Left: back text for sub-views */}
+          {activeView !== "hub" ? (
+            <button
+              onClick={() => setActiveView("hub")}
+              style={{
+                fontSize: "13px",
+                fontWeight: 400,
+                color: "hsl(var(--text) / 0.5)",
+                background: "none",
+                border: "none",
+                padding: 0,
+              }}
+            >
+              ← Back
+            </button>
+          ) : (
+            <div className="w-12" />
+          )}
+
           <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">
             ANREN
           </h1>
+
           <button
-            onClick={() => setActiveView(activeView === "settings" ? "home" : "settings")}
+            onClick={() => setActiveView(activeView === "settings" ? "hub" : "settings")}
             className={cn(
               "p-2 rounded-lg transition-colors",
               activeView === "settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
@@ -96,7 +131,7 @@ const Index = () => {
           </button>
         </div>
 
-        {/* Search bar for home view */}
+        {/* Search bar for home/notes view */}
         {activeView === "home" && (
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
@@ -111,8 +146,16 @@ const Index = () => {
         )}
       </header>
 
-      {activeView === "home" ? (
+      {activeView === "hub" ? (
+        <HubView
+          onNavigate={(v) => setActiveView(v === "notes" ? "home" : v)}
+          cardCount={cards.length}
+          firstPendingTitle={firstPendingTitle}
+          peopleNames={peopleNames}
+        />
+      ) : activeView === "home" ? (
         <main className="px-4">
+          {/* Cards grouped by category */}
           <div className="space-y-5 mb-4">
             {(Object.keys(CATEGORY_CONFIG) as CardCategory[]).map((catKey) => {
               const catCards = cardsByCategory[catKey];
@@ -179,11 +222,11 @@ const Index = () => {
             }}
           >
             {navTabs.map(({ id, icon: TabIcon }) => {
-              const isActive = activeView === id;
+              const isActive = activeView === id || (id === "home" && activeView === "hub");
               return (
                 <button
                   key={id}
-                  onClick={() => setActiveView(id)}
+                  onClick={() => handleNavTab(id)}
                   className={cn(
                     "flex items-center justify-center w-[52px] h-[42px] rounded-[17px] transition-all duration-200",
                     isActive
