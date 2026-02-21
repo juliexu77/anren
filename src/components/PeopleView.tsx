@@ -68,6 +68,18 @@ export function PeopleView() {
     [birthdays]
   );
 
+  // Birthday contacts not yet in the circle — suggestions to add
+  const birthdaySuggestions = birthdays
+    .filter((b) => !people.some((p) => p.name.toLowerCase() === b.name.toLowerCase()))
+    .map((b) => {
+      const bDate = new Date(b.date);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const diff = Math.floor((bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return { ...b, daysUntil: Math.max(0, diff) };
+    })
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+
   // Sort people: upcoming birthdays first, then alphabetical
   const sortedPeople = [...people].sort((a, b) => {
     const aBday = getBirthday(a.name);
@@ -155,6 +167,72 @@ export function PeopleView() {
               index={i}
             />
           ))}
+        </div>
+      )}
+
+      {/* Birthday suggestions from Google Calendar */}
+      {birthdaySuggestions.length > 0 && (
+        <div className="mt-8">
+          <h3
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "hsl(var(--text) / 0.4)",
+              marginBottom: "12px",
+            }}
+          >
+            From your calendar
+          </h3>
+          <div className="space-y-0.5">
+            {birthdaySuggestions.map((b) => {
+              const bDate = new Date(b.date);
+              const label =
+                b.daysUntil === 0
+                  ? "Today!"
+                  : b.daysUntil === 1
+                    ? "Tomorrow"
+                    : b.daysUntil <= 7
+                      ? `In ${b.daysUntil} days`
+                      : bDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+              return (
+                <div
+                  key={`${b.name}-${b.date}`}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p style={{ fontSize: "14px", color: "hsl(var(--text) / 0.85)" }}>
+                      {b.name}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: b.daysUntil <= 7 ? "hsl(var(--primary))" : "hsl(var(--text) / 0.4)",
+                      }}
+                    >
+                      🎂 {label}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await addPerson({ name: b.name });
+                      toast.success(`Added ${b.name}`);
+                    }}
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                    style={{
+                      background: "hsl(var(--surface) / 0.5)",
+                      border: "1px solid hsl(var(--divider) / 0.25)",
+                      color: "hsl(var(--text) / 0.7)",
+                    }}
+                  >
+                    ADD
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
