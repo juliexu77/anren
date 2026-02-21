@@ -5,7 +5,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Search, UserPlus, Check } from "lucide-react";
+import { Search, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface ContactEntry {
@@ -26,46 +26,47 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [pickerTriggered, setPickerTriggered] = useState(false);
   const [manualName, setManualName] = useState("");
 
-  // Try to access contacts API when sheet opens
+  const hasContactsAPI = typeof navigator !== "undefined" && "contacts" in navigator && "ContactsManager" in window;
+
+  // Auto-open native picker when sheet opens
   useEffect(() => {
-    if (!open) return;
-    setSelected(new Set());
-    setSearch("");
-
-    if ("contacts" in navigator && "ContactsManager" in window) {
-      setHasAccess(true);
-    } else {
-      setHasAccess(false);
+    if (!open) {
+      setPickerTriggered(false);
+      setContacts([]);
+      setSelected(new Set());
+      setSearch("");
+      return;
     }
-  }, [open]);
 
-  const handleBrowseContacts = async () => {
-    try {
-      const props = ["name", "tel", "email"];
-      // @ts-ignore - Contact Picker API
-      const results = await navigator.contacts.select(props, { multiple: true });
-      const mapped: ContactEntry[] = results.map((c: any) => ({
-        name: c.name?.[0] || "Unknown",
-        phone: c.tel?.[0] || undefined,
-        email: c.email?.[0] || undefined,
-      }));
-      setContacts(mapped);
-    } catch (err) {
-      console.error("Contact picker error:", err);
-      toast.error("Couldn't access contacts");
+    if (hasContactsAPI && !pickerTriggered) {
+      setPickerTriggered(true);
+      (async () => {
+        try {
+          const props = ["name", "tel", "email"];
+          // @ts-ignore - Contact Picker API
+          const results = await navigator.contacts.select(props, { multiple: true });
+          const mapped: ContactEntry[] = results.map((c: any) => ({
+            name: c.name?.[0] || "Unknown",
+            phone: c.tel?.[0] || undefined,
+            email: c.email?.[0] || undefined,
+          }));
+          setContacts(mapped);
+          // Pre-select all that aren't already added
+          const preSelected = new Set<number>();
+          mapped.forEach((c, i) => {
+            if (!existingNames.includes(c.name)) preSelected.add(i);
+          });
+          setSelected(preSelected);
+        } catch (err) {
+          console.error("Contact picker error:", err);
+          onClose();
+        }
+      })();
     }
-  };
-
-  const handleAddManual = () => {
-    if (!manualName.trim()) return;
-    const entry: ContactEntry = { name: manualName.trim() };
-    setContacts((prev) => [...prev, entry]);
-    setSelected((prev) => new Set(prev).add(contacts.length));
-    setManualName("");
-  };
+  }, [open, hasContactsAPI, pickerTriggered, existingNames, onClose]);
 
   const toggleSelect = (index: number) => {
     setSelected((prev) => {
@@ -74,6 +75,14 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
       else next.add(index);
       return next;
     });
+  };
+
+  const handleAddManual = () => {
+    if (!manualName.trim()) return;
+    const entry: ContactEntry = { name: manualName.trim() };
+    setContacts((prev) => [...prev, entry]);
+    setSelected((prev) => new Set(prev).add(contacts.length));
+    setManualName("");
   };
 
   const handleImport = async () => {
@@ -95,131 +104,143 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const newCount = Array.from(selected).filter(
+    (i) => contacts[i] && !existingNames.includes(contacts[i].name)
+  ).length;
+
+  // Don't show sheet until contacts are loaded (picker is open natively)
+  if (open && hasContactsAPI && contacts.length === 0) return null;
+
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+    <Sheet open={open && contacts.length > 0} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
         side="bottom"
         className="h-[85vh] rounded-t-2xl p-0 border-0"
-        style={{
-          background: "hsl(var(--bg))",
-        }}
+        style={{ background: "hsl(var(--bg))" }}
       >
-        <SheetHeader className="px-5 pt-6 pb-4">
-          <SheetTitle className="text-display-caps-sm text-foreground tracking-[0.2em]">
-            Add People
+        <SheetHeader className="px-5 pt-6 pb-2">
+          <SheetTitle
+            className="font-display"
+            style={{ fontSize: "24px", fontWeight: 400, color: "hsl(var(--text))" }}
+          >
+            Choose people
           </SheetTitle>
+          <p style={{ fontSize: "13px", color: "hsl(var(--text) / 0.45)", marginTop: "4px" }}>
+            {contacts.length} contacts · {newCount} selected
+          </p>
         </SheetHeader>
 
-        <div className="px-5 space-y-4 overflow-y-auto" style={{ maxHeight: "calc(85vh - 120px)" }}>
-          {/* Contact Picker button (mobile only) */}
-          {hasAccess && contacts.length === 0 && (
-            <button
-              onClick={handleBrowseContacts}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-caption"
-              style={{
-                background: "hsl(var(--accent-1) / 0.12)",
-                color: "hsl(var(--accent-1))",
-                border: "1px solid hsl(var(--accent-1) / 0.2)",
-              }}
-            >
-              <UserPlus className="w-4 h-4" />
-              Browse iPhone contacts
-            </button>
-          )}
-
-          {/* Manual add */}
-          <div className="flex gap-2">
+        <div className="px-5 space-y-3 overflow-y-auto" style={{ maxHeight: "calc(85vh - 180px)" }}>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
             <input
               type="text"
-              placeholder="Type a name to add..."
-              value={manualName}
-              onChange={(e) => setManualName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddManual()}
-              className="flex-1 px-3 py-2.5 rounded-lg text-caption"
-            />
-            <button
-              onClick={handleAddManual}
-              disabled={!manualName.trim()}
-              className="px-4 py-2.5 rounded-lg text-label transition-opacity disabled:opacity-30"
+              placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm"
               style={{
-                background: "hsl(var(--accent-1) / 0.15)",
-                color: "hsl(var(--accent-1))",
+                background: "hsl(var(--surface) / 0.5)",
+                border: "1px solid hsl(var(--divider) / 0.15)",
+                color: "hsl(var(--text))",
               }}
-            >
-              Add
-            </button>
+            />
           </div>
 
-          {/* Search (only when contacts loaded) */}
-          {contacts.length > 0 && (
-            <>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-                <input
-                  type="text"
-                  placeholder="Search contacts"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-lg text-caption"
-                />
-              </div>
+          {/* Contact list */}
+          <div className="space-y-0.5">
+            {filtered.map((contact, i) => {
+              const realIndex = contacts.indexOf(contact);
+              const isSelected = selected.has(realIndex);
+              const alreadyAdded = existingNames.includes(contact.name);
 
-              {/* Contact list */}
-              <div className="space-y-1">
-                {filtered.map((contact, i) => {
-                  const realIndex = contacts.indexOf(contact);
-                  const isSelected = selected.has(realIndex);
-                  const alreadyAdded = existingNames.includes(contact.name);
-
-                  return (
-                    <button
-                      key={`${contact.name}-${i}`}
-                      onClick={() => !alreadyAdded && toggleSelect(realIndex)}
-                      disabled={alreadyAdded}
-                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left"
-                      style={{
-                        background: isSelected
-                          ? "hsl(var(--accent-1) / 0.08)"
-                          : "transparent",
-                        opacity: alreadyAdded ? 0.4 : 1,
-                      }}
+              return (
+                <button
+                  key={`${contact.name}-${i}`}
+                  onClick={() => !alreadyAdded && toggleSelect(realIndex)}
+                  disabled={alreadyAdded}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors text-left"
+                  style={{
+                    background: isSelected ? "hsl(var(--accent-1) / 0.08)" : "transparent",
+                    opacity: alreadyAdded ? 0.4 : 1,
+                  }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      background: isSelected ? "hsl(var(--accent-1) / 0.2)" : "hsl(var(--surface))",
+                      border: `1px solid ${isSelected ? "hsl(var(--accent-1) / 0.4)" : "hsl(var(--divider))"}`,
+                    }}
+                  >
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5" style={{ color: "hsl(var(--accent-1))" }} />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate"
+                      style={{ fontSize: "14px", color: "hsl(var(--text) / 0.85)" }}
                     >
-                      {/* Selection indicator */}
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
-                        style={{
-                          background: isSelected
-                            ? "hsl(var(--accent-1) / 0.2)"
-                            : "hsl(var(--surface))",
-                          border: `1px solid ${isSelected ? "hsl(var(--accent-1) / 0.4)" : "hsl(var(--divider))"}`,
-                        }}
+                      {contact.name}
+                    </p>
+                    {contact.phone && (
+                      <p
+                        className="truncate"
+                        style={{ fontSize: "12px", color: "hsl(var(--text) / 0.4)" }}
                       >
-                        {isSelected && (
-                          <Check className="w-3.5 h-3.5" style={{ color: "hsl(var(--accent-1))" }} />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-body-sm text-foreground truncate">{contact.name}</p>
-                        {contact.phone && (
-                          <p className="text-caption-sm text-muted-foreground truncate">{contact.phone}</p>
-                        )}
-                      </div>
-                      {alreadyAdded && (
-                        <span className="text-caption-sm text-muted-foreground">Added</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+                        {contact.phone}
+                      </p>
+                    )}
+                  </div>
+                  {alreadyAdded && (
+                    <span style={{ fontSize: "11px", color: "hsl(var(--text) / 0.35)" }}>
+                      Already added
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Import button */}
-          {selected.size > 0 && (
+          {/* Manual add fallback */}
+          {!hasContactsAPI && contacts.length === 0 && (
+            <div className="flex gap-2 pt-2">
+              <input
+                type="text"
+                placeholder="Type a name..."
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddManual()}
+                className="flex-1 px-3 py-2.5 rounded-lg text-sm"
+                style={{
+                  background: "hsl(var(--surface) / 0.5)",
+                  border: "1px solid hsl(var(--divider) / 0.15)",
+                  color: "hsl(var(--text))",
+                }}
+              />
+              <button
+                onClick={handleAddManual}
+                disabled={!manualName.trim()}
+                className="px-4 py-2.5 rounded-lg text-sm transition-opacity disabled:opacity-30"
+                style={{
+                  background: "hsl(var(--accent-1) / 0.15)",
+                  color: "hsl(var(--accent-1))",
+                }}
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed bottom import button */}
+        {newCount > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 p-5 pb-8">
             <button
               onClick={handleImport}
               disabled={loading}
-              className="w-full py-3 rounded-xl text-label font-medium transition-opacity disabled:opacity-50"
+              className="w-full py-3.5 rounded-xl text-sm font-medium transition-opacity disabled:opacity-50"
               style={{
                 background: "hsl(var(--accent-1) / 0.15)",
                 color: "hsl(var(--accent-1))",
@@ -228,10 +249,10 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
             >
               {loading
                 ? "Adding..."
-                : `Add ${selected.size} ${selected.size === 1 ? "person" : "people"} to circle`}
+                : `Add ${newCount} ${newCount === 1 ? "person" : "people"} to your circle`}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
