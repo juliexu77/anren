@@ -76,7 +76,7 @@ export function HubView({ onNavigate, cardCount, firstPendingTitle, peopleNames 
               color: "hsl(var(--text) / 0.5)",
             }}
           >
-            Tend your relationships
+            Tend your circle
           </p>
         </button>
       </div>
