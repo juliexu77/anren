@@ -1,17 +1,13 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarHeader, type CalendarViewMode } from "@/components/calendar/CalendarHeader";
-import { CalendarTimeGrid } from "@/components/calendar/CalendarTimeGrid";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Trash2, ExternalLink } from "lucide-react";
+import { Loader2, Trash2, ExternalLink } from "lucide-react";
 import {
   format,
   addDays,
   subDays,
-  startOfWeek,
-  endOfWeek,
   startOfDay,
   isSameDay,
   parseISO,
@@ -28,7 +24,6 @@ import { Textarea } from "@/components/ui/textarea";
 export function GoogleCalendarView() {
   const { events, loading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<CalendarViewMode>("day");
   const [showCreate, setShowCreate] = useState(false);
   const [showMiniCal, setShowMiniCal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -98,37 +93,39 @@ export function GoogleCalendarView() {
     }
   }, []);
 
-  // Compute visible date range
-  const visibleDates = useMemo(() => {
-    if (viewMode === "day") return [currentDate];
-    if (viewMode === "3day") return [currentDate, addDays(currentDate, 1), addDays(currentDate, 2)];
-    // week
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  }, [currentDate, viewMode]);
+  // Agenda: 7 days from today
+  const agendaDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(startOfDay(new Date()), i)),
+    []
+  );
 
-  // Fetch events for visible range (with buffer)
+  const getDayLabel = (date: Date) => {
+    if (isSameDay(date, new Date())) return "Today";
+    if (isSameDay(date, addDays(new Date(), 1))) return "Tomorrow";
+    return null;
+  };
+
+  const getEventsForDay = useCallback(
+    (date: Date) =>
+      events.filter((e) => {
+        const eventDate = e.start.dateTime
+          ? parseISO(e.start.dateTime)
+          : e.start.date
+            ? parseISO(e.start.date)
+            : null;
+        return eventDate && isSameDay(eventDate, date);
+      }),
+    [events]
+  );
+
+  // Fetch events for agenda range
   useEffect(() => {
-    if (calendarConnected) {
-      const first = visibleDates[0];
-      const last = visibleDates[visibleDates.length - 1];
-      const timeMin = subDays(first, 1).toISOString();
-      const timeMax = addDays(last, 2).toISOString();
+    if (calendarConnected && agendaDays.length > 0) {
+      const timeMin = subDays(agendaDays[0], 1).toISOString();
+      const timeMax = addDays(agendaDays[agendaDays.length - 1], 2).toISOString();
       fetchEvents(timeMin, timeMax);
     }
-  }, [currentDate, viewMode, fetchEvents, calendarConnected]);
-
-  const handlePrev = () => {
-    const step = viewMode === "day" ? 1 : viewMode === "3day" ? 3 : 7;
-    setCurrentDate((d) => subDays(d, step));
-  };
-
-  const handleNext = () => {
-    const step = viewMode === "day" ? 1 : viewMode === "3day" ? 3 : 7;
-    setCurrentDate((d) => addDays(d, step));
-  };
-
-  const handleToday = () => setCurrentDate(new Date());
+  }, [calendarConnected, agendaDays, fetchEvents]);
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
@@ -145,10 +142,9 @@ export function GoogleCalendarView() {
       setShowCreate(false);
       setNewTitle("");
       setNewDesc("");
-      // Refetch
-      const first = visibleDates[0];
-      const last = visibleDates[visibleDates.length - 1];
-      fetchEvents(subDays(first, 1).toISOString(), addDays(last, 2).toISOString());
+      const timeMin = subDays(agendaDays[0], 1).toISOString();
+      const timeMax = addDays(agendaDays[agendaDays.length - 1], 2).toISOString();
+      fetchEvents(timeMin, timeMax);
     } finally {
       setCreating(false);
     }
@@ -179,65 +175,118 @@ export function GoogleCalendarView() {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 80px)" }}>
-      <CalendarHeader
-        currentDate={currentDate}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onPrev={handlePrev}
-        onNext={handleNext}
-        onToday={handleToday}
-        onTitleClick={() => setShowMiniCal(true)}
-      />
-
-      {/* Day label for single day view */}
-      {viewMode === "day" && (
-        <div className="px-4 pb-1 pl-16">
-          <p className="text-[10px] text-muted-foreground uppercase">
-            {format(currentDate, "EEEE")}
-          </p>
-          <p
-            className={`text-xl font-semibold ${
-              isSameDay(currentDate, new Date())
-                ? "text-primary"
-                : "text-foreground"
-            }`}
+    <>
+      <div className="flex flex-col flex-1 overflow-auto pb-32">
+        {/* Header */}
+        <div className="px-5 pt-2 pb-4">
+          <h2
+            className="font-display"
+            style={{
+              fontSize: "32px",
+              lineHeight: "38px",
+              fontWeight: 400,
+              color: "hsl(var(--text))",
+            }}
           >
-            {format(currentDate, "d")}
-          </p>
+            Calendar
+          </h2>
         </div>
-      )}
 
-      {loading && events.length === 0 ? (
-        <div className="flex justify-center py-12 flex-1">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <CalendarTimeGrid
-          dates={visibleDates}
-          events={events}
-          onEventClick={setSelectedEvent}
-        />
-      )}
-
-      {/* Mini calendar picker sheet */}
-      <Sheet open={showMiniCal} onOpenChange={setShowMiniCal}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
-          <div className="flex justify-center pb-4">
-            <Calendar
-              mode="single"
-              selected={currentDate}
-              onSelect={(d) => {
-                if (d) {
-                  setCurrentDate(d);
-                  setShowMiniCal(false);
-                }
-              }}
-              className="rounded-2xl"
-            />
+        {loading && events.length === 0 ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        </SheetContent>
-      </Sheet>
+        ) : (
+          <div className="px-5">
+            {agendaDays.map((date) => {
+              const dayLabel = getDayLabel(date);
+              const dayEvents = getEventsForDay(date);
+
+              return (
+                <div key={date.toISOString()}>
+                  <div
+                    className="flex items-baseline gap-2 py-4"
+                    style={{
+                      borderBottom: "1px solid hsl(var(--divider) / 0.15)",
+                    }}
+                  >
+                    <span
+                      className="font-display"
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: 400,
+                        color: "hsl(var(--text))",
+                      }}
+                    >
+                      {format(date, "MMM d")}
+                    </span>
+                    {dayLabel && (
+                      <>
+                        <span style={{ fontSize: "13px", color: "hsl(var(--text) / 0.3)" }}>·</span>
+                        <span
+                          style={{
+                            fontSize: "18px",
+                            fontWeight: 400,
+                            color: isSameDay(date, new Date())
+                              ? "hsl(var(--primary))"
+                              : "hsl(var(--text) / 0.5)",
+                          }}
+                        >
+                          {dayLabel}
+                        </span>
+                      </>
+                    )}
+                    <span style={{ fontSize: "13px", color: "hsl(var(--text) / 0.3)" }}>·</span>
+                    <span
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 400,
+                        color: "hsl(var(--text) / 0.35)",
+                      }}
+                    >
+                      {format(date, "EEEE")}
+                    </span>
+                  </div>
+
+                  {dayEvents.length > 0 && (
+                    <div className="py-2 space-y-1.5">
+                      {dayEvents.map((ev) => (
+                        <button
+                          key={ev.id}
+                          onClick={() => setSelectedEvent(ev)}
+                          className="w-full text-left px-3 py-2.5 rounded-lg transition-colors hover:bg-foreground/5"
+                        >
+                          <p
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              color: "hsl(var(--text) / 0.85)",
+                            }}
+                          >
+                            {ev.summary}
+                          </p>
+                          {ev.start.dateTime && (
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                color: "hsl(var(--text) / 0.4)",
+                                marginTop: "2px",
+                              }}
+                            >
+                              {format(parseISO(ev.start.dateTime), "h:mm a")}
+                              {ev.end.dateTime && ` – ${format(parseISO(ev.end.dateTime), "h:mm a")}`}
+                            </p>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Event detail sheet */}
       <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
@@ -277,9 +326,9 @@ export function GoogleCalendarView() {
                     onClick={async () => {
                       await deleteEvent(selectedEvent.id);
                       setSelectedEvent(null);
-                      const first = visibleDates[0];
-                      const last = visibleDates[visibleDates.length - 1];
-                      fetchEvents(subDays(first, 1).toISOString(), addDays(last, 2).toISOString());
+                      const timeMin = subDays(agendaDays[0], 1).toISOString();
+                      const timeMax = addDays(agendaDays[agendaDays.length - 1], 2).toISOString();
+                      fetchEvents(timeMin, timeMax);
                     }}
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
@@ -344,6 +393,6 @@ export function GoogleCalendarView() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
