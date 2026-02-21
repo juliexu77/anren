@@ -220,18 +220,6 @@ export function GoogleCalendarView() {
         />
       )}
 
-      {/* FAB */}
-      <button
-        onClick={() => setShowCreate(true)}
-        className="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-2xl shadow-lg flex items-center justify-center transition-transform hover:scale-105"
-        style={{
-          background: "hsl(var(--primary))",
-          color: "hsl(var(--primary-foreground))",
-        }}
-      >
-        <Plus className="w-6 h-6" />
-      </button>
-
       {/* Mini calendar picker sheet */}
       <Sheet open={showMiniCal} onOpenChange={setShowMiniCal}>
         <SheetContent side="bottom" className="rounded-t-3xl">
