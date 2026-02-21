@@ -229,6 +229,29 @@ export function PeopleView() {
                   />
                 </div>
 
+                {/* Send button */}
+                {editingDraft.trim() && selectedPerson.phone && (
+                  <a
+                    href={`sms:${selectedPerson.phone}${/iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?"}body=${encodeURIComponent(editingDraft)}`}
+                    className="block w-full text-center py-3 rounded-xl transition-opacity"
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      background: "hsl(var(--accent-1) / 0.15)",
+                      color: "hsl(var(--accent-1))",
+                      border: "1px solid hsl(var(--accent-1) / 0.25)",
+                    }}
+                  >
+                    Send via SMS
+                  </a>
+                )}
+
+                {editingDraft.trim() && !selectedPerson.phone && (
+                  <p style={{ fontSize: "12px", color: "hsl(var(--text) / 0.35)" }}>
+                    Add a phone number to send via SMS
+                  </p>
+                )}
+
                 {/* Delete */}
                 <button
                   onClick={async () => {
