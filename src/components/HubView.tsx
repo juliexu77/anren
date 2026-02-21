@@ -1,67 +1,89 @@
-import { Home, Users } from "lucide-react";
+import { usePeople } from "@/hooks/usePeople";
+import { useCards } from "@/hooks/useCards";
 
 interface Props {
-  onNavigate: (view: "home" | "people") => void;
+  onNavigate: (view: "notes" | "people") => void;
+  cardCount: number;
+  firstPendingTitle: string;
+  peopleNames: string[];
 }
 
-export function HubView({ onNavigate }: Props) {
+export function HubView({ onNavigate, cardCount, firstPendingTitle, peopleNames }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center px-6 pt-8" style={{ minHeight: "60vh" }}>
-      <div className="w-full max-w-sm space-y-4">
+    <div className="px-4 pt-6">
+      <div className="space-y-3">
         {/* Home card */}
         <button
-          onClick={() => onNavigate("home")}
-          className="w-full rounded-xl p-6 text-left transition-all duration-200 active:scale-[0.98]"
+          onClick={() => onNavigate("notes")}
+          className="w-full text-left rounded-lg px-5 pt-5 pb-5 transition-all duration-200 active:scale-[0.99]"
           style={{
+            height: "180px",
             background: "hsl(var(--card-bg))",
-            border: "1px solid hsl(var(--card-border))",
-            boxShadow: "0 1px 3px var(--card-shadow), 0 4px 12px var(--card-shadow)",
+            border: "1px solid hsl(var(--divider) / 0.12)",
           }}
         >
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{
-                background: "hsl(var(--accent-1) / 0.12)",
-              }}
-            >
-              <Home className="w-5 h-5" style={{ color: "hsl(var(--accent-1))" }} />
-            </div>
-            <div>
-              <h2 className="text-h3 font-display text-foreground">Home</h2>
-              <p className="text-caption text-muted-foreground mt-0.5">
-                Your mental load, organized
-              </p>
-            </div>
-          </div>
+          <h2
+            className="font-display"
+            style={{
+              fontSize: "24px",
+              lineHeight: "28px",
+              fontWeight: 400,
+              color: "hsl(var(--text))",
+            }}
+          >
+            Home
+          </h2>
+          <p
+            className="mt-2"
+            style={{
+              fontSize: "13px",
+              lineHeight: "18px",
+              fontWeight: 400,
+              color: "hsl(var(--text) / 0.5)",
+            }}
+          >
+            {firstPendingTitle
+              ? firstPendingTitle
+              : cardCount > 0
+                ? `${cardCount} note${cardCount !== 1 ? "s" : ""}`
+                : "Your mental load, organized"}
+          </p>
         </button>
 
         {/* People card */}
         <button
           onClick={() => onNavigate("people")}
-          className="w-full rounded-xl p-6 text-left transition-all duration-200 active:scale-[0.98]"
+          className="w-full text-left rounded-lg px-5 pt-5 pb-5 transition-all duration-200 active:scale-[0.99]"
           style={{
+            height: "180px",
             background: "hsl(var(--card-bg))",
-            border: "1px solid hsl(var(--card-border))",
-            boxShadow: "0 1px 3px var(--card-shadow), 0 4px 12px var(--card-shadow)",
+            border: "1px solid hsl(var(--divider) / 0.12)",
           }}
         >
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{
-                background: "hsl(var(--secondary) / 0.12)",
-              }}
-            >
-              <Users className="w-5 h-5" style={{ color: "hsl(var(--secondary))" }} />
-            </div>
-            <div>
-              <h2 className="text-h3 font-display text-foreground">People</h2>
-              <p className="text-caption text-muted-foreground mt-0.5">
-                Tend your circle
-              </p>
-            </div>
-          </div>
+          <h2
+            className="font-display"
+            style={{
+              fontSize: "24px",
+              lineHeight: "28px",
+              fontWeight: 400,
+              color: "hsl(var(--text))",
+            }}
+          >
+            People
+          </h2>
+          <p
+            className="mt-2"
+            style={{
+              fontSize: "13px",
+              lineHeight: "18px",
+              fontWeight: 400,
+              color: "hsl(var(--text) / 0.5)",
+            }}
+          >
+            {peopleNames.length > 0
+              ? peopleNames.slice(0, 2).join(", ")
+              : "Tend your circle"}
+          </p>
         </button>
       </div>
     </div>
