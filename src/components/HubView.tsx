@@ -42,11 +42,7 @@ export function HubView({ onNavigate, cardCount, firstPendingTitle, peopleNames 
               color: "hsl(var(--text) / 0.5)",
             }}
           >
-            {firstPendingTitle
-              ? firstPendingTitle
-              : cardCount > 0
-                ? `${cardCount} note${cardCount !== 1 ? "s" : ""}`
-                : "Your mental load, organized"}
+            Tend your home
           </p>
         </button>
 
@@ -80,9 +76,7 @@ export function HubView({ onNavigate, cardCount, firstPendingTitle, peopleNames 
               color: "hsl(var(--text) / 0.5)",
             }}
           >
-            {peopleNames.length > 0
-              ? peopleNames.slice(0, 2).join(", ")
-              : "Tend your circle"}
+            Tend your relationships
           </p>
         </button>
       </div>
