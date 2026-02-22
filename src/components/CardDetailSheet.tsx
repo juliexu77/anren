@@ -191,17 +191,6 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleCreateEvent}
-              disabled={extracting}
-              className="text-foreground/70 active:text-foreground p-1"
-            >
-              {extracting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Calendar className="w-4 h-4" />
-              )}
-            </button>
-            <button
               onClick={() => { onDelete(card.id); onClose(); }}
               className="text-destructive/70 active:text-destructive p-1"
             >
@@ -238,14 +227,31 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
           )}
         </div>
 
-        {/* Save button */}
-        {isEditing && (
-          <div className="px-5 pb-6 pt-2">
+        {/* Bottom actions */}
+        <div className="px-5 pb-6 pt-2 space-y-2">
+          {isEditing && (
             <Button className="w-full" onClick={handleSave}>
               Save
             </Button>
-          </div>
-        )}
+          )}
+          <button
+            onClick={handleCreateEvent}
+            disabled={extracting}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm transition-colors"
+            style={{
+              background: "hsl(var(--surface) / 0.5)",
+              border: "1px solid hsl(var(--divider) / 0.25)",
+              color: "hsl(var(--text) / 0.7)",
+            }}
+          >
+            {extracting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Calendar className="w-4 h-4" />
+            )}
+            Add to Calendar
+          </button>
+        </div>
       </div>
 
       {/* Create Event Sheet */}
