@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { BrainCard, CardCategory } from "@/types/card";
 import { CATEGORY_CONFIG } from "@/types/card";
-import { Trash2, ChevronLeft, Calendar, Loader2 } from "lucide-react";
+import { Trash2, ChevronLeft, Calendar, Loader2, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
@@ -28,6 +28,7 @@ const APP_URL = "https://anren.app";
 export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Props) {
   const [body, setBody] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { createEvent } = useGoogleCalendar();
 
@@ -47,6 +48,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
     setLastId(currentCardId);
     setBody(card!.body);
     setIsEditing(false);
+    setShowCategoryPicker(false);
   }
 
   if (!card || !open) return null;
@@ -78,6 +80,14 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
           onUpdate(card.id, updates);
         }
       });
+
+    // Close the card after saving
+    onClose();
+  };
+
+  const handleCategoryChange = (newCategory: CardCategory) => {
+    onUpdate(card.id, { category: newCategory });
+    setShowCategoryPicker(false);
   };
 
   const handleClose = () => {
@@ -124,7 +134,6 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
 
       if (error || !data || data.error) {
         console.error("Extract error:", error || data?.error);
-        // Fallback: use card title and today's date
         setEventTitle(card.title || "New Event");
         setEventDesc("");
         setEventDate(new Date().toISOString().split("T")[0]);
@@ -171,6 +180,8 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
     }
   };
 
+  const allCategories = Object.entries(CATEGORY_CONFIG) as [CardCategory, typeof cat][];
+
   return (
     <>
       <div
@@ -183,12 +194,16 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
           </button>
-          <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowCategoryPicker(!showCategoryPicker)}
+            className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
+          >
             <Icon className="w-3.5 h-3.5 text-muted-foreground/60" />
             <span className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">
               {cat.label}
             </span>
-          </div>
+            <ChevronDown className="w-3 h-3 text-muted-foreground/40" />
+          </button>
           <div className="flex items-center gap-2">
             <button
               onClick={() => { onDelete(card.id); onClose(); }}
@@ -198,6 +213,38 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             </button>
           </div>
         </div>
+
+        {/* Category picker */}
+        {showCategoryPicker && (
+          <div className="px-4 pb-3">
+            <div
+              className="flex flex-wrap gap-2 p-3 rounded-xl"
+              style={{
+                background: "hsl(var(--surface) / 0.6)",
+                border: "1px solid hsl(var(--divider) / 0.2)",
+              }}
+            >
+              {allCategories.map(([key, cfg]) => {
+                const CatIcon = cfg.icon;
+                const isActive = card.category === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleCategoryChange(key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      isActive
+                        ? "bg-foreground/10 text-foreground"
+                        : "text-muted-foreground/60 active:bg-foreground/5"
+                    }`}
+                  >
+                    <CatIcon className="w-3 h-3" />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Attached image */}
         {card.imageUrl && (
