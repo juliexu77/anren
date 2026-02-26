@@ -7,12 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { Search, Check } from "lucide-react";
 import { toast } from "sonner";
-
-interface ContactEntry {
-  name: string;
-  phone?: string;
-  email?: string;
-}
+import { fetchDeviceContacts, hasContactsSupport, type ContactEntry } from "@/lib/contacts";
 
 interface Props {
   open: boolean;
@@ -26,47 +21,45 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pickerTriggered, setPickerTriggered] = useState(false);
+  const [fetchTriggered, setFetchTriggered] = useState(false);
   const [manualName, setManualName] = useState("");
 
-  const hasContactsAPI = typeof navigator !== "undefined" && "contacts" in navigator && "ContactsManager" in window;
+  const supportsContacts = hasContactsSupport();
 
-  // Auto-open native picker when sheet opens
+  // Auto-fetch contacts when sheet opens
   useEffect(() => {
     if (!open) {
-      setPickerTriggered(false);
+      setFetchTriggered(false);
       setContacts([]);
       setSelected(new Set());
       setSearch("");
       return;
     }
 
-    if (hasContactsAPI && !pickerTriggered) {
-      setPickerTriggered(true);
+    if (supportsContacts && !fetchTriggered) {
+      setFetchTriggered(true);
       (async () => {
         try {
-          const props = ["name", "tel", "email"];
-          // @ts-ignore - Contact Picker API
-          const results = await navigator.contacts.select(props, { multiple: true });
-          const mapped: ContactEntry[] = results.map((c: any) => ({
-            name: c.name?.[0] || "Unknown",
-            phone: c.tel?.[0] || undefined,
-            email: c.email?.[0] || undefined,
-          }));
-          setContacts(mapped);
-          // Pre-select all that aren't already added
+          const results = await fetchDeviceContacts();
+          if (!results || results.length === 0) {
+            onClose();
+            return;
+          }
+          setContacts(results);
+          // Pre-select contacts not already added
           const preSelected = new Set<number>();
-          mapped.forEach((c, i) => {
+          results.forEach((c, i) => {
             if (!existingNames.includes(c.name)) preSelected.add(i);
           });
           setSelected(preSelected);
         } catch (err) {
-          console.error("Contact picker error:", err);
+          console.error("Contact fetch error:", err);
+          toast.error("Could not access contacts");
           onClose();
         }
       })();
     }
-  }, [open, hasContactsAPI, pickerTriggered, existingNames, onClose]);
+  }, [open, supportsContacts, fetchTriggered, existingNames, onClose]);
 
   const toggleSelect = (index: number) => {
     setSelected((prev) => {
@@ -108,8 +101,8 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
     (i) => contacts[i] && !existingNames.includes(contacts[i].name)
   ).length;
 
-  // Don't show sheet until contacts are loaded (picker is open natively)
-  if (open && hasContactsAPI && contacts.length === 0) return null;
+  // Don't show sheet until contacts are loaded
+  if (open && supportsContacts && contacts.length === 0) return null;
 
   return (
     <Sheet open={open && contacts.length > 0} onOpenChange={(o) => !o && onClose()}>
@@ -204,7 +197,7 @@ export function ContactImportSheet({ open, onClose, onImport, existingNames }: P
           </div>
 
           {/* Manual add fallback */}
-          {!hasContactsAPI && contacts.length === 0 && (
+          {!supportsContacts && contacts.length === 0 && (
             <div className="flex gap-2 pt-2">
               <input
                 type="text"
