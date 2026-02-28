@@ -18,11 +18,17 @@ export function generateDailyOrientation(
   const overdue = scheduled.filter((c) => c.dueAt && isPast(parseISO(c.dueAt)) && !isToday(parseISO(c.dueAt)));
   const dueToday = scheduled.filter((c) => c.dueAt && isToday(parseISO(c.dueAt)));
 
+  const seenEvents = new Set<string>();
   const todayEvents = calendarEvents.filter((e) => {
     const start = e.start.dateTime || e.start.date;
-    return start ? isToday(parseISO(start)) : false;
+    if (!start || !isToday(parseISO(start))) return false;
+    const key = e.id || `${e.summary}|${start}`;
+    if (seenEvents.has(key)) return false;
+    seenEvents.add(key);
+    return true;
   });
 
+  const seenMilestones = new Set<string>();
   const milestones = calendarEvents
     .filter(isMilestoneEvent)
     .map((e) => {
@@ -31,7 +37,13 @@ export function generateDailyOrientation(
       const daysAway = differenceInDays(startDate, new Date());
       return { ...e, startDate, daysAway };
     })
-    .filter((e) => e.daysAway >= 0 && e.daysAway <= 7)
+    .filter((e) => {
+      if (e.daysAway < 0 || e.daysAway > 7) return false;
+      const key = e.id || `${e.summary}|${e.start.dateTime || e.start.date}`;
+      if (seenMilestones.has(key)) return false;
+      seenMilestones.add(key);
+      return true;
+    })
     .sort((a, b) => a.daysAway - b.daysAway);
 
   const lines: string[] = ["Good morning.", ""];
@@ -67,7 +79,7 @@ export function generateDailyOrientation(
   if (active.length > 0) {
     lines.push("Holding:");
     active.slice(0, 3).forEach((c) => lines.push(`• ${c.title || c.body.split("\n")[0].substring(0, 50) || "Unnamed"}`));
-    if (active.length > 3) lines.push(`• +${active.length - 3} more`);
+    if (active.length > 3) lines.push(`and ${active.length - 3} others resting here`);
     lines.push("");
   }
 
