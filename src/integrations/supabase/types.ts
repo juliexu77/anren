@@ -19,10 +19,14 @@ export type Database = {
           body: string
           category: string
           created_at: string
+          due_at: string | null
+          google_event_id: string | null
           group_id: string | null
           id: string
           image_url: string | null
+          routed_type: string | null
           source: string
+          status: string
           summary: string
           title: string
           updated_at: string
@@ -32,10 +36,14 @@ export type Database = {
           body?: string
           category?: string
           created_at?: string
+          due_at?: string | null
+          google_event_id?: string | null
           group_id?: string | null
           id?: string
           image_url?: string | null
+          routed_type?: string | null
           source?: string
+          status?: string
           summary?: string
           title?: string
           updated_at?: string
@@ -45,10 +53,14 @@ export type Database = {
           body?: string
           category?: string
           created_at?: string
+          due_at?: string | null
+          google_event_id?: string | null
           group_id?: string | null
           id?: string
           image_url?: string | null
+          routed_type?: string | null
           source?: string
+          status?: string
           summary?: string
           title?: string
           updated_at?: string

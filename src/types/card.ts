@@ -26,6 +26,8 @@ export type CardCategory =
   | "laundry";
 
 export type CardSource = "text" | "screenshot" | "voice";
+export type ItemStatus = "inbox" | "routed" | "done";
+export type RoutedType = "task" | "event" | "reference" | "ignore";
 
 export interface BrainCard {
   id: string;
@@ -34,8 +36,12 @@ export interface BrainCard {
   body: string;
   category: CardCategory;
   source: CardSource;
-  imageUrl?: string;
+  imageUrl?: string | null;
   groupId?: string | null;
+  status: ItemStatus;
+  routedType?: RoutedType | null;
+  dueAt?: string | null;
+  googleEventId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

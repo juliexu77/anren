@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { BrainCard, CardCategory, CardSource } from "@/types/card";
+import type { BrainCard, CardCategory, CardSource, ItemStatus, RoutedType } from "@/types/card";
 
 export function useCards() {
   const { user } = useAuth();
@@ -36,6 +36,10 @@ export function useCards() {
           source: row.source as CardSource,
           imageUrl: row.image_url,
           groupId: row.group_id,
+          status: (row.status || "inbox") as ItemStatus,
+          routedType: row.routed_type as RoutedType | null,
+          dueAt: row.due_at,
+          googleEventId: row.google_event_id,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         }));
@@ -98,6 +102,10 @@ export function useCards() {
         source: data.source ?? "text",
         imageUrl: data.imageUrl ?? null,
         groupId: null,
+        status: "inbox",
+        routedType: null,
+        dueAt: null,
+        googleEventId: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -133,7 +141,7 @@ export function useCards() {
   );
 
   const updateCard = useCallback(
-    async (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category">>) => {
+    async (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category" | "status" | "routedType" | "dueAt" | "googleEventId">>) => {
       // Optimistic local update
       setCards((prev) =>
         prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
@@ -144,6 +152,10 @@ export function useCards() {
       if (updates.summary !== undefined) dbUpdates.summary = updates.summary;
       if (updates.body !== undefined) dbUpdates.body = updates.body;
       if (updates.category !== undefined) dbUpdates.category = updates.category;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.routedType !== undefined) dbUpdates.routed_type = updates.routedType;
+      if (updates.dueAt !== undefined) dbUpdates.due_at = updates.dueAt;
+      if (updates.googleEventId !== undefined) dbUpdates.google_event_id = updates.googleEventId;
 
       const { error } = await supabase
         .from("cards")
