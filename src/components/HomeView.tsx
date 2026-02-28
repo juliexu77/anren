@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { isToday, isPast, parseISO, format } from "date-fns";
+import { CalendarClock } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation } from "@/lib/dailyOrientation";
@@ -18,9 +19,14 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
   const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
 
   const todayEvents = useMemo(() => {
+    const seen = new Set<string>();
     return calendarEvents.filter((e) => {
       const start = e.start.dateTime || e.start.date;
-      return start ? isToday(parseISO(start)) : false;
+      if (!start || !isToday(parseISO(start))) return false;
+      const key = e.id || `${e.summary}|${start}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
   }, [calendarEvents]);
 
@@ -30,11 +36,9 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
 
   const orientation = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
 
-  const hasToday = todayEvents.length > 0 || dueToday.length > 0 || overdue.length > 0;
-
   return (
     <main className="px-4 space-y-5 pb-4">
-      {/* ── Daily Orientation ── */}
+      {/* ── Daily Orientation (single orientation zone) ── */}
       <div
         className="rounded-lg px-4 py-3"
         style={{
@@ -50,25 +54,23 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
         </pre>
       </div>
 
-      {/* ── IN VIEW TODAY ── */}
-      <Section title="In view today">
-        {!hasToday && !calendarLoading ? (
-          <EmptyRow text="Nothing pressing. Everything is here." />
-        ) : (
-          <>
-            {calendarLoading && <EmptyRow text="Loading calendar…" />}
-            {overdue.map((card) => (
-              <ItemRow key={card.id} card={card} overdue onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
-            ))}
-            {dueToday.map((card) => (
-              <ItemRow key={card.id} card={card} onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
-            ))}
-            {todayEvents.map((event) => (
-              <EventRow key={event.id} event={event} />
-            ))}
-          </>
-        )}
-      </Section>
+      {/* ── Overdue / Due today (inline, no section header) ── */}
+      {(overdue.length > 0 || dueToday.length > 0) && (
+        <div
+          className="rounded-lg overflow-hidden"
+          style={{
+            background: "hsl(var(--card-bg) / 0.5)",
+            border: "1px solid hsl(var(--divider) / 0.15)",
+          }}
+        >
+          {overdue.map((card) => (
+            <ItemRow key={card.id} card={card} overdue onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
+          ))}
+          {dueToday.map((card) => (
+            <ItemRow key={card.id} card={card} onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
+          ))}
+        </div>
+      )}
 
       {/* ── RESTING HERE ── */}
       {active.length > 0 && (
@@ -196,10 +198,11 @@ function ItemRow({
       {onSchedule && (
         <button
           onClick={(e) => { e.stopPropagation(); onSchedule(); }}
-          className="text-micro px-1.5 py-0.5 rounded shrink-0 transition-colors hover:bg-foreground/[0.05]"
+          className="p-1 rounded shrink-0 transition-colors hover:bg-foreground/[0.05]"
           style={{ color: "hsl(var(--text-muted))" }}
+          title="Schedule"
         >
-          schedule
+          <CalendarClock className="w-3.5 h-3.5" />
         </button>
       )}
     </div>
