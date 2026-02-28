@@ -22,7 +22,7 @@ export function generateDailyOrientation(
   const todayEvents = calendarEvents.filter((e) => {
     const start = e.start.dateTime || e.start.date;
     if (!start || !isToday(parseISO(start))) return false;
-    const key = e.id || `${e.summary}|${start}`;
+    const key = `${(e.summary || "").trim().toLowerCase()}|${start}`;
     if (seenEvents.has(key)) return false;
     seenEvents.add(key);
     return true;
@@ -39,7 +39,7 @@ export function generateDailyOrientation(
     })
     .filter((e) => {
       if (e.daysAway < 0 || e.daysAway > 7) return false;
-      const key = e.id || `${e.summary}|${e.start.dateTime || e.start.date}`;
+      const key = `${(e.summary || "").trim().toLowerCase()}|${e.start.dateTime || e.start.date}`;
       if (seenMilestones.has(key)) return false;
       seenMilestones.add(key);
       return true;

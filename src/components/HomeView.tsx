@@ -23,7 +23,7 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
     return calendarEvents.filter((e) => {
       const start = e.start.dateTime || e.start.date;
       if (!start || !isToday(parseISO(start))) return false;
-      const key = e.id || `${e.summary}|${start}`;
+      const key = `${(e.summary || "").trim().toLowerCase()}|${start}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
