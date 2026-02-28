@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
-import type { BrainCard, CardCategory } from "@/types/card";
-import { CATEGORY_CONFIG } from "@/types/card";
-import { Trash2, ChevronLeft, Calendar, Loader2, ChevronDown } from "lucide-react";
+import type { BrainCard } from "@/types/card";
+import { Trash2, ChevronLeft, Calendar, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
@@ -19,7 +18,7 @@ interface Props {
   card: BrainCard | null;
   open: boolean;
   onClose: () => void;
-  onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category">>) => void;
+  onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body">>) => void;
   onDelete: (id: string) => void;
 }
 
@@ -28,7 +27,6 @@ const APP_URL = "https://anren.app";
 export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Props) {
   const [body, setBody] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { createEvent } = useGoogleCalendar();
 
@@ -48,13 +46,9 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
     setLastId(currentCardId);
     setBody(card!.body);
     setIsEditing(false);
-    setShowCategoryPicker(false);
   }
 
   if (!card || !open) return null;
-
-  const cat = CATEGORY_CONFIG[card.category];
-  const Icon = cat.icon;
 
   const handleTapToEdit = () => {
     setIsEditing(true);
@@ -64,64 +58,13 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
   const handleSave = () => {
     onUpdate(card.id, { body });
     setIsEditing(false);
-
-    // Re-classify and regenerate summary
-    const noteBody = body || card.body;
-    const noteTitle = card.title;
-    supabase.functions
-      .invoke("classify-note", { body: { title: noteTitle, body: noteBody } })
-      .then(({ data, error }) => {
-        if (error || !data || data.error) return;
-        const updates: Partial<Pick<BrainCard, "title" | "summary" | "category">> = {};
-        if (data.category) updates.category = data.category;
-        if (data.summary) updates.summary = data.summary;
-        if (!noteTitle && data.title) updates.title = data.title;
-        if (Object.keys(updates).length > 0) {
-          onUpdate(card.id, updates);
-        }
-      });
-
-    // Close the card after saving
     onClose();
   };
 
-  const handleCategoryChange = (newCategory: CardCategory) => {
-    onUpdate(card.id, { category: newCategory });
-    setShowCategoryPicker(false);
-  };
-
   const handleClose = () => {
-    const bodyChanged = body !== card.body;
-    if (bodyChanged) {
+    if (body !== card.body) {
       onUpdate(card.id, { body });
     }
-
-    const needsClassification =
-      card.source === "text" &&
-      card.category === "uncategorized" &&
-      (body.trim() || card.title.trim());
-
-    if (needsClassification || (bodyChanged && card.source === "text")) {
-      const noteBody = body || card.body;
-      const noteTitle = card.title;
-      supabase.functions
-        .invoke("classify-note", { body: { title: noteTitle, body: noteBody } })
-        .then(({ data, error }) => {
-          if (error || !data || data.error) {
-            console.error("Classify error:", error || data?.error);
-            return;
-          }
-          const updates: Partial<Pick<BrainCard, "title" | "summary" | "category">> = {};
-          if (data.category) updates.category = data.category;
-          if (data.summary) updates.summary = data.summary;
-          if (!noteTitle && data.title) updates.title = data.title;
-          if (Object.keys(updates).length > 0) {
-            onUpdate(card.id, updates);
-            toast.success("Note categorized!");
-          }
-        });
-    }
-
     onClose();
   };
 
@@ -133,7 +76,6 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
       });
 
       if (error || !data || data.error) {
-        console.error("Extract error:", error || data?.error);
         setEventTitle(card.title || "New Event");
         setEventDesc("");
         setEventDate(new Date().toISOString().split("T")[0]);
@@ -147,8 +89,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
         setEventEndTime(data.endTime || "10:00");
       }
       setShowEventSheet(true);
-    } catch (e) {
-      console.error("Extract event error:", e);
+    } catch {
       setEventTitle(card.title || "New Event");
       setEventDesc("");
       setEventDate(new Date().toISOString().split("T")[0]);
@@ -180,13 +121,13 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
     }
   };
 
-  const allCategories = Object.entries(CATEGORY_CONFIG) as [CardCategory, typeof cat][];
+  const typeLabel = card.type === "task" ? "Task" : card.type === "ongoing" ? "Ongoing" : card.type === "event" ? "Event" : "";
 
   return (
     <>
       <div
         className="fixed inset-0 z-50 flex flex-col animate-in fade-in slide-in-from-right duration-200"
-        style={{ background: 'hsl(var(--bg))' }}
+        style={{ background: "hsl(var(--bg))" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
@@ -194,55 +135,23 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
           </button>
-          <button
-            onClick={() => setShowCategoryPicker(!showCategoryPicker)}
-            className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
-          >
-            <Icon className="w-3.5 h-3.5 text-muted-foreground/60" />
+          {typeLabel && (
             <span className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">
-              {cat.label}
+              {typeLabel}
             </span>
-            <ChevronDown className="w-3 h-3 text-muted-foreground/40" />
+          )}
+          <button
+            onClick={() => { onDelete(card.id); onClose(); }}
+            className="text-destructive/70 active:text-destructive p-1"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { onDelete(card.id); onClose(); }}
-              className="text-destructive/70 active:text-destructive p-1"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
         </div>
 
-        {/* Category picker */}
-        {showCategoryPicker && (
-          <div className="px-4 pb-3">
-            <div
-              className="flex flex-wrap gap-2 p-3 rounded-xl"
-              style={{
-                background: "hsl(var(--surface) / 0.6)",
-                border: "1px solid hsl(var(--divider) / 0.2)",
-              }}
-            >
-              {allCategories.map(([key, cfg]) => {
-                const CatIcon = cfg.icon;
-                const isActive = card.category === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => handleCategoryChange(key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      isActive
-                        ? "bg-foreground/10 text-foreground"
-                        : "text-muted-foreground/60 active:bg-foreground/5"
-                    }`}
-                  >
-                    <CatIcon className="w-3 h-3" />
-                    {cfg.label}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Title */}
+        {card.title && (
+          <div className="px-5 pt-2">
+            <h2 className="text-h3" style={{ color: "hsl(var(--text))" }}>{card.title}</h2>
           </div>
         )}
 
@@ -277,9 +186,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
         {/* Bottom actions */}
         <div className="px-5 pb-6 pt-2 space-y-2">
           {isEditing && (
-            <Button className="w-full" onClick={handleSave}>
-              Save
-            </Button>
+            <Button className="w-full" onClick={handleSave}>Save</Button>
           )}
           <button
             onClick={handleCreateEvent}
@@ -291,11 +198,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
               color: "hsl(var(--text) / 0.7)",
             }}
           >
-            {extracting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Calendar className="w-4 h-4" />
-            )}
+            {extracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
             Add to Calendar
           </button>
         </div>
@@ -308,53 +211,23 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             <SheetTitle className="font-display text-lg">Create Calendar Event</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 mt-4">
-            <Input
-              placeholder="Event title"
-              value={eventTitle}
-              onChange={(e) => setEventTitle(e.target.value)}
-              autoFocus
-            />
-            <Textarea
-              placeholder="Description"
-              value={eventDesc}
-              onChange={(e) => setEventDesc(e.target.value)}
-              className="resize-none"
-              rows={2}
-            />
+            <Input placeholder="Event title" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} autoFocus />
+            <Textarea placeholder="Description" value={eventDesc} onChange={(e) => setEventDesc(e.target.value)} className="resize-none" rows={2} />
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Date</label>
-              <Input
-                type="date"
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
-              />
+              <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="text-xs text-muted-foreground mb-1 block">Start</label>
-                <Input
-                  type="time"
-                  value={eventStartTime}
-                  onChange={(e) => setEventStartTime(e.target.value)}
-                />
+                <Input type="time" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
               </div>
               <div className="flex-1">
                 <label className="text-xs text-muted-foreground mb-1 block">End</label>
-                <Input
-                  type="time"
-                  value={eventEndTime}
-                  onChange={(e) => setEventEndTime(e.target.value)}
-                />
+                <Input type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              A link back to this note will be included in the event description.
-            </p>
-            <Button
-              className="w-full"
-              onClick={handleConfirmCreate}
-              disabled={!eventTitle.trim() || creating}
-            >
+            <Button className="w-full" onClick={handleConfirmCreate} disabled={!eventTitle.trim() || creating}>
               {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Create Event
             </Button>
