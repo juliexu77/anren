@@ -1,64 +1,43 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Wallet,
-  Baby,
-  Trophy,
-  Stethoscope,
-  Wrench,
-  Home,
-  Package,
-  Shirt,
-  UtensilsCrossed,
-  WashingMachine,
-} from "lucide-react";
-
-export type CardCategory =
-  | "uncategorized"
-  | "finance"
-  | "childcare"
-  | "extracurriculars"
-  | "doctor"
-  | "house-maintenance"
-  | "home-organization"
-  | "household-inventory"
-  | "kids-clothes"
-  | "food"
-  | "laundry";
-
-export type CardSource = "text" | "screenshot" | "voice";
-export type ItemStatus = "inbox" | "routed" | "done";
-export type RoutedType = "task" | "event" | "reference" | "ignore";
+export type ItemType = "task" | "ongoing" | "event";
+export type ItemStatus = "active" | "scheduled" | "complete";
+export type CardSource = "text" | "screenshot" | "voice" | "brain_dump";
 
 export interface BrainCard {
   id: string;
   title: string;
   summary: string;
   body: string;
-  category: CardCategory;
   source: CardSource;
+  type: ItemType | null;
+  status: ItemStatus;
   imageUrl?: string | null;
   groupId?: string | null;
-  status: ItemStatus;
-  routedType?: RoutedType | null;
   dueAt?: string | null;
   googleEventId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export const CATEGORY_CONFIG: Record<
-  CardCategory,
-  { label: string; icon: LucideIcon; color: string }
-> = {
-  uncategorized: { label: "New", icon: Package, color: "bg-muted" },
-  finance: { label: "Finance", icon: Wallet, color: "bg-primary/10" },
-  childcare: { label: "Kids", icon: Baby, color: "bg-secondary/10" },
-  extracurriculars: { label: "Activities", icon: Trophy, color: "bg-primary/8" },
-  doctor: { label: "Medical", icon: Stethoscope, color: "bg-secondary/10" },
-  "house-maintenance": { label: "Repairs", icon: Wrench, color: "bg-primary/10" },
-  "home-organization": { label: "Organize", icon: Home, color: "bg-secondary/8" },
-  "household-inventory": { label: "Inventory", icon: Package, color: "bg-primary/8" },
-  "kids-clothes": { label: "Clothes", icon: Shirt, color: "bg-secondary/10" },
-  food: { label: "Food", icon: UtensilsCrossed, color: "bg-primary/10" },
-  laundry: { label: "Laundry", icon: WashingMachine, color: "bg-muted" },
-};
+/* ── Legacy mapping helpers ── */
+export function mapStatus(raw: string): ItemStatus {
+  switch (raw) {
+    case "active": return "active";
+    case "inbox": return "active";
+    case "scheduled": return "scheduled";
+    case "routed": return "scheduled";
+    case "complete": return "complete";
+    case "done": return "complete";
+    default: return "active";
+  }
+}
+
+export function mapType(raw: string | null): ItemType | null {
+  switch (raw) {
+    case "task": return "task";
+    case "ongoing": return "ongoing";
+    case "event": return "event";
+    case "reference": return "ongoing";
+    case "ignore": return null;
+    default: return null;
+  }
+}

@@ -1,0 +1,229 @@
+import { useMemo } from "react";
+import { isToday, isPast, parseISO, format } from "date-fns";
+import type { BrainCard } from "@/types/card";
+import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
+import { generateDailyOrientation } from "@/lib/dailyOrientation";
+
+interface Props {
+  cards: BrainCard[];
+  calendarEvents: CalendarEvent[];
+  calendarLoading: boolean;
+  onCardClick: (card: BrainCard) => void;
+  onComplete: (id: string) => void;
+  onSchedule: (card: BrainCard) => void;
+}
+
+export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule }: Props) {
+  const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@"), [cards]);
+  const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
+
+  const todayEvents = useMemo(() => {
+    return calendarEvents.filter((e) => {
+      const start = e.start.dateTime || e.start.date;
+      return start ? isToday(parseISO(start)) : false;
+    });
+  }, [calendarEvents]);
+
+  const dueToday = useMemo(() => scheduled.filter((c) => c.dueAt && isToday(parseISO(c.dueAt))), [scheduled]);
+  const overdue = useMemo(() => scheduled.filter((c) => c.dueAt && isPast(parseISO(c.dueAt)) && !isToday(parseISO(c.dueAt))), [scheduled]);
+  const upcoming = useMemo(() => scheduled.filter((c) => !c.dueAt || (!isToday(parseISO(c.dueAt!)) && !isPast(parseISO(c.dueAt!)))), [scheduled]);
+
+  const orientation = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
+
+  const hasToday = todayEvents.length > 0 || dueToday.length > 0 || overdue.length > 0;
+
+  return (
+    <main className="px-4 space-y-5 pb-4">
+      {/* ── Daily Orientation ── */}
+      <div
+        className="rounded-lg px-4 py-3"
+        style={{
+          background: "hsl(var(--card-bg) / 0.5)",
+          border: "1px solid hsl(var(--divider) / 0.15)",
+        }}
+      >
+        <pre
+          className="text-caption whitespace-pre-wrap font-sans"
+          style={{ color: "hsl(var(--text-secondary))", lineHeight: "1.6" }}
+        >
+          {orientation}
+        </pre>
+      </div>
+
+      {/* ── IN VIEW TODAY ── */}
+      <Section title="In view today">
+        {!hasToday && !calendarLoading ? (
+          <EmptyRow text="Nothing pressing. Everything is here." />
+        ) : (
+          <>
+            {calendarLoading && <EmptyRow text="Loading calendar…" />}
+            {overdue.map((card) => (
+              <ItemRow key={card.id} card={card} overdue onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
+            ))}
+            {dueToday.map((card) => (
+              <ItemRow key={card.id} card={card} onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
+            ))}
+            {todayEvents.map((event) => (
+              <EventRow key={event.id} event={event} />
+            ))}
+          </>
+        )}
+      </Section>
+
+      {/* ── RESTING HERE ── */}
+      {active.length > 0 && (
+        <Section title="Resting here">
+          {active.map((card) => (
+            <ItemRow
+              key={card.id}
+              card={card}
+              onClick={() => onCardClick(card)}
+              onSchedule={() => onSchedule(card)}
+              onComplete={() => onComplete(card.id)}
+            />
+          ))}
+        </Section>
+      )}
+
+      {/* ── IN MOTION ── */}
+      {upcoming.length > 0 && (
+        <Section title="In motion">
+          {upcoming.map((card) => (
+            <ItemRow key={card.id} card={card} showDate onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
+          ))}
+        </Section>
+      )}
+
+      {cards.length === 0 && !calendarLoading && (
+        <p className="text-caption text-center py-12" style={{ color: "hsl(var(--text-muted))" }}>
+          Your mind is clear. Tap below to empty your head.
+        </p>
+      )}
+    </main>
+  );
+}
+
+/* ── Section ── */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="text-label uppercase tracking-wider mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+        {title}
+      </h2>
+      <div
+        className="rounded-lg overflow-hidden"
+        style={{
+          background: "hsl(var(--card-bg) / 0.5)",
+          border: "1px solid hsl(var(--divider) / 0.15)",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ── Empty Row ── */
+function EmptyRow({ text }: { text: string }) {
+  return (
+    <div className="px-3 py-2.5">
+      <span className="text-caption" style={{ color: "hsl(var(--text-muted))" }}>{text}</span>
+    </div>
+  );
+}
+
+/* ── Item Row ── */
+function ItemRow({
+  card,
+  overdue,
+  showDate,
+  onClick,
+  onComplete,
+  onSchedule,
+}: {
+  card: BrainCard;
+  overdue?: boolean;
+  showDate?: boolean;
+  onClick: () => void;
+  onComplete?: () => void;
+  onSchedule?: () => void;
+}) {
+  const typeLabel = card.type === "ongoing" ? "ongoing" : card.type === "event" ? "event" : "";
+  const dateStr = showDate && card.dueAt ? format(parseISO(card.dueAt), "MMM d") : "";
+
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-2 transition-colors"
+      style={{ borderBottom: "1px solid hsl(var(--divider) / 0.08)" }}
+    >
+      {/* Complete button */}
+      {onComplete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onComplete(); }}
+          className="w-4 h-4 rounded-full border shrink-0 transition-colors hover:border-foreground/40"
+          style={{ borderColor: "hsl(var(--divider) / 0.4)" }}
+          title="Mark complete"
+        />
+      )}
+
+      {dateStr && (
+        <span
+          className="text-micro font-medium w-[44px] shrink-0 text-right tabular-nums"
+          style={{ color: overdue ? "hsl(var(--destructive))" : "hsl(var(--text-muted))" }}
+        >
+          {dateStr}
+        </span>
+      )}
+
+      <button onClick={onClick} className="flex-1 text-left truncate min-w-0">
+        <span
+          className="text-caption truncate"
+          style={{ color: overdue ? "hsl(var(--destructive))" : "hsl(var(--text))" }}
+        >
+          {card.title || card.body.split("\n")[0].substring(0, 60) || "Unnamed"}
+        </span>
+      </button>
+
+      {typeLabel && (
+        <span
+          className="text-micro px-1.5 py-0.5 rounded shrink-0"
+          style={{ background: "hsl(var(--surface))", color: "hsl(var(--text-muted))" }}
+        >
+          {typeLabel}
+        </span>
+      )}
+
+      {onSchedule && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSchedule(); }}
+          className="text-micro px-1.5 py-0.5 rounded shrink-0 transition-colors hover:bg-foreground/[0.05]"
+          style={{ color: "hsl(var(--text-muted))" }}
+        >
+          schedule
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ── Calendar Event Row ── */
+function EventRow({ event }: { event: CalendarEvent }) {
+  const time = event.start.dateTime ? format(parseISO(event.start.dateTime), "h:mm a") : "All day";
+
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-2"
+      style={{ borderBottom: "1px solid hsl(var(--divider) / 0.08)" }}
+    >
+      <span
+        className="text-micro font-medium w-[60px] shrink-0 text-right tabular-nums"
+        style={{ color: "hsl(var(--text-muted))" }}
+      >
+        {time}
+      </span>
+      <span className="text-caption flex-1 truncate" style={{ color: "hsl(var(--text))" }}>
+        {event.summary}
+      </span>
+    </div>
+  );
+}

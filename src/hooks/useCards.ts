@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { BrainCard, CardCategory, CardSource, ItemStatus, RoutedType } from "@/types/card";
+import type { BrainCard, ItemType, ItemStatus, CardSource } from "@/types/card";
+import { mapStatus, mapType } from "@/types/card";
 
 export function useCards() {
   const { user } = useAuth();
   const [cards, setCards] = useState<BrainCard[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch cards from database
   useEffect(() => {
     if (!user) {
       setCards([]);
@@ -27,24 +27,23 @@ export function useCards() {
       if (error) {
         console.error("Failed to fetch cards:", error);
       } else {
-        const mapped = (data || []).map((row: any) => ({
+        const mapped = (data || []).map((row: any): BrainCard => ({
           id: row.id,
           title: row.title,
           summary: row.summary || "",
           body: row.body,
-          category: row.category as CardCategory,
           source: row.source as CardSource,
+          type: mapType(row.routed_type),
+          status: mapStatus(row.status),
           imageUrl: row.image_url,
           groupId: row.group_id,
-          status: (row.status || "inbox") as ItemStatus,
-          routedType: row.routed_type as RoutedType | null,
           dueAt: row.due_at,
           googleEventId: row.google_event_id,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         }));
 
-        // Auto-fail cards stuck in parsing for >2 minutes
+        // Auto-fail stale parsing items
         const now = Date.now();
         const staleIds: string[] = [];
         mapped.forEach((c) => {
@@ -64,52 +63,47 @@ export function useCards() {
 
     fetchCards();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel("cards-changes")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "cards", filter: `user_id=eq.${user.id}` },
-        () => {
-          fetchCards();
-        }
+        () => fetchCards()
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const addCard = useCallback(
     async (data: {
       title: string;
       body: string;
-      category?: CardCategory;
       source?: CardSource;
       imageUrl?: string;
+      type?: ItemType;
+      status?: ItemStatus;
+      dueAt?: string;
     }): Promise<string> => {
       if (!user) return "";
 
-      // Optimistic: add to UI immediately
       const tempId = crypto.randomUUID();
-      const optimisticCard: BrainCard = {
+      const optimistic: BrainCard = {
         id: tempId,
         title: data.title,
         summary: "",
         body: data.body,
-        category: data.category ?? "uncategorized",
         source: data.source ?? "text",
+        type: data.type ?? null,
+        status: data.status ?? "active",
         imageUrl: data.imageUrl ?? null,
         groupId: null,
-        status: "inbox",
-        routedType: null,
-        dueAt: null,
+        dueAt: data.dueAt ?? null,
         googleEventId: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      setCards((prev) => [optimisticCard, ...prev]);
+      setCards((prev) => [optimistic, ...prev]);
 
       const { data: inserted, error } = await supabase
         .from("cards")
@@ -117,8 +111,10 @@ export function useCards() {
           user_id: user.id,
           title: data.title,
           body: data.body,
-          category: data.category ?? "uncategorized",
           source: data.source ?? "text",
+          routed_type: data.type ?? null,
+          status: data.status ?? "active",
+          due_at: data.dueAt ?? null,
           image_url: data.imageUrl,
         })
         .select("id")
@@ -130,102 +126,61 @@ export function useCards() {
         return "";
       }
 
-      // Replace temp id with real id
-      setCards((prev) =>
-        prev.map((c) => (c.id === tempId ? { ...c, id: inserted.id } : c))
-      );
-
+      setCards((prev) => prev.map((c) => (c.id === tempId ? { ...c, id: inserted.id } : c)));
       return inserted.id;
     },
     [user]
   );
 
+  /** Bulk-add items from a brain dump */
+  const addItems = useCallback(
+    async (items: Array<{
+      title: string;
+      type: ItemType;
+      dueAt?: string | null;
+    }>) => {
+      if (!user) return;
+
+      const rows = items.map((item) => ({
+        user_id: user.id,
+        title: item.title,
+        body: "",
+        source: "brain_dump",
+        routed_type: item.type,
+        status: item.dueAt ? "scheduled" : "active",
+        due_at: item.dueAt || null,
+      }));
+
+      const { error } = await supabase.from("cards").insert(rows);
+      if (error) console.error("Failed to add items:", error);
+    },
+    [user]
+  );
+
   const updateCard = useCallback(
-    async (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "category" | "status" | "routedType" | "dueAt" | "googleEventId">>) => {
-      // Optimistic local update
-      setCards((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
-      );
+    async (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body" | "status" | "type" | "dueAt" | "googleEventId">>) => {
+      setCards((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
 
       const dbUpdates: Record<string, any> = {};
       if (updates.title !== undefined) dbUpdates.title = updates.title;
       if (updates.summary !== undefined) dbUpdates.summary = updates.summary;
       if (updates.body !== undefined) dbUpdates.body = updates.body;
-      if (updates.category !== undefined) dbUpdates.category = updates.category;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
-      if (updates.routedType !== undefined) dbUpdates.routed_type = updates.routedType;
+      if (updates.type !== undefined) dbUpdates.routed_type = updates.type;
       if (updates.dueAt !== undefined) dbUpdates.due_at = updates.dueAt;
       if (updates.googleEventId !== undefined) dbUpdates.google_event_id = updates.googleEventId;
 
-      const { error } = await supabase
-        .from("cards")
-        .update(dbUpdates)
-        .eq("id", id);
-
-      if (error) {
-        console.error("Failed to update card:", error);
-      }
-    },
-    []
-  );
-
-  const groupCards = useCallback(
-    async (cardId1: string, cardId2: string) => {
-      // Check if either card already has a group
-      const card1 = cards.find((c) => c.id === cardId1);
-      const card2 = cards.find((c) => c.id === cardId2);
-      if (!card1 || !card2) return;
-
-      const groupId = card1.groupId || card2.groupId || crypto.randomUUID();
-
-      // Optimistic update
-      setCards((prev) =>
-        prev.map((c) =>
-          c.id === cardId1 || c.id === cardId2 || c.groupId === groupId
-            ? { ...c, groupId }
-            : c
-        )
-      );
-
-      const { error } = await supabase
-        .from("cards")
-        .update({ group_id: groupId })
-        .in("id", [cardId1, cardId2]);
-
-      if (error) console.error("Failed to group cards:", error);
-    },
-    [cards]
-  );
-
-  const ungroupCards = useCallback(
-    async (groupId: string) => {
-      setCards((prev) =>
-        prev.map((c) => (c.groupId === groupId ? { ...c, groupId: null } : c))
-      );
-
-      const { error } = await supabase
-        .from("cards")
-        .update({ group_id: null })
-        .eq("group_id", groupId);
-
-      if (error) console.error("Failed to ungroup cards:", error);
+      const { error } = await supabase.from("cards").update(dbUpdates).eq("id", id);
+      if (error) console.error("Failed to update card:", error);
     },
     []
   );
 
   const deleteCard = useCallback(async (id: string) => {
-    // Optimistically remove from UI
     setCards((prev) => prev.filter((c) => c.id !== id));
-
-    const { error } = await supabase
-      .from("cards")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Failed to delete card:", error);
-    }
+    const { error } = await supabase.from("cards").delete().eq("id", id);
+    if (error) console.error("Failed to delete card:", error);
   }, []);
 
-  return { cards, loading, addCard, updateCard, deleteCard, groupCards, ungroupCards };
+  return { cards, loading, addCard, addItems, updateCard, deleteCard };
 }
