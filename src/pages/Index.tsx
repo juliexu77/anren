@@ -2,27 +2,24 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { usePeople } from "@/hooks/usePeople";
 import { HomeTriageView } from "@/components/HomeTriageView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { GoogleCalendarView } from "@/components/GoogleCalendarView";
 import { SettingsPage } from "@/components/SettingsPage";
-import { PeopleView } from "@/components/PeopleView";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
-import { Settings, Search, Home, Users, Calendar, Camera, Type, Mic, Plus } from "lucide-react";
+import { Settings, Home, Calendar, Camera, Type, Mic, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { startOfDay, addDays } from "date-fns";
 import type { BrainCard, CardCategory, RoutedType } from "@/types/card";
 
-type ViewId = "home" | "people" | "calendar" | "settings";
+type ViewId = "home" | "calendar" | "settings";
 
 const Index = () => {
   const { cards, addCard, updateCard, deleteCard } = useCards();
-  const { people } = usePeople();
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent } = useGoogleCalendar();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeView, setActiveView] = useState<ViewId>("home");
@@ -31,7 +28,6 @@ const Index = () => {
   const [showComposeMenu, setShowComposeMenu] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [scheduleCard, setScheduleCard] = useState<BrainCard | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch calendar events for today + 7 days
   useEffect(() => {
@@ -45,9 +41,7 @@ const Index = () => {
     const openCardId = searchParams.get("openCard");
     if (openCardId && cards.length > 0) {
       const found = cards.find((c) => c.id === openCardId);
-      if (found) {
-        setSelectedCard(found);
-      }
+      if (found) setSelectedCard(found);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, cards, setSearchParams]);
@@ -64,7 +58,6 @@ const Index = () => {
 
   const navTabs: { id: ViewId; icon: typeof Home; label: string }[] = [
     { id: "home", icon: Home, label: "Home" },
-    { id: "people", icon: Users, label: "People" },
     { id: "calendar", icon: Calendar, label: "Calendar" },
   ];
 
@@ -95,8 +88,6 @@ const Index = () => {
           onRoute={handleRoute}
           onSchedule={handleSchedule}
         />
-      ) : activeView === "people" ? (
-        <PeopleView />
       ) : activeView === "calendar" ? (
         <GoogleCalendarView />
       ) : (

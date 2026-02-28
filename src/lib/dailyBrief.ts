@@ -1,6 +1,13 @@
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
-import { isToday, isPast, parseISO, format } from "date-fns";
+import { isToday, isPast, parseISO, format, differenceInDays } from "date-fns";
+
+const MILESTONE_KEYWORDS = ["birthday", "anniversary", "bday", "b-day"];
+
+function isMilestoneEvent(event: CalendarEvent): boolean {
+  const summary = (event.summary || "").toLowerCase();
+  return MILESTONE_KEYWORDS.some(kw => summary.includes(kw));
+}
 
 export function generateDailyBrief(
   cards: BrainCard[],
@@ -16,11 +23,32 @@ export function generateDailyBrief(
     return start ? isToday(parseISO(start)) : false;
   });
 
+  // Milestone events (birthdays, anniversaries) in next 7 days
+  const milestones = calendarEvents
+    .filter(isMilestoneEvent)
+    .map(e => {
+      const start = e.start.dateTime || e.start.date;
+      const startDate = start ? parseISO(start) : new Date();
+      const daysAway = differenceInDays(startDate, new Date());
+      return { ...e, startDate, daysAway };
+    })
+    .filter(e => e.daysAway >= 0 && e.daysAway <= 7)
+    .sort((a, b) => a.daysAway - b.daysAway);
+
   const lines: string[] = ["Good morning.", ""];
+
+  // Milestones — surface first
+  if (milestones.length > 0) {
+    milestones.forEach(m => {
+      const when = m.daysAway === 0 ? "Today" : m.daysAway === 1 ? "Tomorrow" : format(m.startDate, "EEEE");
+      lines.push(`🎂 ${m.summary} — ${when}`);
+    });
+    lines.push("");
+  }
 
   // Today section
   const todayItems: string[] = [];
-  todayEvents.slice(0, 3).forEach(e => {
+  todayEvents.filter(e => !isMilestoneEvent(e)).slice(0, 3).forEach(e => {
     const time = e.start.dateTime ? format(parseISO(e.start.dateTime), "h:mm a") : "All day";
     todayItems.push(`${time} — ${e.summary}`);
   });
