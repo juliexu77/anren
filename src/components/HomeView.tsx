@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { isToday, isPast, parseISO, format } from "date-fns";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Loader2 } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation } from "@/lib/dailyOrientation";
@@ -15,7 +15,8 @@ interface Props {
 }
 
 export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule }: Props) {
-  const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@"), [cards]);
+  const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@"), [cards]);
+  const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
   const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
 
   const todayEvents = useMemo(() => {
@@ -68,6 +69,30 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
           ))}
           {dueToday.map((card) => (
             <ItemRow key={card.id} card={card} onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
+          ))}
+        </div>
+      )}
+
+      {/* ── PARSING ── */}
+      {parsing.length > 0 && (
+        <div
+          className="rounded-lg overflow-hidden"
+          style={{
+            background: "hsl(var(--card-bg) / 0.5)",
+            border: "1px solid hsl(var(--divider) / 0.15)",
+          }}
+        >
+          {parsing.map((card) => (
+            <div
+              key={card.id}
+              className="flex items-center gap-2 px-3 py-2.5"
+              style={{ borderBottom: "1px solid hsl(var(--divider) / 0.08)" }}
+            >
+              <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: "hsl(var(--text-muted))" }} />
+              <span className="text-caption" style={{ color: "hsl(var(--text-muted))" }}>
+                Parsing image…
+              </span>
+            </div>
           ))}
         </div>
       )}

@@ -64,7 +64,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
     }).then(({ data, error }) => {
       if (error || data?.error) {
         console.error("Background parse error:", error || data?.error);
-        toast.error("Couldn't parse image — edit the note manually");
+        toast.error("Couldn't parse image — edit the note manually", { id: "parse-image" });
         if (onUpdateCard) onUpdateCard(cardId, { body: "@@PARSE_FAILED@@" });
         return;
       }
@@ -75,7 +75,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
           summary: data.summary || "",
         });
       }
-      toast.success("Image parsed!");
+      toast.success("Image parsed!", { id: "parse-image" });
     });
   };
 
@@ -86,6 +86,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       return;
     }
     didPickRef.current = true;
+    toast.loading("Processing image…", { id: "parse-image" });
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const base64 = ev.target?.result as string;
