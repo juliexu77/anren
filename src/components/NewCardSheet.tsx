@@ -114,6 +114,7 @@ export function NewCardSheet({ open, onClose, onAdd, onUpdateCard }: Props) {
       ref={fileInputRef}
       type="file"
       accept="image/*"
+      capture="environment"
       className="hidden"
       onChange={handleImageUpload}
     />

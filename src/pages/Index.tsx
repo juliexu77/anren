@@ -5,9 +5,10 @@ import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
+import { NewCardSheet } from "@/components/NewCardSheet";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
-import { Settings, X } from "lucide-react";
+import { Settings, X, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
 import type { BrainCard, ItemType } from "@/types/card";
@@ -18,6 +19,7 @@ const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showBrainDump, setShowBrainDump] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [scheduleCard, setScheduleCard] = useState<BrainCard | null>(null);
 
@@ -93,22 +95,39 @@ const Index = () => {
         onSchedule={handleSchedule}
       />
 
-      {/* ── Empty Your Head button ── */}
+      {/* ── Bottom action bar ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 px-5 pb-8 pt-4 pointer-events-none">
-        <button
-          onClick={() => setShowBrainDump(true)}
-          className="w-full py-3.5 rounded-xl text-button font-medium transition-all pointer-events-auto active:scale-[0.98]"
-          style={{
-            background: "hsl(var(--surface) / 0.7)",
-            border: "1px solid hsl(var(--divider) / 0.25)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-            color: "hsl(var(--text))",
-          }}
-        >
-          Empty your head
-        </button>
+        <div className="flex gap-3 pointer-events-auto">
+          <button
+            onClick={() => setShowCamera(true)}
+            className="py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] shrink-0"
+            style={{
+              background: "hsl(var(--surface) / 0.7)",
+              border: "1px solid hsl(var(--divider) / 0.25)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+              color: "hsl(var(--text))",
+            }}
+            title="Capture screenshot"
+          >
+            <Camera className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowBrainDump(true)}
+            className="flex-1 py-3.5 rounded-xl text-button font-medium transition-all active:scale-[0.98]"
+            style={{
+              background: "hsl(var(--surface) / 0.7)",
+              border: "1px solid hsl(var(--divider) / 0.25)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+              color: "hsl(var(--text))",
+            }}
+          >
+            Empty your head
+          </button>
+        </div>
       </div>
 
       {/* Sheets */}
@@ -126,6 +145,13 @@ const Index = () => {
         onClose={() => setScheduleCard(null)}
         onCreateEvent={createEvent}
         onUpdateCard={updateCard}
+      />
+
+      <NewCardSheet
+        open={showCamera}
+        onClose={() => setShowCamera(false)}
+        onAdd={addCard}
+        onUpdateCard={(id, updates) => updateCard(id, updates)}
       />
 
       <BrainDumpSheet
