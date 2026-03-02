@@ -18,7 +18,8 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      if (isNativeApp() && Capacitor.getPlatform() === "ios") {
+      // iOS: always use native Google Sign-In (Capgo). Never use web redirect on iOS to avoid 404 on callback.
+      if (Capacitor.getPlatform() === "ios") {
         const result = await signInWithGoogleNative();
         if (!result.success) {
           toast.error(result.message || "Sign in failed. Please try again.");

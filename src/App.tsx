@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GoogleCallback from "./pages/GoogleCallback";
+import LovableOAuthCallback from "./pages/LovableOAuthCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -41,6 +42,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/google-callback" element={<ProtectedRoute><GoogleCallback /></ProtectedRoute>} />
+              <Route path="/~oauth/callback" element={<LovableOAuthCallback />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/card/:cardId" element={<ProtectedRoute><CardDeepLink /></ProtectedRoute>} />

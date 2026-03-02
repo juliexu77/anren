@@ -71,3 +71,42 @@ When you change the app:
 | Web | `642658972912-pl00m439aqavqbdhgne2a5dpk8oj3v3d.apps.googleusercontent.com` |
 | iOS | `642658972912-pg1g1hti6rkv53s2m30cve5auenjti7d.apps.googleusercontent.com` |
 | iOS URL scheme (Info.plist) | `com.googleusercontent.apps.642658972912-pg1g1hti6rkv53s2m30cve5auenjti7d` |
+
+---
+
+## Testing & configuration checklist
+
+### 1. Google client ID secrets (configure once)
+
+- **Local iOS builds**  
+  In project root, `.env.local` must contain (already set):
+  - `VITE_GOOGLE_WEB_CLIENT_ID=642658972912-pl00m439aqavqbdhgne2a5dpk8oj3v3d.apps.googleusercontent.com`
+  - `VITE_GOOGLE_IOS_CLIENT_ID=642658972912-pg1g1hti6rkv53s2m30cve5auenjti7d.apps.googleusercontent.com`
+
+- **Supabase**  
+  Dashboard → **Authentication** → **Providers** → **Google**:  
+  Enable Google and set **Client ID** (Web) and **Client Secret** from the same Web OAuth client in Google Cloud. If Supabase has an optional field for additional iOS client ID, add the iOS client ID above so `signInWithIdToken` accepts tokens from both.
+
+- **Edge functions**  
+  Supabase → **Project settings** → **Edge Functions** → **Secrets**:  
+  `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` must be set (used by `google-auth-callback` and `google-calendar` for calendar OAuth and API calls).
+
+- **Google Cloud Console**  
+  APIs & Services → **Credentials**:  
+  - Web OAuth client: authorized redirect URIs include your web app origin (e.g. Lovable preview) and, for calendar, `https://<your-domain>/google-callback`.  
+  - iOS OAuth client: bundle ID `com.anrenapp.anren`; no redirect URI needed for native Sign-In.
+
+### 2. Test Google Sign-In end-to-end
+
+- **Web**  
+  1. Open the app in a browser (not in Capacitor).  
+  2. Go to the auth page and click **Sign in with Google**.  
+  3. Complete Google sign-in; you should land on the app logged in (e.g. Hub/Home).  
+  4. No console errors; `useAuth` has a user.
+
+- **iOS**  
+  1. `npm run build && npx cap sync ios`, then open Xcode and run on simulator or device.  
+  2. On the auth screen, tap **Sign in with Google**.  
+  3. Native Google Sign-In sheet should appear (not a full WebView).  
+  4. After signing in, you should be in the app with cards/Hub visible.  
+  5. Optional: Calendar tab → **Connect Google Calendar** → complete flow; events should load.
