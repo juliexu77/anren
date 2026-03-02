@@ -9,12 +9,13 @@
     - Supabase edge function `parse-image` calls **Claude Sonnet** to extract card data from images.
     - `classify-note` and `process-brain-dump` use Lovable’s Gemini gateway to classify notes and expand brain dumps.
   - **Mobile shell**: Capacitor (iOS + Android ready), plus **Capgo Social Login** for native Google sign‑in on iOS.
+  - **Chrome extension**: Lives in **extension/** — Manifest V3 side panel (React), same backend as web app. Shares types with web via **shared/**; build output **extension/dist** (load unpacked in Chrome).
 
 ## Domain model
 
-- **BrainCard** (`src/types/card.ts`):
+- **BrainCard** — single source of truth in **shared/types/card.ts**; web app uses **src/types/card.ts** (re-exports from shared).
   - **Core fields**: `id`, `title`, `summary`, `body`, `source`, `type`, `status`, `dueAt`, `googleEventId`, `createdAt`, `updatedAt`.
-  - **Source**: `text` | `screenshot` | `voice` | `brain_dump`.
+  - **Source**: `text` | `screenshot` | `voice` | `brain_dump` | `extension`.
   - **Type**: `task` (one‑time), `ongoing`, `event` (calendar‑bound).
   - **Status**: `active`, `scheduled`, `complete`.
   - Helper mappers `mapStatus`/`mapType` normalize legacy values.
@@ -96,6 +97,17 @@
   - iOS client ID: `642658972912-pg1g1hti6rkv53s2m30cve5auenjti7d.apps.googleusercontent.com`.
   - Important redirect URI: `https://anren.app/google-callback` (must be whitelisted for calendar connect).
 
+- **Extension env** — **extension/.env** (gitignored): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`; optional `VITE_INTAKE_API_URL`. Copy from **extension/.env.example**.
+
+## Shared module and extension
+
+- **shared/** — Used by web app and Chrome extension.
+  - `shared/types/card.ts` — BrainCard, ItemType, ItemStatus, CardSource, mapStatus, mapType.
+  - `shared/api/createSupabase.ts` — `createSupabaseClient(url, anonKey)`.
+  - `shared/index.ts` — Re-exports.
+- **Web app**: `src/types/card.ts` re-exports from shared so existing `@/types/card` imports work.
+- **Extension**: Uses shared types via **extension/src/shared/cardTypes.ts** (re-exports from `"shared"`). Supabase client lives in **extension/src/shared/supabaseClient.ts** (its own `createClient` + env) to avoid type clashes between root and extension `node_modules`; extension manifest includes `https://*.supabase.co/*` in host_permissions. Build: Vite builds side panel from **side-panel.html**; plugin copies **public/manifest.json**, **background.js**, **calendar-inject.js**, **icons** into **extension/dist** and fixes script paths.
+
 ## Things to preserve when editing
 
 - **Do not remove or bypass**:
@@ -103,6 +115,7 @@
   - `getAppOrigin()` in `src/lib/utils.ts` and its usage in `GoogleCalendarView` and `GoogleCallback` — required so calendar OAuth works on both web and iOS.
   - URL scheme and Google Sign‑In handling in `ios/App/App/Info.plist` and `ios/App/App/AppDelegate.swift`.
   - Supabase edge functions’ tool/JSON schemas when calling external AI APIs; callers expect those shapes.
+  - **shared/** as single source for card types and `createSupabaseClient`; extension’s **cardTypes.ts** and build (dist + manifest + Supabase host permission) wiring.
 
 ## How to run and build
 
@@ -114,4 +127,6 @@
 - **iOS**:
   - `npm run build && npx cap sync ios`
   - `npx cap open ios` → build/run from Xcode, then Archive for TestFlight as usual.
+- **Chrome extension**:
+  - `npm run build:extension` (from repo root). Load unpacked extension from **extension/dist** in Chrome (`chrome://extensions` → Developer mode → Load unpacked). Ensure **extension/.env** has Supabase URL and anon key (see extension/.env.example).
 
