@@ -384,8 +384,8 @@
 
 .anren-guidance-title {
   font-family: var(--font-serif);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 400;
   color: hsl(var(--text));
   margin: 0 0 6px;
   line-height: 1.3;
