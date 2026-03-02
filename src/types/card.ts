@@ -1,6 +1,6 @@
 export type ItemType = "task" | "ongoing" | "event";
 export type ItemStatus = "active" | "scheduled" | "complete";
-export type CardSource = "text" | "screenshot" | "voice" | "brain_dump";
+export type CardSource = "text" | "screenshot" | "voice" | "brain_dump" | "extension";
 
 export interface BrainCard {
   id: string;
