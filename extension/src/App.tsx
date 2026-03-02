@@ -6,12 +6,10 @@ import {
 } from "./components/AnrenGuidanceTooltips";
 import { callIntakeApi } from "./shared/intakeApi";
 import {
-  createIntakeFallback,
-  createTasks,
-  fetchRecentIntakeItems,
+  createCard,
+  fetchRecentCards,
   hasSupabaseConfig,
-  type IntakeItem,
-  type Task as SupabaseTask,
+  type Card,
 } from "./shared/supabaseClient";
 import { getCurrentUserId } from "./shared/config";
 import "./App.css";
@@ -27,55 +25,33 @@ type RestingHereItem = {
   sourceLabel: string;
 };
 
-/** Tiny source label for display: gmail, calendar, or domain. */
-function getSourceLabel(item: IntakeItem): string {
-  const url = item.source_url || "";
-  const title = (item.source_title || "").toLowerCase();
-  if (url.includes("mail.google.com") || title.includes("gmail") || title.includes("inbox"))
-    return "Gmail";
-  if (url.includes("calendar.google.com") || title.includes("calendar"))
-    return "Calendar";
-  if (url) {
-    try {
-      const host = new URL(url).hostname.replace(/^www\./, "");
-      return host.split(".").slice(-2).join(".") || "Saved";
-    } catch {
-      return "Saved";
-    }
-  }
-  return "Side panel";
+function getSourceLabel(card: Card): string {
+  const s = (card.source || "").toLowerCase();
+  if (s.includes("extension")) return "Side panel";
+  if (s.includes("gmail") || s.includes("mail")) return "Gmail";
+  if (s.includes("calendar")) return "Calendar";
+  return card.source || "Saved";
 }
 
-function mapIntakeToResting(item: IntakeItem): RestingHereItem {
-  const raw = item.raw_text || "";
-  const [firstLine, ...rest] = raw.split("\n");
-  const title = firstLine.trim() || "Untitled note";
-  const body = rest.join("\n").trim() || raw;
-
+function mapCardToResting(card: Card): RestingHereItem {
   let createdAtLabel = "Just now";
-  if (item.created_at) {
-    const created = new Date(item.created_at);
+  if (card.created_at) {
+    const created = new Date(card.created_at);
     const today = new Date();
     const isToday =
       created.getFullYear() === today.getFullYear() &&
       created.getMonth() === today.getMonth() &&
       created.getDate() === today.getDate();
-    if (isToday) {
-      createdAtLabel = "Added today";
-    } else {
-      createdAtLabel = created.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-      });
-    }
+    createdAtLabel = isToday
+      ? "Added today"
+      : created.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   }
-
   return {
-    id: item.id,
-    title,
-    body,
+    id: card.id,
+    title: card.title || "Untitled",
+    body: card.body || "",
     createdAtLabel,
-    sourceLabel: getSourceLabel(item),
+    sourceLabel: getSourceLabel(card),
   };
 }
 
@@ -159,14 +135,13 @@ function App() {
     if (!hasSupabase) return;
 
     let cancelled = false;
-    const userId = getCurrentUserId();
 
     async function load() {
       try {
         setDataStatus("loading");
-        const intake = await fetchRecentIntakeItems(userId);
+        const cards = await fetchRecentCards(20, "extension");
         if (cancelled) return;
-        setRestingItems(intake.map(mapIntakeToResting));
+        setRestingItems(cards.map(mapCardToResting));
         setDataStatus("ready");
       } catch {
         if (cancelled) return;
@@ -193,43 +168,32 @@ function App() {
     const userId = getCurrentUserId();
     const timestamp = new Date().toISOString();
 
-    const sourceOptions =
-      sourceUrl || sourceTitle
-        ? {
-            source_url: sourceUrl ?? undefined,
-            source_title: sourceTitle ?? undefined,
-          }
-        : undefined;
-
     try {
-      const apiResult = await callIntakeApi({
+      await callIntakeApi({
         userId,
         rawText: rawText.trim(),
         source: "chrome_side_panel",
         timestamp,
       });
-
-      if ("tasks" in apiResult && apiResult.tasks.length > 0) {
-        await createTasks(
-          userId,
-          apiResult.tasks as Omit<
-            SupabaseTask,
-            "id" | "user_id" | "created_at"
-          >[],
-        );
-      }
     } catch {
-      // Swallow intake API errors; we always fall back to storing the raw text.
+      // Swallow; we persist via createCard below.
     }
 
-    const created = await createIntakeFallback(
-      userId,
-      rawText.trim(),
-      sourceOptions,
-    );
+    const [firstLine, ...rest] = rawText.trim().split("\n");
+    const title = firstLine.trim() || "Untitled note";
+    let body = rest.join("\n").trim();
+    if (sourceUrl || sourceTitle) {
+      body = [body, [sourceTitle, sourceUrl].filter(Boolean).join(" ")].filter(Boolean).join("\n\n");
+    }
+
+    const created = await createCard({
+      title,
+      body,
+      summary: body.slice(0, 200) || title,
+    });
 
     if (created) {
-      setRestingItems((current) => [mapIntakeToResting(created), ...current]);
+      setRestingItems((current) => [mapCardToResting(created), ...current]);
       setStatus("saved");
       setPreviewText("");
       setSourceUrl(null);

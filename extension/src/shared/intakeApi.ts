@@ -1,4 +1,4 @@
-import type { Task, UserId } from "./supabaseClient";
+import type { UserId } from "./supabaseClient";
 
 const INTAKE_API_URL = import.meta.env
   .VITE_INTAKE_API_URL as string | undefined;
@@ -10,13 +10,18 @@ export type IntakeRequest = {
   timestamp: string;
 };
 
+/** Shape of a task returned by the intake API (if configured). */
+export type IntakeTask = {
+  title: string;
+  notes?: string | null;
+  due_at?: string | null;
+  scope?: string | null;
+  status?: string | null;
+};
+
 export type IntakeApiResponse =
-  | {
-      tasks: Omit<Task, "id" | "user_id" | "created_at">[];
-    }
-  | {
-      error: string;
-    };
+  | { tasks: IntakeTask[] }
+  | { error: string };
 
 async function fetchWithTimeout(
   url: string,
