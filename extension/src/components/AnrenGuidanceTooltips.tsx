@@ -4,10 +4,10 @@ import { X, ChevronRight, ChevronLeft } from "lucide-react";
 
 const GUIDANCE_STEPS = [
   {
-    title: "Where the mental load rests.",
+    title: "A quiet holding place.",
     content:
-      "This is a quiet holding place. Capture something small now, and you can decide what to do with it later.",
-    icon: "✧",
+      "Notice something on your mind. Capture it here — you can decide what to do with it later.",
+    icon: "○",
   },
   {
     title: "Notice something",
