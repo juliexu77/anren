@@ -21,7 +21,7 @@ const Auth = () => {
       if (isNativeApp() && Capacitor.getPlatform() === "ios") {
         const result = await signInWithGoogleNative();
         if (!result.success) {
-          toast.error(result.message || "Sign in failed. Please try again.");
+          toast.error("message" in result ? result.message : "Sign in failed. Please try again.");
         }
         return;
       }
