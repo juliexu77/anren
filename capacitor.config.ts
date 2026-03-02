@@ -1,13 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.0a7e4764598a41d486213c2b0280a390',
+  appId: 'com.anrenapp.anren',
   appName: 'anren',
   webDir: 'dist',
-  server: {
-    url: 'https://0a7e4764-598a-41d4-8621-3c2b0280a390.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+  // Production: app serves bundled assets from dist/. For dev hot-reload, uncomment server block and point url to your preview.
+  // server: {
+  //   url: 'https://0a7e4764-598a-41d4-8621-3c2b0280a390.lovableproject.com?forceHideBadge=true',
+  //   cleartext: true,
+  // },
   ios: {
     contentInset: 'automatic',
   },
