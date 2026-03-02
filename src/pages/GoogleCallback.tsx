@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { getAppOrigin } from "@/lib/utils";
 
 export default function GoogleCallback() {
   const [searchParams] = useSearchParams();
@@ -24,7 +25,7 @@ export default function GoogleCallback() {
         const token = session.data.session?.access_token;
         if (!token) throw new Error("Not signed in");
 
-        const redirectUri = `${window.location.origin}/google-callback`;
+        const redirectUri = `${getAppOrigin()}/google-callback`;
 
         const res = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-auth-callback?action=exchange-code`,

@@ -49,5 +49,14 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>ANREN uses your contacts so you can add people to your circle.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.642658972912-pg1g1hti6rkv53s2m30cve5auenjti7d</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

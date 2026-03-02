@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Capacitor } from "@capacitor/core";
+import { signInWithGoogleNative, isNativeApp } from "@/lib/authNative";
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -15,17 +17,30 @@ const Auth = () => {
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-      extraParams: {
-        access_type: "offline",
-        prompt: "consent",
-        scope: "openid email profile https://www.googleapis.com/auth/calendar",
-      },
-    });
-    if (error) {
+    try {
+      if (isNativeApp() && Capacitor.getPlatform() === "ios") {
+        const result = await signInWithGoogleNative();
+        if (!result.success) {
+          toast.error(result.message || "Sign in failed. Please try again.");
+        }
+        return;
+      }
+
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+        extraParams: {
+          access_type: "offline",
+          prompt: "consent",
+          scope: "openid email profile https://www.googleapis.com/auth/calendar",
+        },
+      });
+      if (error) {
+        toast.error("Sign in failed. Please try again.");
+        console.error("OAuth error:", error);
+      }
+    } catch (err) {
+      console.error("Sign-in error:", err);
       toast.error("Sign in failed. Please try again.");
-      console.error("OAuth error:", error);
     }
   };
 

@@ -12,6 +12,7 @@ import {
   isSameDay,
   parseISO,
 } from "date-fns";
+import { getAppOrigin } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -70,7 +71,7 @@ export function GoogleCalendarView() {
       const token = session.data.session?.access_token;
       if (!token) throw new Error("Not signed in");
 
-      const redirectUri = `${window.location.origin}/google-callback`;
+      const redirectUri = `${getAppOrigin()}/google-callback`;
 
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-auth-callback?action=get-auth-url`,
