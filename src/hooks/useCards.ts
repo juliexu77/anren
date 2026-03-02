@@ -151,8 +151,29 @@ export function useCards() {
         due_at: item.dueAt || null,
       }));
 
-      const { error } = await supabase.from("cards").insert(rows);
-      if (error) console.error("Failed to add items:", error);
+      const { data, error } = await supabase.from("cards").insert(rows).select();
+      if (error) {
+        console.error("Failed to add items:", error);
+        return;
+      }
+      if (data) {
+        const mapped: BrainCard[] = data.map((row) => ({
+          id: row.id,
+          title: row.title,
+          summary: row.summary,
+          body: row.body,
+          source: row.source as BrainCard["source"],
+          type: mapType(row.routed_type),
+          status: mapStatus(row.status),
+          imageUrl: row.image_url,
+          groupId: row.group_id,
+          dueAt: row.due_at,
+          googleEventId: row.google_event_id,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+        setCards((prev) => [...mapped, ...prev]);
+      }
     },
     [user]
   );
