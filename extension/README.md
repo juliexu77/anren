@@ -1,41 +1,86 @@
-# ANREN Chrome Extension
+# Anren Chrome Extension
 
-Lives in this repo next to the web app. Shares the same backend (Supabase) and **shared/** types/API.
+Side panel for Anren (same backend as the web app). Build from repo root: `npm run build:extension`. Load the unpacked extension from `extension/dist` in Chrome.
 
-## Structure
+## Shared types
 
-- **shared/** (repo root) — `BrainCard` types, `createSupabaseClient(url, anonKey)`. Import from `shared` in popup/background/content.
-- **src/popup.*** — Popup UI (replace with your implementation).
-- **src/background.ts** — Service worker (replace with your logic).
-- **src/content.ts** — Content script (replace with your logic).
-- **manifest.json** — Chrome Manifest V3.
+This extension lives in the anren monorepo and shares types with the web app via the `shared` module:
 
-## Build
+- **Card types:** `import type { BrainCard, ItemType, ItemStatus } from "./shared/cardTypes";` — `extension/src/shared/cardTypes.ts` re-exports from `shared` so the side panel uses the same `BrainCard` (and helpers like `mapStatus`, `mapType`) as the web app.
+- **Supabase:** The side panel uses its own Supabase client in `extension/src/shared/supabaseClient.ts` (with `extension/.env`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) to avoid type clashes between root and extension `node_modules`. For new code you can use `createSupabaseClient(url, anonKey)` from `"shared"` if you pass URL/key from storage or options.
 
-From repo root:
+---
 
-```bash
-cd extension && npm install && npm run build
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-Or from root package.json: `npm run build:extension`
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-Output: **extension/dist/** — load this folder in Chrome as “Load unpacked”.
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-## Using shared code
-
-In popup/background/content:
-
-```ts
-import { createSupabaseClient, type BrainCard } from "shared";
-// Get url/anonKey from chrome.storage or options page, then:
-const supabase = createSupabaseClient(url, anonKey);
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-## Replacing with your extension
-
-If you had a separate extension repo, copy your real popup/background/content and options UI here, then:
-
-1. Keep using `shared` for types and `createSupabaseClient`.
-2. Ensure extension/build outputs to `extension/dist` and manifest paths match.
-3. Add any extra permissions in `manifest.json`.

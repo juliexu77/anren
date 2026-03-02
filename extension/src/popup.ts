@@ -1,8 +1,7 @@
 /**
- * ANREN extension popup — replace with your UI.
- * Use shared types and API: import { createSupabaseClient, type BrainCard } from "../../shared";
+ * ANREN extension popup — same backend as web app.
+ * Use shared: import type { BrainCard } from "shared"; import { createSupabaseClient } from "shared";
  */
-
 document.getElementById("root")!.innerHTML = `
   <div style="min-width: 320px; padding: 16px; font-family: system-ui;">
     <h2 style="margin: 0 0 8px; font-size: 18px;">ANREN</h2>
