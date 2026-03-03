@@ -68,6 +68,60 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_brief_dismissals: {
+        Row: {
+          created_at: string
+          dismissed_date: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_date?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_date?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_brief_settings: {
+        Row: {
+          calendars: string[]
+          created_at: string
+          delivery_time: string
+          enabled: boolean
+          id: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendars?: string[]
+          created_at?: string
+          delivery_time?: string
+          enabled?: boolean
+          id?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendars?: string[]
+          created_at?: string
+          delivery_time?: string
+          enabled?: boolean
+          id?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       people: {
         Row: {
           created_at: string

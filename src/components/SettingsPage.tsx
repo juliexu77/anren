@@ -1,12 +1,51 @@
 import { useColorTheme } from "@/contexts/ColorThemeContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { cn } from "@/lib/utils";
-import { Check, LogOut } from "lucide-react";
+import { Check, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { useMemo, useCallback } from "react";
+
+/** Convert "HH:MM:SS" → display "h:mm AM/PM" */
+function formatTime(time24: string): string {
+  const [h, m] = time24.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+
+/** Generate all 15-min slots */
+function generateTimeSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      slots.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:00`);
+    }
+  }
+  return slots;
+}
 
 export function SettingsPage() {
   const { currentTheme, setTheme, themes } = useColorTheme();
   const { user, signOut } = useAuth();
+  const { settings, settingsLoaded, updateSettings } = useDailyBrief();
+
+  const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  const handleTimeChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      updateSettings({ delivery_time: e.target.value });
+    },
+    [updateSettings]
+  );
+
+  const handleToggle = useCallback(
+    (enabled: boolean) => {
+      updateSettings({ enabled });
+    },
+    [updateSettings]
+  );
 
   return (
     <main className="px-5 pb-8 space-y-8">
@@ -24,6 +63,69 @@ export function SettingsPage() {
           </Button>
         </div>
       </section>
+
+      {/* Daily Brief */}
+      {settingsLoaded && (
+        <section>
+          <h2 className="text-section-header text-muted-foreground mb-4">Daily Brief</h2>
+          <div
+            className="rounded-2xl border p-4 space-y-4"
+            style={{
+              borderColor: "hsl(var(--divider) / 0.25)",
+              background: "hsl(var(--card-bg) / 0.5)",
+            }}
+          >
+            {/* Enable / disable */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4" style={{ color: "hsl(var(--text-muted))" }} />
+                <span className="text-caption" style={{ color: "hsl(var(--text))" }}>
+                  Morning brief
+                </span>
+              </div>
+              <Switch checked={settings.enabled} onCheckedChange={handleToggle} />
+            </div>
+
+            {/* Delivery time */}
+            {settings.enabled && (
+              <div className="space-y-2">
+                <label
+                  className="text-label"
+                  style={{ color: "hsl(var(--text-muted))" }}
+                >
+                  Delivery time
+                </label>
+                <select
+                  value={settings.delivery_time}
+                  onChange={handleTimeChange}
+                  className="w-full rounded-lg px-3 py-2.5 text-caption appearance-none"
+                  style={{
+                    background: "hsl(var(--surface))",
+                    border: "1px solid hsl(var(--divider) / 0.3)",
+                    color: "hsl(var(--text))",
+                  }}
+                >
+                  {timeSlots.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {formatTime(slot)}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-micro" style={{ color: "hsl(var(--text-muted))" }}>
+                  {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                </p>
+              </div>
+            )}
+
+            {/* Calendar note */}
+            {settings.enabled && (
+              <p className="text-micro" style={{ color: "hsl(var(--text-muted))" }}>
+                Your primary Google Calendar is used. One calendar keeps the brief focused.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Theme */}
       <section>
