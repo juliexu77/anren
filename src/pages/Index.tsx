@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
+import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
 import { Settings, X, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
@@ -16,6 +18,7 @@ import type { BrainCard, ItemType } from "@/types/card";
 const Index = () => {
   const { cards, addCard, addItems, updateCard, deleteCard } = useCards();
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent } = useGoogleCalendar();
+  const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showBrainDump, setShowBrainDump] = useState(false);
@@ -71,6 +74,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      {/* Daily Brief Overlay */}
+      {showBrief && (
+        <DailyBriefOverlay
+          cards={cards}
+          calendarEvents={calendarEvents}
+          onDismiss={dismissBrief}
+        />
+      )}
       {/* Header */}
       <header className="sticky top-0 z-40 px-5 pt-12 pb-2">
         <div className="flex items-center justify-between">
