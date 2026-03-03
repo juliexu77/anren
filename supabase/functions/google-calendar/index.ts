@@ -123,6 +123,30 @@ serve(async (req) => {
       });
     }
 
+    if (action === "calendarList") {
+      const calRes = await fetch(
+        "https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader",
+        { headers: { Authorization: `Bearer ${providerToken}` } }
+      );
+
+      if (!calRes.ok) {
+        const errText = await calRes.text();
+        throw new Error(`CalendarList error: ${calRes.status} ${errText}`);
+      }
+
+      const data = await calRes.json();
+      const calendars = (data.items || []).map((c: any) => ({
+        id: c.id,
+        summary: c.summary || c.id,
+        primary: !!c.primary,
+        backgroundColor: c.backgroundColor,
+      }));
+
+      return new Response(JSON.stringify({ calendars }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "birthdays") {
       // Query the Google Contacts birthday calendar for the next year
       const now = new Date();

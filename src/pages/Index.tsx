@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
@@ -19,6 +20,7 @@ const Index = () => {
   const { cards, addCard, addItems, updateCard, deleteCard } = useCards();
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
+  usePushNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showBrainDump, setShowBrainDump] = useState(false);
