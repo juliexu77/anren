@@ -1,45 +1,40 @@
 
 
-# Mom Brain — Your Smart Thought Capture App
+## Google Calendar Parity Review
 
-A mobile-first "better Apple Notes" that catches your half-formed thoughts, screenshots, and voice memos and turns them into organized, beautiful cards.
+### What's already working
+- Time grid with hour/half-hour lines ✓
+- Event blocks positioned by time ✓
+- Current time indicator ✓
+- All-day events strip in `CalendarTimeGrid` ✓
+- Month picker dropdown ✓
+- Day chips for navigation ✓
+- Swipe to change days ✓
 
-## Design & Aesthetic
-- **Light glass morphism** inspired by Aster's card-based layout — soft whites, frosted glass cards with subtle shadows, rose-gold and warm pastel accents
-- **Fonts**: DM Sans (body) + Playfair Display (headers) — elegant but readable
-- **Card grid layout** like Aster's Cosmos tiles — tappable cards in a responsive masonry/grid
-- **Mobile-first** with a bottom tab navigation bar
+### Gaps to fix
 
-## Tab Structure
-1. **Brain Dump** (main tab) — Your card feed, organized by category
-2. **Calendar** (placeholder tab) — Empty state with "Connect Google Calendar" prompt, ready for future integration
+**1. Day label on top-left (like Google Calendar)**
+Google Calendar shows the current day number prominently in the time gutter's top-left corner (e.g., a large "4" with "Tue" below it). Currently the sheet only shows "March 2026" as a title — there's no prominent day indicator next to the time gutter.
 
-## Card Capture Methods
-- **📸 Screenshot → Smart Card**: Upload or take a screenshot, AI reads it and extracts structured info (event details, recipe steps, to-do items, etc.) into a categorized card
-- **✏️ Quick Text Note**: Tap to jot a half-formed thought — title optional, just start typing
-- **🎙️ Voice Memo → Card**: Record a voice note, it gets transcribed and turned into a card
+**Fix:** In `CalendarTimeGrid`, add a day-of-month label at the top of the time gutter column (large number + short weekday), styled like Google Calendar's top-left corner. This replaces the blank space above the hour labels.
 
-## Smart Card Features
-- **Auto-categorization**: AI automatically tags cards into categories like Events, Tasks, Ideas, Recipes, Shopping, Kids, etc.
-- **Category pills/filters** at the top of the feed to filter by type
-- **Tap to expand & edit**: Tap any card to open it full-screen, edit text, change category, add notes
-- **Card previews**: Each card shows a summary snippet, category badge, and timestamp
+**2. All-day events not visible from AgendaSheet**
+The `CalendarTimeGrid` already has all-day event rendering logic (`getAllDayEvents` + the strip at the top), but it only shows when `hasAllDay` is true. This should already work — but the events fetched via `useGoogleCalendar` need to include all-day events (events with `start.date` instead of `start.dateTime`). The code handles both formats, so this should display correctly if the API returns them. No code change needed here — it's already implemented.
 
-## Card Editing
-- Tap into any card to edit title, body, category
-- Add additional notes or context after creation
-- Delete cards with swipe or from detail view
+**3. Day chips should show day-of-week above the number (like Google Calendar)**
+Currently chips show "Today" / "Tmrw" / "Mon" above the date number. This matches Google Calendar's style already. No change needed.
 
-## Data Storage (v1)
-- **localStorage** for all card data — no login required
-- Architecture designed for easy migration to a cloud backend later
+### Plan
 
-## AI Integration
-- Powered by **Lovable AI** (via edge function) for screenshot parsing and auto-categorization
-- Note: This will require enabling Lovable Cloud when we implement the AI features
+**File: `src/components/calendar/CalendarTimeGrid.tsx`**
+- Add a day header row above the time grid (between all-day strip and scrollable area)
+- For single-day view: show large day number + weekday abbreviation in the gutter area, with "today" styling (circled/highlighted) if it's today
+- For multi-day view: show day headers across columns
+- Style: large day number (like Google Calendar's ~24px bold number), small weekday text above it, primary color circle behind it if today
 
-## Future-Ready Design Decisions
-- Tab bar accommodates adding a Calendar tab with Google Calendar integration
-- Card data model includes fields for calendar event linking
-- Component architecture supports a future Chrome extension companion
+**File: `src/components/CalendarAgendaSheet.tsx`**
+- No changes needed — the day chips already serve as navigation and the month/year title is tappable
+
+### Summary
+One file to edit. Add a Google Calendar-style day header showing the weekday and large day number at the top of the time gutter, with today's date circled in the primary color.
 
