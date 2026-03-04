@@ -135,7 +135,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
             color: "hsl(var(--text))",
           }}
         >
-          Empty your head
+          Clear your mind
         </button>
       </div>
 
@@ -248,7 +248,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {cards.length === 0 && !calendarLoading && (
         <p className="text-caption text-center py-12" style={{ color: "hsl(var(--text-muted))" }}>
-          Your mind is clear. Tap below to empty your head.
+          Nothing resting here yet.
         </p>
       )}
     </main>

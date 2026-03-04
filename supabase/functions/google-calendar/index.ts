@@ -105,9 +105,10 @@ serve(async (req) => {
     if (action === "list") {
       const timeMin = url.searchParams.get("timeMin") || new Date().toISOString();
       const timeMax = url.searchParams.get("timeMax") || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const calendarId = url.searchParams.get("calendarId") || "primary";
 
       const calRes = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=50`,
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=50`,
         { headers: { Authorization: `Bearer ${providerToken}` } }
       );
 

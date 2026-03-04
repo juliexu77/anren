@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import GoogleCallback from "./pages/GoogleCallback";
 import LovableOAuthCallback from "./pages/LovableOAuthCallback";
 import Privacy from "./pages/Privacy";
@@ -27,7 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
 
@@ -41,6 +42,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/google-callback" element={<ProtectedRoute><GoogleCallback /></ProtectedRoute>} />
               <Route path="/~oauth/callback" element={<LovableOAuthCallback />} />
               <Route path="/privacy" element={<Privacy />} />
