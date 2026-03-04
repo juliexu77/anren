@@ -87,12 +87,16 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
   };
 
   const stopRecording = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     }
     setIsRecording(false);
   };
