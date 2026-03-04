@@ -5,6 +5,12 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  build: {
+    rollupOptions: {
+      // Native-only Capacitor plugins: not resolvable in web build; provided at runtime in native shell.
+      external: ["@capacitor/push-notifications"],
+    },
+  },
   server: {
     host: "::",
     port: 8080,
