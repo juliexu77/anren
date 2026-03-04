@@ -68,10 +68,52 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Day header row — Google Calendar style */}
+      <div className="flex border-b border-border px-0">
+        {/* Gutter: day number + weekday for single-day view */}
+        <div className="w-12 shrink-0 flex flex-col items-center justify-center py-1.5">
+          {dates.length === 1 && (
+            <>
+              <span className="text-[11px] font-medium text-muted-foreground uppercase leading-none">
+                {format(dates[0], "EEE")}
+              </span>
+              <span
+                className={`text-[22px] font-bold leading-none mt-0.5 w-9 h-9 flex items-center justify-center rounded-full ${
+                  isSameDay(dates[0], now)
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground"
+                }`}
+              >
+                {format(dates[0], "d")}
+              </span>
+            </>
+          )}
+        </div>
+        <div className="flex flex-1">
+          {isMultiDay &&
+            dates.map((date, i) => {
+              const isToday = isSameDay(date, now);
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center py-1.5 min-w-0">
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase leading-none">
+                    {format(date, "EEE")}
+                  </span>
+                  <span
+                    className={`text-[22px] font-bold leading-none mt-0.5 w-9 h-9 flex items-center justify-center rounded-full ${
+                      isToday ? "bg-primary text-primary-foreground" : "text-foreground"
+                    }`}
+                  >
+                    {format(date, "d")}
+                  </span>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+
       {/* All-day events strip */}
       {hasAllDay && (
         <div className="flex border-b border-border px-0">
-          {/* Time gutter spacer */}
           <div className="w-12 shrink-0" />
           <div className="flex flex-1">
             {dates.map((date, i) => (
