@@ -6,15 +6,24 @@ import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
 import { useRef, useCallback } from "react";
 
-const MEDITATIVE_MESSAGES = [
-  "Gathering your thoughts…",
-  "Creating a calm space…",
-  "Preparing your sanctuary…",
-  "Letting things settle…",
-  "Making room for clarity…",
-  "Breathing in stillness…",
-  "Arranging what matters…",
-  "Finding your center…",
+const LOADING_LINES = [
+  // Mary Oliver
+  "Tell me, what is it you plan to do with your one wild and precious life?",
+  "Someone I loved once gave me a box full of darkness. It took me years to understand that this too, was a gift.",
+  "Keep some room in your heart for the unimaginable.",
+  "I don't want to end up simply having visited this world.",
+  "Attention is the beginning of devotion.",
+  // Rumi
+  "Let yourself be silently drawn by the strange pull of what you really love.",
+  "The wound is the place where the light enters you.",
+  "Respond to every call that excites your spirit.",
+  "Why do you stay in prison when the door is so wide open?",
+  "Wherever you are, and whatever you do, be in love.",
+  // David Whyte
+  "Anything or anyone that does not bring you alive is too small for you.",
+  "The rest is yet to come.",
+  "Sometimes it takes darkness and the sweet confinement of your aloneness to learn that anything or anyone that does not bring you alive is too small for you.",
+  "Start close in. Don't take the second step or the third. Start with the first thing close in.",
 ];
 
 interface Props {
@@ -30,13 +39,15 @@ interface Props {
 }
 
 export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
-  const [meditativeIndex, setMeditativeIndex] = useState(0);
+  const [meditativeIndex, setMeditativeIndex] = useState(() =>
+    Math.floor(Math.random() * LOADING_LINES.length)
+  );
 
   useEffect(() => {
     if (!cardsLoading) return;
     const interval = setInterval(() => {
-      setMeditativeIndex((prev) => (prev + 1) % MEDITATIVE_MESSAGES.length);
-    }, 2800);
+      setMeditativeIndex((prev) => (prev + 1) % LOADING_LINES.length);
+    }, 4000);
     return () => clearInterval(interval);
   }, [cardsLoading]);
   const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@"), [cards]);
@@ -84,10 +95,10 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
           />
           <p
             key={meditativeIndex}
-            className="text-caption text-center animate-fade-in"
-            style={{ color: "hsl(var(--text-muted))" }}
+            className="text-caption text-center italic max-w-[280px] animate-fade-in"
+            style={{ color: "hsl(var(--text-muted))", lineHeight: "1.6" }}
           >
-            {MEDITATIVE_MESSAGES[meditativeIndex]}
+            {LOADING_LINES[meditativeIndex]}
           </p>
         </div>
       </main>
