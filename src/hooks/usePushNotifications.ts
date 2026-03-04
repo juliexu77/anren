@@ -52,16 +52,6 @@ export function usePushNotifications() {
       return;
     }
 
-    // ── Web (browser Notification API) ──
-    if ("Notification" in window && Notification.permission === "default") {
-      // Small delay so it doesn't fire immediately on first load
-      const timeout = setTimeout(() => {
-        Notification.requestPermission().then((perm) => {
-          console.log("Web notification permission:", perm);
-          registered.current = true;
-        });
-      }, 3000);
-      return () => clearTimeout(timeout);
-    }
+    // Web: no-op (no browser notifications)
   }, [user]);
 }
