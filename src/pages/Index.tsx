@@ -17,7 +17,7 @@ import { startOfDay, addDays } from "date-fns";
 import type { BrainCard, ItemType } from "@/types/card";
 
 const Index = () => {
-  const { cards, addCard, addItems, updateCard, deleteCard } = useCards();
+  const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards();
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
   usePushNotifications();
@@ -101,6 +101,7 @@ const Index = () => {
       {/* Home */}
       <HomeView
         cards={cards}
+        cardsLoading={cardsLoading}
         calendarEvents={calendarEvents}
         calendarLoading={calendarLoading}
         onCardClick={(card) => setSelectedCard(card)}
