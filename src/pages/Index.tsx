@@ -63,7 +63,7 @@ const Index = () => {
 
   if (showSettings) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen max-w-xl mx-auto">
         <header className="sticky top-0 z-40 px-5 pt-12 pb-2">
           <div className="flex items-center justify-between">
             <div className="w-12" />
@@ -79,7 +79,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen pb-6">
+    <div className="min-h-screen pb-6 max-w-xl mx-auto">
       {/* Daily Brief Overlay */}
       {showBrief && (
         <DailyBriefOverlay
