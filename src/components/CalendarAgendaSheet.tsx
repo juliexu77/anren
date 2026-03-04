@@ -75,20 +75,39 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
         <div className="shrink-0 px-5 pt-5 pb-2" style={{ background: "hsl(var(--background))" }}>
           <div className="flex items-center justify-between mb-3">
             <button
+              onClick={handleClose}
+              className="flex items-center gap-1.5 p-1 -ml-1"
+              aria-label="Back to home"
+            >
+              <ChevronLeft className="w-5 h-5" style={{ color: "hsl(var(--text) / 0.5)" }} />
+              <span className="text-[13px] font-medium" style={{ color: "hsl(var(--text) / 0.5)" }}>Home</span>
+            </button>
+            <button onClick={handleClose} className="p-2 -mr-2">
+              <X className="w-5 h-5" style={{ color: "hsl(var(--text-muted))" }} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <button
               onClick={() => {
                 setMonthPickerDate(selectedDate);
                 setShowMonthPicker((v) => !v);
               }}
-              className="font-display text-left"
+              className="font-display text-left flex items-center gap-2"
               style={{ fontSize: "24px", fontWeight: 400, color: "hsl(var(--text))" }}
             >
               {format(selectedDate, "MMMM yyyy")}
-              <span className="inline-block ml-1 text-[14px]" style={{ color: "hsl(var(--text) / 0.4)" }}>
-                {showMonthPicker ? "▲" : "▼"}
+              <span
+                className="inline-flex items-center justify-center rounded-full transition-colors"
+                style={{
+                  width: "28px",
+                  height: "28px",
+                  background: showMonthPicker ? "hsl(var(--primary) / 0.15)" : "hsl(var(--text) / 0.08)",
+                }}
+              >
+                <span className="text-[12px]" style={{ color: showMonthPicker ? "hsl(var(--primary))" : "hsl(var(--text) / 0.5)" }}>
+                  {showMonthPicker ? "▲" : "▼"}
+                </span>
               </span>
-            </button>
-            <button onClick={handleClose} className="p-2 -mr-2">
-              <X className="w-5 h-5" style={{ color: "hsl(var(--text-muted))" }} />
             </button>
           </div>
 
