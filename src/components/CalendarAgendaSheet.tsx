@@ -38,7 +38,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[85vh] overflow-auto p-0">
+      <SheetContent side="bottom" className="rounded-t-3xl h-[85vh] overflow-auto p-0 max-w-xl mx-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 pt-5 pb-3" style={{ background: "hsl(var(--background))" }}>
           <h2
             className="font-display"
