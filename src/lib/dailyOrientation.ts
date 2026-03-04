@@ -9,10 +9,16 @@ function isMilestoneEvent(event: CalendarEvent): boolean {
   return MILESTONE_KEYWORDS.some((kw) => summary.includes(kw));
 }
 
+export interface OrientationLine {
+  text: string;
+  type: "greeting" | "milestone" | "today" | "holding" | "holding-more" | "upcoming" | "empty" | "spacer" | "section-header";
+  cardId?: string;
+}
+
 export function generateDailyOrientation(
   cards: BrainCard[],
   calendarEvents: CalendarEvent[]
-): string {
+): OrientationLine[] {
   const active = cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@");
   const scheduled = cards.filter((c) => c.status === "scheduled");
   const overdue = scheduled.filter((c) => c.dueAt && isPast(parseISO(c.dueAt)) && !isToday(parseISO(c.dueAt)));
@@ -46,57 +52,61 @@ export function generateDailyOrientation(
     })
     .sort((a, b) => a.daysAway - b.daysAway);
 
-  const lines: string[] = ["Good morning.", ""];
+  const lines: OrientationLine[] = [{ text: "Good morning.", type: "greeting" }, { text: "", type: "spacer" }];
 
   // Milestones
   if (milestones.length > 0) {
     milestones.forEach((m) => {
       const when = m.daysAway === 0 ? "Today" : m.daysAway === 1 ? "Tomorrow" : format(m.startDate, "EEEE");
-      lines.push(`🎂 ${m.summary} — ${when}`);
+      lines.push({ text: `🎂 ${m.summary} — ${when}`, type: "milestone" });
     });
-    lines.push("");
+    lines.push({ text: "", type: "spacer" });
   }
 
   // Today
-  const todayItems: string[] = [];
+  const todayItems: OrientationLine[] = [];
   todayEvents
     .filter((e) => !isMilestoneEvent(e))
     .slice(0, 3)
     .forEach((e) => {
       const time = e.start.dateTime ? format(parseISO(e.start.dateTime), "h:mm a") : "All day";
-      todayItems.push(`${time} — ${e.summary}`);
+      todayItems.push({ text: `${time} — ${e.summary}`, type: "today" });
     });
-  dueToday.slice(0, 2).forEach((c) => todayItems.push(c.title || "Untitled"));
-  overdue.slice(0, 2).forEach((c) => todayItems.push(`${c.title || "Untitled"} (overdue)`));
+  dueToday.slice(0, 2).forEach((c) => todayItems.push({ text: c.title || "Untitled", type: "today", cardId: c.id }));
+  overdue.slice(0, 2).forEach((c) => todayItems.push({ text: `${c.title || "Untitled"} (overdue)`, type: "today", cardId: c.id }));
 
   if (todayItems.length > 0) {
-    lines.push("Today:");
-    todayItems.forEach((t) => lines.push(`• ${t}`));
-    lines.push("");
+    lines.push({ text: "Today:", type: "section-header" });
+    todayItems.forEach((t) => lines.push({ ...t, text: `• ${t.text}` }));
+    lines.push({ text: "", type: "spacer" });
   }
 
   // Holding
   if (active.length > 0) {
-    lines.push("Holding:");
-    active.slice(0, 3).forEach((c) => lines.push(`• ${c.title || c.body.split("\n")[0].substring(0, 50) || "Unnamed"}`));
-    if (active.length > 3) lines.push(`and ${active.length - 3} others resting here`);
-    lines.push("");
+    lines.push({ text: "Holding:", type: "section-header" });
+    active.slice(0, 3).forEach((c) => lines.push({
+      text: `• ${c.title || c.body.split("\n")[0].substring(0, 50) || "Unnamed"}`,
+      type: "holding",
+      cardId: c.id,
+    }));
+    if (active.length > 3) lines.push({ text: `and ${active.length - 3} others resting here`, type: "holding-more" });
+    lines.push({ text: "", type: "spacer" });
   }
 
   // Coming up
   const upcoming = scheduled.filter((c) => c.dueAt && !isToday(parseISO(c.dueAt!)) && !isPast(parseISO(c.dueAt!)));
   if (upcoming.length > 0) {
-    lines.push("Coming up:");
+    lines.push({ text: "Coming up:", type: "section-header" });
     upcoming.slice(0, 2).forEach((c) => {
       const date = c.dueAt ? format(parseISO(c.dueAt), "MMM d") : "";
-      lines.push(`• ${date} — ${c.title || "Untitled"}`);
+      lines.push({ text: `• ${date} — ${c.title || "Untitled"}`, type: "upcoming", cardId: c.id });
     });
   }
 
   // If nothing at all
   if (todayItems.length === 0 && active.length === 0 && upcoming.length === 0 && milestones.length === 0) {
-    lines.push("Nothing pressing. Everything is here.");
+    lines.push({ text: "Nothing pressing. Everything is here.", type: "empty" });
   }
 
-  return lines.join("\n");
+  return lines;
 }

@@ -3,7 +3,8 @@ import { isToday, isPast, parseISO, format } from "date-fns";
 import { CalendarClock, Loader2 } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
-import { generateDailyOrientation } from "@/lib/dailyOrientation";
+import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
+import { useRef, useCallback } from "react";
 
 interface Props {
   cards: BrainCard[];
@@ -35,7 +36,17 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
   const overdue = useMemo(() => scheduled.filter((c) => c.dueAt && isPast(parseISO(c.dueAt)) && !isToday(parseISO(c.dueAt))), [scheduled]);
   const upcoming = useMemo(() => scheduled.filter((c) => !c.dueAt || (!isToday(parseISO(c.dueAt!)) && !isPast(parseISO(c.dueAt!)))), [scheduled]);
 
-  const orientation = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
+  const orientationLines = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
+  const restingSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleOrientationTap = useCallback((line: OrientationLine) => {
+    if (line.type === "holding-more") {
+      restingSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (line.cardId) {
+      const card = cards.find((c) => c.id === line.cardId);
+      if (card) onCardClick(card);
+    }
+  }, [cards, onCardClick]);
 
   return (
     <main className="px-4 space-y-5 pb-4">
@@ -47,12 +58,30 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
           border: "1px solid hsl(var(--divider) / 0.15)",
         }}
       >
-        <pre
-          className="text-caption whitespace-pre-wrap font-sans"
-          style={{ color: "hsl(var(--text-secondary))", lineHeight: "1.6" }}
-        >
-          {orientation}
-        </pre>
+        <div className="space-y-0" style={{ lineHeight: "1.6" }}>
+          {orientationLines.map((line, i) => {
+            if (line.type === "spacer") return <div key={i} className="h-2" />;
+            const isClickable = line.type === "holding-more" || !!line.cardId;
+            return (
+              <div
+                key={i}
+                role={isClickable ? "button" : undefined}
+                tabIndex={isClickable ? 0 : undefined}
+                onClick={isClickable ? () => handleOrientationTap(line) : undefined}
+                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""}`}
+                style={{
+                  color: line.type === "holding-more"
+                    ? "hsl(var(--text-muted))"
+                    : line.type === "section-header"
+                    ? "hsl(var(--text-secondary))"
+                    : "hsl(var(--text-secondary))",
+                }}
+              >
+                {line.text}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Overdue / Due today (inline, no section header) ── */}
@@ -99,7 +128,7 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
 
       {/* ── RESTING HERE ── */}
       {active.length > 0 && (
-        <Section title="Resting here">
+        <Section title="Resting here" sectionRef={restingSectionRef}>
           {active.map((card) => (
             <ItemRow
               key={card.id}
@@ -131,9 +160,9 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
 }
 
 /* ── Section ── */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, sectionRef }: { title: string; children: React.ReactNode; sectionRef?: React.RefObject<HTMLDivElement> }) {
   return (
-    <div>
+    <div ref={sectionRef}>
       <h2 className="text-label uppercase tracking-wider mb-1" style={{ color: "hsl(var(--text-muted))" }}>
         {title}
       </h2>
@@ -196,7 +225,7 @@ function ItemRow({
       {dateStr && (
         <span
           className="text-micro font-medium w-[44px] shrink-0 text-right tabular-nums"
-          style={{ color: overdue ? "hsl(var(--destructive))" : "hsl(var(--text-muted))" }}
+          style={{ color: "hsl(var(--text-muted))" }}
         >
           {dateStr}
         </span>
@@ -205,7 +234,7 @@ function ItemRow({
       <button onClick={onClick} className="flex-1 text-left truncate min-w-0">
         <span
           className="text-caption truncate"
-          style={{ color: overdue ? "hsl(var(--destructive))" : "hsl(var(--text))" }}
+          style={{ color: "hsl(var(--text))" }}
         >
           {card.title || card.body.split("\n")[0].substring(0, 60) || "Unnamed"}
         </span>

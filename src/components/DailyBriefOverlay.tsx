@@ -56,15 +56,21 @@ export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
             border: "1px solid hsl(var(--divider) / 0.15)",
           }}
         >
-          <pre
-            className="text-body-sm whitespace-pre-wrap font-sans"
+          <div
+            className="text-body-sm font-sans space-y-0"
             style={{
               color: "hsl(var(--text-secondary))",
               lineHeight: "1.7",
             }}
           >
-            {orientation}
-          </pre>
+            {orientation.map((line, i) =>
+              line.type === "spacer" ? (
+                <div key={i} className="h-2" />
+              ) : (
+                <div key={i} className="text-body-sm">{line.text}</div>
+              )
+            )}
+          </div>
         </div>
 
         <button
