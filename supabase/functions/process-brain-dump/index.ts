@@ -23,6 +23,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
+    const today = new Date().toISOString().split("T")[0];
     const systemPrompt = `You are a gentle, precise assistant that helps people externalize their mental load.
 
 You will receive a raw brain dump — a stream of consciousness from someone carrying too much in their head. It may be messy, fragmented, repetitive. That's OK.
@@ -33,7 +34,7 @@ Your job:
    - A short, clear title (5-10 words max)
    - Type: "task" (one-time action), "ongoing" (recurring responsibility), or "event" (time-bound, needs calendar)
    - Theme: one of "household", "school", "health", "admin", "travel", "social", "work", "finance", "family", "personal"
-   - If you detect a date or time reference, provide it as an ISO 8601 string in due_at. Otherwise null.
+   - due_at: ONLY set this if the user explicitly mentioned a specific date or deadline (e.g. "by Friday", "March 10th", "next week"). Do NOT infer dates from words like "birthday", "anniversary", or seasonal references unless a specific date is stated. If no specific date/deadline is mentioned, set due_at to null. Today is ${today}.
 3. Do NOT merge items. Keep them separate.
 4. Do NOT add items that weren't mentioned.
 5. Be warm but efficient. Titles should feel human, not corporate.`;

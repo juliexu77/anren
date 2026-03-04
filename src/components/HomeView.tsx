@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { isToday, isPast, parseISO, format } from "date-fns";
-import { CalendarClock, Loader2 } from "lucide-react";
+import { CalendarClock, Loader2, Camera } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
@@ -13,9 +13,11 @@ interface Props {
   onCardClick: (card: BrainCard) => void;
   onComplete: (id: string) => void;
   onSchedule: (card: BrainCard) => void;
+  onOpenCamera: () => void;
+  onOpenBrainDump: () => void;
 }
 
-export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule }: Props) {
+export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
   const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@"), [cards]);
   const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
   const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
@@ -84,7 +86,33 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
         </div>
       </div>
 
-      {/* ── Overdue / Due today (inline, no section header) ── */}
+      {/* ── Action buttons ── */}
+      <div className="flex gap-3">
+        <button
+          onClick={onOpenCamera}
+          className="py-3 px-4 rounded-xl transition-all active:scale-[0.98] shrink-0"
+          style={{
+            background: "hsl(var(--surface) / 0.7)",
+            border: "1px solid hsl(var(--divider) / 0.25)",
+            color: "hsl(var(--text))",
+          }}
+          title="Capture screenshot"
+        >
+          <Camera className="w-5 h-5" />
+        </button>
+        <button
+          onClick={onOpenBrainDump}
+          className="flex-1 py-3 rounded-xl text-button font-medium transition-all active:scale-[0.98]"
+          style={{
+            background: "hsl(var(--surface) / 0.7)",
+            border: "1px solid hsl(var(--divider) / 0.25)",
+            color: "hsl(var(--text))",
+          }}
+        >
+          Empty your head
+        </button>
+      </div>
+
       {(overdue.length > 0 || dueToday.length > 0) && (
         <div
           className="rounded-lg overflow-hidden"
