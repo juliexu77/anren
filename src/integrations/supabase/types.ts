@@ -185,6 +185,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          birthdays_enabled: boolean | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -192,11 +193,14 @@ export type Database = {
           google_refresh_token: string | null
           google_token_expires_at: string | null
           id: string
+          onboarding_completed: boolean | null
+          selected_calendars: string[] | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          birthdays_enabled?: boolean | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -204,11 +208,14 @@ export type Database = {
           google_refresh_token?: string | null
           google_token_expires_at?: string | null
           id?: string
+          onboarding_completed?: boolean | null
+          selected_calendars?: string[] | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          birthdays_enabled?: boolean | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -216,6 +223,8 @@ export type Database = {
           google_refresh_token?: string | null
           google_token_expires_at?: string | null
           id?: string
+          onboarding_completed?: boolean | null
+          selected_calendars?: string[] | null
           updated_at?: string
           user_id?: string
         }

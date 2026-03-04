@@ -100,7 +100,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
         const transcript = data.body || data.text || "";
         setText((prev) => (prev ? prev + "\n\n" + transcript : transcript));
-        toast.success("Added to your dump");
+        toast.success("Heard you");
       };
 
       mediaRecorderRef.current = recorder;
@@ -189,7 +189,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
         <span className="text-label uppercase tracking-widest" style={{ color: "hsl(var(--text-muted))" }}>
-          {phase === "capture" ? "Empty your head" : phase === "processing" ? "Processing" : "What I'm holding"}
+          {phase === "capture" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
         </span>
         <div className="w-9" />
       </div>
@@ -198,13 +198,13 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       {phase === "capture" && (
         <div className="flex-1 flex flex-col px-5 pb-6">
           <p className="text-caption mb-3" style={{ color: "hsl(var(--text-muted))" }}>
-            Speak or type freely. No structure needed.
+            Say what's on your mind. I'll hold it.
           </p>
 
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Everything on your mind right now…"
+            placeholder="What's weighing on you…"
             className="flex-1 w-full resize-none rounded-lg px-4 py-3 text-body-sm focus:outline-none"
             style={{
               background: "hsl(var(--surface))",
