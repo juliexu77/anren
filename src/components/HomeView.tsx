@@ -107,7 +107,34 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
   return (
     <main className="px-4 space-y-5 pb-4">
-      {/* ── Daily Orientation (single orientation zone) ── */}
+      {/* ── Action buttons (top) ── */}
+      <div className="flex gap-3">
+        <button
+          onClick={onOpenCamera}
+          className="py-3 px-4 rounded-xl transition-all active:scale-[0.98] shrink-0"
+          style={{
+            background: "hsl(var(--surface) / 0.7)",
+            border: "1px solid hsl(var(--divider) / 0.25)",
+            color: "hsl(var(--text))",
+          }}
+          title="Capture screenshot"
+        >
+          <Camera className="w-5 h-5" />
+        </button>
+        <button
+          onClick={onOpenBrainDump}
+          className="flex-1 py-3 rounded-xl text-button font-medium transition-all active:scale-[0.98]"
+          style={{
+            background: "hsl(var(--surface) / 0.7)",
+            border: "1px solid hsl(var(--divider) / 0.25)",
+            color: "hsl(var(--text))",
+          }}
+        >
+          Empty your head
+        </button>
+      </div>
+
+      {/* ── Daily Orientation ── */}
       <div
         className="rounded-lg px-4 py-3"
         style={{
@@ -139,33 +166,6 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
             );
           })}
         </div>
-      </div>
-
-      {/* ── Action buttons ── */}
-      <div className="flex gap-3">
-        <button
-          onClick={onOpenCamera}
-          className="py-3 px-4 rounded-xl transition-all active:scale-[0.98] shrink-0"
-          style={{
-            background: "hsl(var(--surface) / 0.7)",
-            border: "1px solid hsl(var(--divider) / 0.25)",
-            color: "hsl(var(--text))",
-          }}
-          title="Capture screenshot"
-        >
-          <Camera className="w-5 h-5" />
-        </button>
-        <button
-          onClick={onOpenBrainDump}
-          className="flex-1 py-3 rounded-xl text-button font-medium transition-all active:scale-[0.98]"
-          style={{
-            background: "hsl(var(--surface) / 0.7)",
-            border: "1px solid hsl(var(--divider) / 0.25)",
-            color: "hsl(var(--text))",
-          }}
-        >
-          Empty your head
-        </button>
       </div>
 
       {(overdue.length > 0 || dueToday.length > 0) && (
