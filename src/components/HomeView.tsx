@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { isToday, isPast, parseISO, format } from "date-fns";
 import { CalendarClock, Loader2, Camera } from "lucide-react";
 import type { BrainCard } from "@/types/card";
@@ -6,8 +6,20 @@ import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
 import { useRef, useCallback } from "react";
 
+const MEDITATIVE_MESSAGES = [
+  "Gathering your thoughts…",
+  "Creating a calm space…",
+  "Preparing your sanctuary…",
+  "Letting things settle…",
+  "Making room for clarity…",
+  "Breathing in stillness…",
+  "Arranging what matters…",
+  "Finding your center…",
+];
+
 interface Props {
   cards: BrainCard[];
+  cardsLoading: boolean;
   calendarEvents: CalendarEvent[];
   calendarLoading: boolean;
   onCardClick: (card: BrainCard) => void;
@@ -17,7 +29,16 @@ interface Props {
   onOpenBrainDump: () => void;
 }
 
-export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
+  const [meditativeIndex, setMeditativeIndex] = useState(0);
+
+  useEffect(() => {
+    if (!cardsLoading) return;
+    const interval = setInterval(() => {
+      setMeditativeIndex((prev) => (prev + 1) % MEDITATIVE_MESSAGES.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [cardsLoading]);
   const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@"), [cards]);
   const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
   const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
@@ -49,6 +70,29 @@ export function HomeView({ cards, calendarEvents, calendarLoading, onCardClick, 
       if (card) onCardClick(card);
     }
   }, [cards, onCardClick]);
+
+  if (cardsLoading) {
+    return (
+      <main className="px-4 pb-4 flex flex-col items-center justify-center" style={{ minHeight: "60vh" }}>
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div
+            className="w-8 h-8 rounded-full border-2 animate-spin"
+            style={{
+              borderColor: "hsl(var(--divider) / 0.2)",
+              borderTopColor: "hsl(var(--text-muted))",
+            }}
+          />
+          <p
+            key={meditativeIndex}
+            className="text-caption text-center animate-fade-in"
+            style={{ color: "hsl(var(--text-muted))" }}
+          >
+            {MEDITATIVE_MESSAGES[meditativeIndex]}
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="px-4 space-y-5 pb-4">
