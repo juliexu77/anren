@@ -32,6 +32,61 @@ export type Card = {
   updated_at: string;
 };
 
+/**
+ * chrome.storage.local adapter for Supabase auth session persistence.
+ * Falls back to localStorage when chrome.storage is unavailable (dev mode).
+ */
+const chromeStorageAdapter = {
+  getItem: (key: string): Promise<string | null> => {
+    return new Promise((resolve) => {
+      try {
+        const chromeAny = globalThis as unknown as { chrome?: { storage?: { local?: { get: (keys: string[], cb: (items: Record<string, unknown>) => void) => void } } } };
+        if (chromeAny.chrome?.storage?.local) {
+          chromeAny.chrome.storage.local.get([key], (items) => {
+            resolve((items[key] as string) ?? null);
+          });
+        } else {
+          resolve(localStorage.getItem(key));
+        }
+      } catch {
+        resolve(localStorage.getItem(key));
+      }
+    });
+  },
+  setItem: (key: string, value: string): Promise<void> => {
+    return new Promise((resolve) => {
+      try {
+        const chromeAny = globalThis as unknown as { chrome?: { storage?: { local?: { set: (items: Record<string, unknown>, cb?: () => void) => void } } } };
+        if (chromeAny.chrome?.storage?.local) {
+          chromeAny.chrome.storage.local.set({ [key]: value }, () => resolve());
+        } else {
+          localStorage.setItem(key, value);
+          resolve();
+        }
+      } catch {
+        localStorage.setItem(key, value);
+        resolve();
+      }
+    });
+  },
+  removeItem: (key: string): Promise<void> => {
+    return new Promise((resolve) => {
+      try {
+        const chromeAny = globalThis as unknown as { chrome?: { storage?: { local?: { remove: (keys: string[], cb?: () => void) => void } } } };
+        if (chromeAny.chrome?.storage?.local) {
+          chromeAny.chrome.storage.local.remove([key], () => resolve());
+        } else {
+          localStorage.removeItem(key);
+          resolve();
+        }
+      } catch {
+        localStorage.removeItem(key);
+        resolve();
+      }
+    });
+  },
+};
+
 let client: SupabaseClient | null = null;
 
 export function hasSupabaseConfig(): boolean {
@@ -42,10 +97,42 @@ export function getClient(): SupabaseClient | null {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
   if (!client) {
     client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
+      auth: {
+        persistSession: true,
+        storage: chromeStorageAdapter,
+        autoRefreshToken: true,
+      },
     });
   }
   return client;
+}
+
+/**
+ * Sign in with Google OAuth. Opens a new tab for Google consent.
+ * The redirect points to the web app's callback; the extension picks up
+ * the session via onAuthStateChange + chrome.storage.local persistence.
+ */
+export async function signInWithGoogle(): Promise<{ error: Error | null }> {
+  const supabase = getClient();
+  if (!supabase) return { error: new Error("Supabase not configured") };
+
+  const webAppOrigin = (SUPABASE_URL || "").replace(/\/+$/, "").includes("supabase")
+    ? "https://anren.lovable.app"
+    : window.location.origin;
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: webAppOrigin + "/google-callback",
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+        scope: "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts.readonly",
+      },
+    },
+  });
+
+  return { error: error ? new Error(error.message) : null };
 }
 
 /**
@@ -129,4 +216,47 @@ export async function createCard(
   }
 
   return data as Card;
+}
+
+/**
+ * Migrate locally-stored cards to the database after auth.
+ */
+export async function migrateLocalCards(): Promise<void> {
+  const supabase = getClient();
+  if (!supabase) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  return new Promise((resolve) => {
+    const chromeAny = globalThis as unknown as { chrome?: { storage?: { local?: { get: (keys: string[], cb: (items: Record<string, unknown>) => void) => void; remove: (keys: string[]) => void } } } };
+    if (!chromeAny.chrome?.storage?.local) {
+      resolve();
+      return;
+    }
+
+    chromeAny.chrome.storage.local.get(["anren_local_cards"], async (items) => {
+      const cards = (items.anren_local_cards as Array<{ title: string; body: string; source: string }>) || [];
+      if (cards.length === 0) {
+        resolve();
+        return;
+      }
+
+      const rows = cards.map((c) => ({
+        user_id: user.id,
+        title: c.title,
+        body: c.body,
+        source: c.source || "extension",
+        status: "active" as const,
+        category: "uncategorized" as const,
+        summary: "",
+      }));
+
+      const { error } = await supabase.from("cards").insert(rows);
+      if (!error) {
+        chromeAny.chrome!.storage!.local!.remove(["anren_local_cards"]);
+      }
+      resolve();
+    });
+  });
 }

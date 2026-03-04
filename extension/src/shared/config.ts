@@ -1,9 +1,13 @@
-import type { UserId } from "./supabaseClient";
+import { getClient, type UserId } from "./supabaseClient";
 
-const DEV_USER_ID = (import.meta.env.VITE_DEV_USER_ID ||
-  "anren-dev-user") as UserId;
+/**
+ * Get the current authenticated user's ID.
+ * Returns null if no session exists.
+ */
+export async function getCurrentUserId(): Promise<UserId | null> {
+  const supabase = getClient();
+  if (!supabase) return null;
 
-export function getCurrentUserId(): UserId {
-  return DEV_USER_ID;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
 }
-

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useGoogleCalendarList } from "@/hooks/useGoogleCalendarList";
 import { useBirthdaySync } from "@/hooks/useBirthdaySync";
@@ -18,6 +19,7 @@ export default function Onboarding() {
   const { user } = useAuth();
   const {
     step,
+    setStep,
     nextStep,
     skipStep,
     addLocalCard,
@@ -77,6 +79,32 @@ export default function Onboarding() {
     }
   };
 
+  // Returning user: sign in then check if onboarding is already complete
+  const handleReturningUserSignIn = async () => {
+    await handleGoogleSignIn();
+  };
+
+  // After auth, check if returning user has completed onboarding
+  useEffect(() => {
+    if (user && step === 1) {
+      // User signed in from "Already have an account?" on step 1
+      (async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("user_id", user.id)
+          .single();
+        if (data?.onboarding_completed === true) {
+          completeOnboarding();
+          navigate("/", { replace: true });
+        } else {
+          // Skip to calendar prefs
+          setStep(5);
+        }
+      })();
+    }
+  }, [user]);
+
   const handleFinish = async () => {
     await saveCalendarPrefs(selectedCals, birthdaysOn);
     if (birthdaysOn) {
@@ -125,6 +153,14 @@ export default function Onboarding() {
               }}
             >
               Begin
+            </button>
+            <button
+              onClick={handleReturningUserSignIn}
+              disabled={signingIn}
+              className="mt-3 py-2 px-4 text-xs underline underline-offset-2"
+              style={{ color: "hsl(var(--text-muted) / 0.7)", background: "transparent", border: "none", cursor: "pointer" }}
+            >
+              Already have an account? Sign in
             </button>
           </div>
         )}
