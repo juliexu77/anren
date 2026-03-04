@@ -1,11 +1,12 @@
-import { useMemo } from "react";
-import { format, parseISO, addDays, startOfDay, isSameDay } from "date-fns";
+import { useState, useMemo } from "react";
+import { format, addDays, startOfDay, isSameDay } from "date-fns";
 import { X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
+import { CalendarTimeGrid } from "@/components/calendar/CalendarTimeGrid";
 
 interface Props {
   events: CalendarEvent[];
@@ -15,118 +16,90 @@ interface Props {
 }
 
 export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Props) {
+  const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+
   const agendaDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(startOfDay(new Date()), i)),
     []
   );
 
-  const getEventsForDay = (date: Date) =>
-    events.filter((e) => {
-      const eventDate = e.start.dateTime
-        ? parseISO(e.start.dateTime)
-        : e.start.date
-          ? parseISO(e.start.date)
-          : null;
-      return eventDate && isSameDay(eventDate, date);
-    });
+  const selectedDate = agendaDays[selectedDateIndex];
 
-  const getDayLabel = (date: Date) => {
+  const getChipLabel = (date: Date) => {
     if (isSameDay(date, new Date())) return "Today";
-    if (isSameDay(date, addDays(new Date(), 1))) return "Tomorrow";
-    return null;
+    if (isSameDay(date, addDays(new Date(), 1))) return "Tmrw";
+    return format(date, "EEE");
   };
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[85vh] overflow-auto p-0 max-w-xl mx-auto">
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 pt-5 pb-3" style={{ background: "hsl(var(--background))" }}>
-          <h2
-            className="font-display"
-            style={{ fontSize: "24px", fontWeight: 400, color: "hsl(var(--text))" }}
-          >
-            Calendar
-          </h2>
-          <button onClick={onClose} className="p-2 -mr-2">
-            <X className="w-5 h-5" style={{ color: "hsl(var(--text-muted))" }} />
-          </button>
-        </div>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) { onClose(); setSelectedDateIndex(0); } }}>
+      <SheetContent side="bottom" className="rounded-t-3xl h-[90vh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="shrink-0 px-5 pt-5 pb-2" style={{ background: "hsl(var(--background))" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h2
+              className="font-display"
+              style={{ fontSize: "24px", fontWeight: 400, color: "hsl(var(--text))" }}
+            >
+              {format(selectedDate, "MMM d")}
+              <span style={{ color: "hsl(var(--text) / 0.35)", fontWeight: 400 }}>
+                {" · "}{format(selectedDate, "EEEE")}
+              </span>
+            </h2>
+            <button onClick={onClose} className="p-2 -mr-2">
+              <X className="w-5 h-5" style={{ color: "hsl(var(--text-muted))" }} />
+            </button>
+          </div>
 
-        <div className="px-5 pb-8">
-          {agendaDays.map((date) => {
-            const dayLabel = getDayLabel(date);
-            const dayEvents = getEventsForDay(date);
-
-            return (
-              <div key={date.toISOString()}>
-                <div
-                  className="flex items-baseline gap-2 py-4"
-                  style={{ borderBottom: "1px solid hsl(var(--divider) / 0.15)" }}
+          {/* Day chips */}
+          <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
+            {agendaDays.map((date, i) => {
+              const isSelected = i === selectedDateIndex;
+              const isToday = isSameDay(date, new Date());
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDateIndex(i)}
+                  className="shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors"
+                  style={{
+                    background: isSelected ? "hsl(var(--primary) / 0.15)" : "transparent",
+                    minWidth: "52px",
+                  }}
                 >
                   <span
-                    className="font-display"
-                    style={{ fontSize: "18px", fontWeight: 400, color: "hsl(var(--text))" }}
+                    className="text-[11px] font-medium"
+                    style={{
+                      color: isSelected
+                        ? "hsl(var(--primary))"
+                        : "hsl(var(--text) / 0.4)",
+                    }}
                   >
-                    {format(date, "MMM d")}
+                    {getChipLabel(date)}
                   </span>
-                  {dayLabel && (
-                    <>
-                      <span style={{ fontSize: "13px", color: "hsl(var(--text) / 0.3)" }}>·</span>
-                      <span
-                        style={{
-                          fontSize: "18px",
-                          fontWeight: 400,
-                          color: isSameDay(date, new Date())
-                            ? "hsl(var(--primary))"
-                            : "hsl(var(--text) / 0.5)",
-                        }}
-                      >
-                        {dayLabel}
-                      </span>
-                    </>
-                  )}
-                  <span style={{ fontSize: "13px", color: "hsl(var(--text) / 0.3)" }}>·</span>
-                  <span style={{ fontSize: "15px", fontWeight: 400, color: "hsl(var(--text) / 0.35)" }}>
-                    {format(date, "EEEE")}
+                  <span
+                    className="text-[15px] font-medium mt-0.5"
+                    style={{
+                      color: isSelected
+                        ? "hsl(var(--primary))"
+                        : isToday
+                          ? "hsl(var(--text))"
+                          : "hsl(var(--text) / 0.6)",
+                    }}
+                  >
+                    {format(date, "d")}
                   </span>
-                </div>
-
-                {dayEvents.length > 0 && (
-                  <div className="py-2 space-y-1.5">
-                    {dayEvents.map((ev) => (
-                      <button
-                        key={ev.id}
-                        onClick={() => onEventClick(ev)}
-                        className="w-full text-left px-3 py-2.5 rounded-lg transition-colors active:opacity-60"
-                      >
-                        <p
-                          className="text-caption"
-                          style={{ color: "hsl(var(--text) / 0.85)" }}
-                        >
-                          {ev.summary}
-                        </p>
-                        {ev.start.dateTime && (
-                          <p
-                            className="text-micro"
-                            style={{ color: "hsl(var(--text) / 0.4)", marginTop: "2px" }}
-                          >
-                            {format(parseISO(ev.start.dateTime), "h:mm a")}
-                            {ev.end.dateTime && ` – ${format(parseISO(ev.end.dateTime), "h:mm a")}`}
-                          </p>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {dayEvents.length === 0 && (
-                  <div className="py-3 px-3">
-                    <p className="text-micro" style={{ color: "hsl(var(--text-muted))" }}>No events</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Time grid */}
+        <CalendarTimeGrid
+          dates={[selectedDate]}
+          events={events}
+          onEventClick={onEventClick}
+        />
       </SheetContent>
     </Sheet>
   );
