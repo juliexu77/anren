@@ -5,9 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
- * Registers for push notifications on native iOS.
- * Stores the APNs device token in the device_tokens table.
- * No-ops on web.
+ * Registers for push notifications on native iOS (APNs)
+ * and requests browser Notification permission on web.
  */
 export function usePushNotifications() {
   const { user } = useAuth();
@@ -15,41 +14,54 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (!user || registered.current) return;
-    if (!Capacitor.isNativePlatform()) return;
 
-    const register = async () => {
-      try {
-        const perm = await PushNotifications.requestPermissions();
-        if (perm.receive !== "granted") {
-          console.log("Push permission not granted");
-          return;
+    // ── Native (iOS / Android) ──
+    if (Capacitor.isNativePlatform()) {
+      const register = async () => {
+        try {
+          const perm = await PushNotifications.requestPermissions();
+          if (perm.receive !== "granted") {
+            console.log("Push permission not granted");
+            return;
+          }
+
+          await PushNotifications.register();
+
+          PushNotifications.addListener("registration", async (token) => {
+            console.log("Push token:", token.value);
+            registered.current = true;
+
+            await supabase.from("device_tokens").upsert(
+              {
+                user_id: user.id,
+                token: token.value,
+                platform: "ios",
+              },
+              { onConflict: "user_id,token" }
+            );
+          });
+
+          PushNotifications.addListener("registrationError", (err) => {
+            console.error("Push registration error:", err);
+          });
+        } catch (e) {
+          console.error("Push setup error:", e);
         }
+      };
+      register();
+      return;
+    }
 
-        await PushNotifications.register();
-
-        PushNotifications.addListener("registration", async (token) => {
-          console.log("Push token:", token.value);
+    // ── Web (browser Notification API) ──
+    if ("Notification" in window && Notification.permission === "default") {
+      // Small delay so it doesn't fire immediately on first load
+      const timeout = setTimeout(() => {
+        Notification.requestPermission().then((perm) => {
+          console.log("Web notification permission:", perm);
           registered.current = true;
-
-          // Upsert token
-          await supabase.from("device_tokens").upsert(
-            {
-              user_id: user.id,
-              token: token.value,
-              platform: "ios",
-            },
-            { onConflict: "user_id,token" }
-          );
         });
-
-        PushNotifications.addListener("registrationError", (err) => {
-          console.error("Push registration error:", err);
-        });
-      } catch (e) {
-        console.error("Push setup error:", e);
-      }
-    };
-
-    register();
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
   }, [user]);
 }
