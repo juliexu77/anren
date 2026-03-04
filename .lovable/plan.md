@@ -1,90 +1,100 @@
-## Onboarding: Revised Plan
-
-### Two concerns to address first
-
-**1. Calendar scope: "Which calendars?"**
-The `calendarList` action already returns ALL calendars the user has access to — personal, family, shared school calendars, etc. Google Calendar API's `calendarList` endpoint returns every calendar visible to the user, regardless of ownership. So yes, shared school calendars, family calendars, and any subscribed calendars will appear. The onboarding step just needs to show all of them with checkboxes, not filter by type. No work/personal distinction needed from our side — the user simply picks which ones matter to them.
-
-**2. Voice and copy direction**
-Current copy issues spotted:
-
-- HomeView line 138: "Empty your head" → needs replacing
-- HomeView line 253: "Your mind is clear. Tap below to empty your head." → needs replacing  
-- BrainDumpSheet line 192: header says "Empty your head" → needs replacing
-- BrainDumpSheet line 103: toast "Added to your dump" → needs replacing
-
-The voice should channel Mary Oliver / Rumi / David Whyte — contemplative, gentle, never clinical or productivity-speak. "Brain dump" and "empty your head" are out. The spirit is "set it down here" / "what are you holding?" / "let it rest."
-
----
-
-### Plan
-
-#### A. Fix app-wide copy (voice alignment)
-
-**File: `src/components/HomeView.tsx**`
-
-- Line 138: "Empty your head" → "clear your mind
-  "
-- Line 253: "Your mind is clear. Tap below to empty your head." → "Nothing resting here yet."
-
-**File: `src/components/BrainDumpSheet.tsx**`
-
-- Line 192 header: "Empty your head" → "Set it down"
-- Line 103 toast: "Added to your dump" → "Heard you"
-- Line 200 subtitle: "Speak or type freely. No structure needed." → "Say what's on your mind. I'll hold it."
-- Line 207 placeholder: "Everything on your mind right now…" → "What's weighing on you…"
-
-#### B. Onboarding flow (5 steps, value-first)
-
-**New file: `src/pages/Onboarding.tsx**`
-Multi-step full-screen page with thin progress bar at top.
 
 
-| Step | Screen              | Auth? | Copy direction                                                                                                                                                              |
-| ---- | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Welcome             | No    | "ANREN — Where the mental load rests." / "A quiet place for everything you're carrying." / [Begin]                                                                          |
-| 2    | First capture       | No    | "What's one thing on your mind right now?" — single text input, saved to localStorage. Optional skip.                                                                       |
-| 3    | Visual capture      | No    | "Notice something you want to hold onto?" — camera/photo prompt, saved to localStorage. Optional skip.                                                                      |
-| 4    | Value bridge + Auth | Yes   | Shows count of held items. "Now let's anchor these to your day. Your calendar gives Anren the rhythm of your life." [Sign in with Google]                                   |
-| 5    | Calendar prefs      | Yes   | "Which calendars feel like yours?" — checkboxes from `calendarList` API (personal, family, school, any shared). Toggle: "Hold birthdays and milestones from your contacts?" |
+## Extension Onboarding Plan
 
+### Key insight
+The extension's onboarding is different from the app's because the extension *already has context* — it lives inside the browser where the user is working. Step 2 ("What's on your mind?") should leverage that: instead of a blank textarea, the extension can pre-fill with whatever the user has selected or is viewing on the page. The extension's superpower is capturing what's already in front of you.
 
-**New file: `src/hooks/useOnboarding.ts**`
+### Extension onboarding flow (4 steps)
 
-- Manages step state, localStorage for pre-auth cards
-- On auth: migrates localStorage cards → database
-- Stores onboarding completion in profile
+```text
+┌──────────────────────────────────────────────┐
+│  1. WELCOME                                  │
+│     "ANREN — Where the mental load rests."   │
+│     "A quiet place for everything            │
+│      you're carrying."                       │
+│     [Begin]                                  │
+│     Already have an account? Sign in         │
+│     ▪ Progress: ████░░░░░░░░ 1/4             │
+├──────────────────────────────────────────────┤
+│  2. CONTEXTUAL CAPTURE                       │
+│     If page context was captured:            │
+│       Shows selected text / page title       │
+│       "Something caught your eye.            │
+│        Add a thought, or just hold it."      │
+│     If no context:                           │
+│       "What's one thing on your mind?"       │
+│       Plain textarea                         │
+│     Saves to localStorage (pre-auth)         │
+│     [Hold this for me]  [Skip]               │
+│     ▪ Progress: ████████░░░░ 2/4             │
+├──────────────────────────────────────────────┤
+│  3. VALUE BRIDGE + AUTH                      │
+│     Shows count of held items                │
+│     "Now let's make sure these are yours."   │
+│     "Sign in so Anren can hold things        │
+│      across your devices."                   │
+│     [Sign in with Google]                    │
+│     ▪ Progress: █████████░░░ 3/4             │
+├──────────────────────────────────────────────┤
+│  4. CALENDAR PREFS                           │
+│     Same as app step 5: calendar checkboxes  │
+│     + birthday toggle                        │
+│     [I'm ready]                              │
+│     ▪ Progress: ████████████ 4/4             │
+├──────────────────────────────────────────────┤
+│  → Capture UI (existing extension App)       │
+└──────────────────────────────────────────────┘
+```
 
-**New file: `src/hooks/useBirthdaySync.ts**`
+No visual-capture step (step 3 from web app) — the extension captures web content, not photos. That step doesn't make sense in a side panel.
 
-- Calls `google-calendar?action=birthdays` (already exists)
-- Creates cards with `source: 'birthday_scan'` for each birthday
-- Deduplicates by name + approximate date against existing cards
-- Birthdays are all-day events, not timed — creates cards with `due_at` set to the birthday date, no time component
+### "Already have an account?" (both web + extension)
 
-**Modified: `src/App.tsx**`
+On step 1, a subtle link triggers Google sign-in immediately. After auth:
+- Check `profiles.onboarding_completed`
+- If `true` → skip to capture UI (extension) or home (web app)
+- If `false` → jump to calendar prefs step
 
-- Add `/onboarding` route
-- Unauthenticated users hitting `/` → redirect to `/onboarding` instead of `/auth`
-- After onboarding completes → home
+### Technical changes
 
-**Database migration:**
+**Extension files:**
 
-- Add to `profiles`: `selected_calendars text[] default ARRAY['primary']`, `birthdays_enabled boolean default false`, `onboarding_completed boolean default false`
+1. **`extension/src/App.tsx`** — Wrap in an onboarding gate. New state: `onboardingStep` persisted in `chrome.storage.local`. If `onboardingStep < 5` (not complete), render the onboarding steps instead of the capture UI. After step 4 completes, set `onboardingStep = 5` and show capture UI.
 
-#### C. Calendar selection logic
+2. **`extension/src/shared/supabaseClient.ts`** — Change `persistSession: false` to `persistSession: true` with `chrome.storage.local` as the storage adapter so sessions survive panel close/reopen. Add a `signInWithGoogle()` function that uses `supabase.auth.signInWithOAuth({ provider: 'google' })` — this opens a new tab for Google consent, and the existing `onAuthStateChange` picks up the session.
 
-The `calendarList` endpoint returns all calendars the user can see — personal, family, shared (school, sports, etc.), subscribed. We show them all with their Google-provided display name and color swatch. The user checks the ones they want. Selected IDs are saved to `profiles.selected_calendars` and used when fetching events (the `list` action would be called once per selected calendar, or we update the edge function to accept a `calendarId` param).
+3. **`extension/src/shared/config.ts`** — Replace hardcoded dev user ID. `getCurrentUserId()` reads from the Supabase session (`getClient()?.auth.getUser()`). Falls back to dev ID only if no session.
 
-**Modified: `supabase/functions/google-calendar/index.ts**`
+4. **`extension/public/background.js`** — No changes needed. Context capture already works and feeds into step 2.
 
-- `list` action: accept optional `calendarId` param (defaults to `primary`). This allows fetching events from non-primary calendars.
+**Web app files:**
 
-#### D. Birthday scan details
+5. **`src/pages/Onboarding.tsx`** — Add "Already have an account? Sign in" link on step 1. After successful auth, check `profiles.onboarding_completed`:
+   - If `true`: `navigate("/")`
+   - If `false`: jump to step 5 (calendar prefs)
 
-When the user toggles "Hold birthdays and milestones":
+### Extension auth approach
 
-1. Call `google-calendar?action=birthdays` (fetches next 365 days from contacts birthday calendar)
-2. For each birthday returned, create a card: `{ title: "Sarah's birthday", source: "birthday_scan", due_at: "2026-06-15", category: "milestone" }`
-3. These appear in "In motion" section on the home screen as they approach
-4. Re-scan can happen weekly via the existing `send-daily-brief` edge function
+Chrome extensions can't do OAuth redirects back to themselves easily. The approach:
+- `supabase.auth.signInWithOAuth()` opens Google consent in a new browser tab
+- The redirect URL points to the web app's existing `/~oauth/callback` or `/google-callback`
+- The web app callback sets the Supabase session cookie
+- The extension's Supabase client with `persistSession: true` + a `chrome.storage.local` storage adapter picks up the session via `onAuthStateChange`
+- Alternative simpler approach: after Google consent completes in the tab, the extension polls `supabase.auth.getSession()` until it finds one
+
+### Extension local storage for pre-auth cards
+
+Same pattern as web app but using `chrome.storage.local` instead of `localStorage` (more reliable in extension context, persists across panel open/close):
+- Key: `anren_local_cards`
+- On auth completion: bulk-insert to `cards` table, clear local storage
+
+### Summary of files
+
+| File | Action |
+|------|--------|
+| `extension/src/App.tsx` | Major rewrite: onboarding gate + 4-step flow |
+| `extension/src/shared/supabaseClient.ts` | Persist session, add `signInWithGoogle()` |
+| `extension/src/shared/config.ts` | Dynamic user ID from session |
+| `src/pages/Onboarding.tsx` | Add "Already have an account?" link on step 1 |
+
