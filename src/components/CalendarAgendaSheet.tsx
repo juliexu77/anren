@@ -70,9 +70,9 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[90vh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
+      <SheetContent side="bottom" className="rounded-t-3xl h-[85vh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="shrink-0 px-5 pt-5 pb-2" style={{ background: "hsl(var(--background))" }}>
+        <div className="shrink-0 px-5 pb-2" style={{ background: "hsl(var(--background))", paddingTop: "max(20px, env(safe-area-inset-top, 20px))" }}>
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={handleClose}
