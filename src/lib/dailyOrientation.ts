@@ -13,6 +13,7 @@ export interface OrientationLine {
   text: string;
   type: "greeting" | "milestone" | "today" | "holding" | "holding-more" | "upcoming" | "empty" | "spacer" | "section-header";
   cardId?: string;
+  calendarEventId?: string;
 }
 
 export function generateDailyOrientation(
@@ -70,7 +71,7 @@ export function generateDailyOrientation(
     .slice(0, 3)
     .forEach((e) => {
       const time = e.start.dateTime ? format(parseISO(e.start.dateTime), "h:mm a") : "All day";
-      todayItems.push({ text: `${time} — ${e.summary}`, type: "today" });
+      todayItems.push({ text: `${time} — ${e.summary}`, type: "today", calendarEventId: e.id });
     });
   dueToday.slice(0, 2).forEach((c) => todayItems.push({ text: c.title || "Untitled", type: "today", cardId: c.id }));
   overdue.slice(0, 2).forEach((c) => todayItems.push({ text: `${c.title || "Untitled"} (overdue)`, type: "today", cardId: c.id }));
