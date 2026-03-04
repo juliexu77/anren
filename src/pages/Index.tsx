@@ -11,7 +11,7 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
-import { Settings, X, Camera } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
 import type { BrainCard, ItemType } from "@/types/card";
@@ -75,7 +75,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-6">
       {/* Daily Brief Overlay */}
       {showBrief && (
         <DailyBriefOverlay
@@ -106,42 +106,9 @@ const Index = () => {
         onCardClick={(card) => setSelectedCard(card)}
         onComplete={handleComplete}
         onSchedule={handleSchedule}
+        onOpenCamera={() => setShowCamera(true)}
+        onOpenBrainDump={() => setShowBrainDump(true)}
       />
-
-      {/* ── Bottom action bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 px-5 pb-8 pt-4 pointer-events-none">
-        <div className="flex gap-3 pointer-events-auto">
-          <button
-            onClick={() => setShowCamera(true)}
-            className="py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] shrink-0"
-            style={{
-              background: "hsl(var(--surface) / 0.7)",
-              border: "1px solid hsl(var(--divider) / 0.25)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-              color: "hsl(var(--text))",
-            }}
-            title="Capture screenshot"
-          >
-            <Camera className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setShowBrainDump(true)}
-            className="flex-1 py-3.5 rounded-xl text-button font-medium transition-all active:scale-[0.98]"
-            style={{
-              background: "hsl(var(--surface) / 0.7)",
-              border: "1px solid hsl(var(--divider) / 0.25)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-              color: "hsl(var(--text))",
-            }}
-          >
-            Empty your head
-          </button>
-        </div>
-      </div>
 
       {/* Sheets */}
       <CardDetailSheet

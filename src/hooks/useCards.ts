@@ -141,15 +141,20 @@ export function useCards() {
     }>) => {
       if (!user) return;
 
-      const rows = items.map((item) => ({
-        user_id: user.id,
-        title: item.title,
-        body: "",
-        source: "brain_dump",
-        routed_type: item.type,
-        status: item.dueAt ? "scheduled" : "active",
-        due_at: item.dueAt || null,
-      }));
+      const now = new Date();
+      const rows = items.map((item) => {
+        // Don't schedule items with past due dates
+        const hasFutureDue = item.dueAt ? new Date(item.dueAt) > now : false;
+        return {
+          user_id: user.id,
+          title: item.title,
+          body: "",
+          source: "brain_dump",
+          routed_type: item.type,
+          status: hasFutureDue ? "scheduled" : "active",
+          due_at: hasFutureDue ? item.dueAt : null,
+        };
+      });
 
       const { data, error } = await supabase.from("cards").insert(rows).select();
       if (error) {
