@@ -178,8 +178,8 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
                       style={{ top: nowTop }}
                     >
                       <div className="flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
-                        <div className="flex-1 h-[2px] bg-red-500" />
+                        <div className="w-2 h-2 rounded-full -ml-1" style={{ background: "hsl(var(--primary))" }} />
+                        <div className="flex-1 h-[1.5px]" style={{ background: "hsl(var(--primary))" }} />
                       </div>
                     </div>
                   )}
