@@ -32,13 +32,15 @@ interface Props {
   calendarEvents: CalendarEvent[];
   calendarLoading: boolean;
   onCardClick: (card: BrainCard) => void;
+  onCalendarEventClick: (event: CalendarEvent) => void;
+  onViewCalendar: () => void;
   onComplete: (id: string) => void;
   onSchedule: (card: BrainCard) => void;
   onOpenCamera: () => void;
   onOpenBrainDump: () => void;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
   const [meditativeIndex, setMeditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -76,11 +78,14 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
   const handleOrientationTap = useCallback((line: OrientationLine) => {
     if (line.type === "holding-more") {
       restingSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (line.calendarEventId) {
+      const event = calendarEvents.find((e) => e.id === line.calendarEventId);
+      if (event) onCalendarEventClick(event);
     } else if (line.cardId) {
       const card = cards.find((c) => c.id === line.cardId);
       if (card) onCardClick(card);
     }
-  }, [cards, onCardClick]);
+  }, [cards, calendarEvents, onCardClick, onCalendarEventClick]);
 
   if (cardsLoading) {
     return (
@@ -145,7 +150,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         <div className="space-y-0" style={{ lineHeight: "1.6" }}>
           {orientationLines.map((line, i) => {
             if (line.type === "spacer") return <div key={i} className="h-2" />;
-            const isClickable = line.type === "holding-more" || !!line.cardId;
+            const isClickable = line.type === "holding-more" || !!line.cardId || !!line.calendarEventId;
             return (
               <div
                 key={i}
@@ -165,6 +170,14 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
               </div>
             );
           })}
+          <div className="h-1" />
+          <button
+            onClick={onViewCalendar}
+            className="text-micro active:opacity-60 transition-opacity"
+            style={{ color: "hsl(var(--text-muted))" }}
+          >
+            View calendar →
+          </button>
         </div>
       </div>
 

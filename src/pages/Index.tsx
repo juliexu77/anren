@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
-import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { HomeView } from "@/components/HomeView";
@@ -11,6 +11,8 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
+import { CalendarEventSheet } from "@/components/CalendarEventSheet";
+import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
@@ -18,7 +20,7 @@ import type { BrainCard, ItemType } from "@/types/card";
 
 const Index = () => {
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards();
-  const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent } = useGoogleCalendar();
+  const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
   usePushNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,6 +29,8 @@ const Index = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [scheduleCard, setScheduleCard] = useState<BrainCard | null>(null);
+  const [selectedCalEvent, setSelectedCalEvent] = useState<CalendarEvent | null>(null);
+  const [showAgenda, setShowAgenda] = useState(false);
 
   // Fetch calendar events for today + 7 days
   useEffect(() => {
@@ -105,6 +109,8 @@ const Index = () => {
         calendarEvents={calendarEvents}
         calendarLoading={calendarLoading}
         onCardClick={(card) => setSelectedCard(card)}
+        onCalendarEventClick={(event) => setSelectedCalEvent(event)}
+        onViewCalendar={() => setShowAgenda(true)}
         onComplete={handleComplete}
         onSchedule={handleSchedule}
         onOpenCamera={() => setShowCamera(true)}
@@ -139,6 +145,23 @@ const Index = () => {
         open={showBrainDump}
         onClose={() => setShowBrainDump(false)}
         onConfirm={handleBrainDumpConfirm}
+      />
+
+      <CalendarEventSheet
+        event={selectedCalEvent}
+        open={!!selectedCalEvent}
+        onClose={() => setSelectedCalEvent(null)}
+        onDelete={async (id) => {
+          await deleteEvent(id);
+          setSelectedCalEvent(null);
+        }}
+      />
+
+      <CalendarAgendaSheet
+        events={calendarEvents}
+        open={showAgenda}
+        onClose={() => setShowAgenda(false)}
+        onEventClick={(event) => { setShowAgenda(false); setSelectedCalEvent(event); }}
       />
     </div>
   );
