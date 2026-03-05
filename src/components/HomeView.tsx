@@ -118,10 +118,11 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       <div className="flex gap-3">
         <button
           onClick={onOpenCamera}
-          className="py-3 px-4 rounded-xl transition-all active:scale-[0.98] shrink-0"
+          className="py-3 px-4 rounded-xl transition-all active:scale-[0.97] shrink-0"
           style={{
-            background: "hsl(var(--surface) / 0.7)",
-            border: "1px solid hsl(var(--divider) / 0.25)",
+            background: "var(--sanctuary-surface)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
             color: "hsl(var(--text))",
           }}
           title="Capture screenshot"
@@ -130,10 +131,11 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </button>
         <button
           onClick={onOpenBrainDump}
-          className="flex-1 py-3 rounded-xl text-button font-medium transition-all active:scale-[0.98]"
+          className="flex-1 py-3 rounded-xl text-button font-medium transition-all active:scale-[0.97]"
           style={{
-            background: "hsl(var(--surface) / 0.7)",
-            border: "1px solid hsl(var(--divider) / 0.25)",
+            background: "var(--sanctuary-surface)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
             color: "hsl(var(--text))",
           }}
         >
@@ -143,10 +145,11 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {/* ── Daily Orientation ── */}
       <div
-        className="rounded-lg px-4 py-3"
+        className="rounded-xl px-4 py-3"
         style={{
-          background: "hsl(var(--card-bg) / 0.5)",
-          border: "1px solid hsl(var(--divider) / 0.15)",
+          background: "linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end))",
+          border: "1px solid var(--glass-border)",
+          boxShadow: "var(--depth-shadow), var(--inner-highlight)",
         }}
       >
         <div className="space-y-0" style={{ lineHeight: "1.6" }}>
@@ -185,10 +188,11 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {(overdue.length > 0 || dueToday.length > 0) && (
         <div
-          className="rounded-lg overflow-hidden"
+          className="rounded-xl overflow-hidden"
           style={{
-            background: "hsl(var(--card-bg) / 0.5)",
-            border: "1px solid hsl(var(--divider) / 0.15)",
+            background: "var(--sanctuary-surface)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
           }}
         >
           {overdue.map((card) => (
@@ -203,10 +207,11 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       {/* ── PARSING ── */}
       {parsing.length > 0 && (
         <div
-          className="rounded-lg overflow-hidden"
+          className="rounded-xl overflow-hidden"
           style={{
-            background: "hsl(var(--card-bg) / 0.5)",
-            border: "1px solid hsl(var(--divider) / 0.15)",
+            background: "var(--sanctuary-surface)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
           }}
         >
           {parsing.map((card) => (
@@ -282,10 +287,11 @@ function Section({ title, children, sectionRef }: { title: string; children: Rea
         {title}
       </h2>
       <div
-        className="rounded-lg overflow-hidden"
+        className="rounded-xl overflow-hidden"
         style={{
-          background: "hsl(var(--card-bg) / 0.5)",
-          border: "1px solid hsl(var(--divider) / 0.15)",
+          background: "var(--sanctuary-surface)",
+          border: "1px solid var(--glass-border)",
+          boxShadow: "var(--depth-shadow), var(--inner-highlight)",
         }}
       >
         {children}

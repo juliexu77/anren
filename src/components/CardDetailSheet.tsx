@@ -189,8 +189,9 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
           <div
             className="mx-5 mb-3 px-4 py-3 rounded-xl"
             style={{
-              background: "hsl(var(--surface) / 0.4)",
-              border: "1px solid hsl(var(--divider) / 0.15)",
+              background: "var(--sanctuary-surface)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "var(--depth-shadow), var(--inner-highlight)",
             }}
           >
             <p className="text-xs font-medium mb-1" style={{ color: "hsl(var(--text-muted))" }}>
@@ -210,10 +211,11 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
           <button
             onClick={handleCreateEvent}
             disabled={extracting}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm transition-all active:scale-[0.97]"
             style={{
-              background: "hsl(var(--surface) / 0.5)",
-              border: "1px solid hsl(var(--divider) / 0.25)",
+              background: "var(--sanctuary-surface)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "var(--depth-shadow), var(--inner-highlight)",
               color: "hsl(var(--text) / 0.7)",
             }}
           >
