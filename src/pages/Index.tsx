@@ -16,6 +16,8 @@ import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
 
 const Index = () => {
@@ -31,6 +33,8 @@ const Index = () => {
   const [scheduleCard, setScheduleCard] = useState<BrainCard | null>(null);
   const [selectedCalEvent, setSelectedCalEvent] = useState<CalendarEvent | null>(null);
   const [showAgenda, setShowAgenda] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const [suggestions, setSuggestions] = useState<Record<string, string>>({});
 
   // Fetch calendar events for today + 7 days
   useEffect(() => {
@@ -60,6 +64,42 @@ const Index = () => {
   const handleBrainDumpConfirm = useCallback(async (items: Array<{ title: string; type: ItemType; due_at?: string | null }>) => {
     await addItems(items.map((i) => ({ title: i.title, type: i.type, dueAt: i.due_at })));
   }, [addItems]);
+
+  const handleReorder = useCallback(async () => {
+    const active = cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@");
+    if (active.length < 2) return;
+    setReordering(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("smart-reorder", {
+        body: { cards: active.map((c) => ({ id: c.id, title: c.title, body: c.body, type: c.type, dueAt: c.dueAt, createdAt: c.createdAt })) },
+      });
+      if (error || !data?.items) {
+        toast.error("Couldn't organize right now. Try again in a moment.");
+        return;
+      }
+      // Build new order based on AI response
+      const reordered = data.items.map((item: { index: number; suggestion: string }) => active[item.index]).filter(Boolean);
+      const newSuggestions: Record<string, string> = {};
+      data.items.forEach((item: { index: number; suggestion: string }) => {
+        const card = active[item.index];
+        if (card) newSuggestions[card.id] = item.suggestion;
+      });
+      setSuggestions((prev) => ({ ...prev, ...newSuggestions }));
+
+      // Update created_at in DB to reflect new order (newest first = first item gets latest timestamp)
+      const now = Date.now();
+      const updates = reordered.map((card: BrainCard, i: number) => {
+        const ts = new Date(now - i * 1000).toISOString();
+        return supabase.from("cards").update({ created_at: ts }).eq("id", card.id);
+      });
+      await Promise.all(updates);
+      toast("I've organized your list. Tap one to see how we can move it forward.");
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setReordering(false);
+    }
+  }, [cards]);
 
   if (showSettings) {
     return (
@@ -115,6 +155,8 @@ const Index = () => {
         onSchedule={handleSchedule}
         onOpenCamera={() => setShowCamera(true)}
         onOpenBrainDump={() => setShowBrainDump(true)}
+        onReorder={handleReorder}
+        reordering={reordering}
       />
 
       {/* Sheets */}
@@ -124,6 +166,7 @@ const Index = () => {
         onClose={() => setSelectedCard(null)}
         onUpdate={updateCard}
         onDelete={deleteCard}
+        suggestion={selectedCard ? suggestions[selectedCard.id] : undefined}
       />
 
       <ScheduleSheet
