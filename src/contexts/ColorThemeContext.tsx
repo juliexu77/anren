@@ -207,6 +207,15 @@ export const ColorThemeProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--card-shadow', 'rgba(0, 0, 0, 0.3)');
     root.style.setProperty('--card-shadow-hover', 'rgba(0, 0, 0, 0.4)');
 
+    // Glass/depth tokens — derived from theme colors for universal compat
+    root.style.setProperty('--glass-border', `hsl(${currentTheme.textPrimary} / 0.06)`);
+    root.style.setProperty('--glass-overlay-start', `hsl(${currentTheme.textPrimary} / 0.04)`);
+    root.style.setProperty('--glass-overlay-end', `hsl(${currentTheme.textPrimary} / 0.01)`);
+    root.style.setProperty('--glass-shadow', 'hsl(0 0% 0% / 0.12)');
+    root.style.setProperty('--glass-highlight', `hsl(${currentTheme.textPrimary} / 0.06)`);
+    root.style.setProperty('--sanctuary-surface', `hsl(${currentTheme.cardBg} / 0.85)`);
+    root.style.setProperty('--sanctuary-surface-hover', `hsl(${currentTheme.cardBg} / 0.95)`);
+
     // Body background
     document.body.style.background = `hsl(${currentTheme.bgPrimary})`;
 
