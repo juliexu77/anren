@@ -1,100 +1,64 @@
 
 
-## Extension Onboarding Plan
+# Consolidate Hardcoded Styles into the Design System
 
-### Key insight
-The extension's onboarding is different from the app's because the extension *already has context* — it lives inside the browser where the user is working. Step 2 ("What's on your mind?") should leverage that: instead of a blank textarea, the extension can pre-fill with whatever the user has selected or is viewing on the page. The extension's superpower is capturing what's already in front of you.
+## Problem
+Across ~16 component files, styling is applied via inline `style={{}}` attributes with hardcoded `hsl(var(--text-muted))`, `hsl(var(--accent-1))`, `hsl(40 30% 97%)`, etc. instead of using Tailwind utility classes that reference the existing design system tokens. This means:
+- Styles don't consistently respect theme changes
+- Hardcoded values like `hsl(40 30% 97%)` (a cream white) won't adapt across themes
+- The sanctuary depth tokens (`--sanctuary-surface`, `--glass-border`, etc.) aren't used everywhere they should be
 
-### Extension onboarding flow (4 steps)
+## What Changes
 
-```text
-┌──────────────────────────────────────────────┐
-│  1. WELCOME                                  │
-│     "ANREN — Where the mental load rests."   │
-│     "A quiet place for everything            │
-│      you're carrying."                       │
-│     [Begin]                                  │
-│     Already have an account? Sign in         │
-│     ▪ Progress: ████░░░░░░░░ 1/4             │
-├──────────────────────────────────────────────┤
-│  2. CONTEXTUAL CAPTURE                       │
-│     If page context was captured:            │
-│       Shows selected text / page title       │
-│       "Something caught your eye.            │
-│        Add a thought, or just hold it."      │
-│     If no context:                           │
-│       "What's one thing on your mind?"       │
-│       Plain textarea                         │
-│     Saves to localStorage (pre-auth)         │
-│     [Hold this for me]  [Skip]               │
-│     ▪ Progress: ████████░░░░ 2/4             │
-├──────────────────────────────────────────────┤
-│  3. VALUE BRIDGE + AUTH                      │
-│     Shows count of held items                │
-│     "Now let's make sure these are yours."   │
-│     "Sign in so Anren can hold things        │
-│      across your devices."                   │
-│     [Sign in with Google]                    │
-│     ▪ Progress: █████████░░░ 3/4             │
-├──────────────────────────────────────────────┤
-│  4. CALENDAR PREFS                           │
-│     Same as app step 5: calendar checkboxes  │
-│     + birthday toggle                        │
-│     [I'm ready]                              │
-│     ▪ Progress: ████████████ 4/4             │
-├──────────────────────────────────────────────┤
-│  → Capture UI (existing extension App)       │
-└──────────────────────────────────────────────┘
-```
+### 1. Add Missing Tailwind Color Tokens
+Add new color mappings in `tailwind.config.ts` so we can use classes like `text-text-muted`, `bg-surface`, `border-divider` instead of inline styles:
+- `text-primary-color` → `hsl(var(--text))`  
+- `text-secondary-color` → `hsl(var(--text-secondary))`
+- `text-muted-color` → `hsl(var(--text-muted))`
+- `surface` → `hsl(var(--surface))`
+- `divider` → `hsl(var(--divider))`
+- `accent-1` → `hsl(var(--accent-1))`
+- `card-bg` → `hsl(var(--card-bg))`
 
-No visual-capture step (step 3 from web app) — the extension captures web content, not photos. That step doesn't make sense in a side panel.
+### 2. Create Reusable Component Classes
+Add Tailwind `@layer components` classes in `src/index.css` for repeated patterns:
+- `.sanctuary-card` — the rounded-xl container with glass border, depth shadow, inner highlight
+- `.sanctuary-btn` — action button with sanctuary surface styling  
+- `.accent-btn` — primary action (currently hardcoded `hsl(var(--accent-1))` + `hsl(40 30% 97%)`)
+- `.item-row` — the repeated item row with bottom divider border
 
-### "Already have an account?" (both web + extension)
+### 3. Replace Inline Styles Across Components
+Convert all `style={{}}` to Tailwind classes in these files:
 
-On step 1, a subtle link triggers Google sign-in immediately. After auth:
-- Check `profiles.onboarding_completed`
-- If `true` → skip to capture UI (extension) or home (web app)
-- If `false` → jump to calendar prefs step
+| File | Issue |
+|------|-------|
+| **HomeView.tsx** | ~25 inline styles for colors, borders, backgrounds |
+| **CardDetailSheet.tsx** | ~10 inline styles on suggestion box, buttons, text |
+| **BrainDumpSheet.tsx** | ~15 inline styles, hardcoded `hsl(40 30% 97%)` on buttons |
+| **ScheduleSheet.tsx** | Hardcoded `hsl(40 30% 97%)` on save button |
+| **DailyBriefOverlay.tsx** | ~8 inline styles for backgrounds and text colors |
+| **SettingsPage.tsx** | ~12 inline styles for labels, borders, inputs |
+| **CalendarEventSheet.tsx** | Minor inline color styles |
+| **CalendarAgendaSheet.tsx** | Inline styles on date chips and grid |
+| **Onboarding.tsx** | ~15 inline styles, hardcoded accent colors |
+| **NightSkyBackground.tsx** | Hardcoded gradient HSL values (needs theme-aware CSS vars) |
+| **button.tsx** | `cta` variant has hardcoded `amber-400` and `rgba(212,175,55,...)` — should use accent tokens |
 
-### Technical changes
+### 4. Fix the Worst Offender: Hardcoded `hsl(40 30% 97%)`
+This cream-white is used as the text color on accent buttons in BrainDumpSheet, ScheduleSheet, and Onboarding. It should be `hsl(var(--accent-foreground))` or the Tailwind class `text-accent-foreground` so it adapts per theme.
 
-**Extension files:**
-
-1. **`extension/src/App.tsx`** — Wrap in an onboarding gate. New state: `onboardingStep` persisted in `chrome.storage.local`. If `onboardingStep < 5` (not complete), render the onboarding steps instead of the capture UI. After step 4 completes, set `onboardingStep = 5` and show capture UI.
-
-2. **`extension/src/shared/supabaseClient.ts`** — Change `persistSession: false` to `persistSession: true` with `chrome.storage.local` as the storage adapter so sessions survive panel close/reopen. Add a `signInWithGoogle()` function that uses `supabase.auth.signInWithOAuth({ provider: 'google' })` — this opens a new tab for Google consent, and the existing `onAuthStateChange` picks up the session.
-
-3. **`extension/src/shared/config.ts`** — Replace hardcoded dev user ID. `getCurrentUserId()` reads from the Supabase session (`getClient()?.auth.getUser()`). Falls back to dev ID only if no session.
-
-4. **`extension/public/background.js`** — No changes needed. Context capture already works and feeds into step 2.
-
-**Web app files:**
-
-5. **`src/pages/Onboarding.tsx`** — Add "Already have an account? Sign in" link on step 1. After successful auth, check `profiles.onboarding_completed`:
-   - If `true`: `navigate("/")`
-   - If `false`: jump to step 5 (calendar prefs)
-
-### Extension auth approach
-
-Chrome extensions can't do OAuth redirects back to themselves easily. The approach:
-- `supabase.auth.signInWithOAuth()` opens Google consent in a new browser tab
-- The redirect URL points to the web app's existing `/~oauth/callback` or `/google-callback`
-- The web app callback sets the Supabase session cookie
-- The extension's Supabase client with `persistSession: true` + a `chrome.storage.local` storage adapter picks up the session via `onAuthStateChange`
-- Alternative simpler approach: after Google consent completes in the tab, the extension polls `supabase.auth.getSession()` until it finds one
-
-### Extension local storage for pre-auth cards
-
-Same pattern as web app but using `chrome.storage.local` instead of `localStorage` (more reliable in extension context, persists across panel open/close):
-- Key: `anren_local_cards`
-- On auth completion: bulk-insert to `cards` table, clear local storage
-
-### Summary of files
-
-| File | Action |
-|------|--------|
-| `extension/src/App.tsx` | Major rewrite: onboarding gate + 4-step flow |
-| `extension/src/shared/supabaseClient.ts` | Persist session, add `signInWithGoogle()` |
-| `extension/src/shared/config.ts` | Dynamic user ID from session |
-| `src/pages/Onboarding.tsx` | Add "Already have an account?" link on step 1 |
+## Files to Edit
+1. `tailwind.config.ts` — add color token mappings
+2. `src/index.css` — add `.sanctuary-card`, `.sanctuary-btn`, `.accent-btn` component classes
+3. `src/components/HomeView.tsx` — replace all inline styles
+4. `src/components/CardDetailSheet.tsx` — replace all inline styles
+5. `src/components/BrainDumpSheet.tsx` — replace all inline styles
+6. `src/components/ScheduleSheet.tsx` — replace inline styles
+7. `src/components/DailyBriefOverlay.tsx` — replace inline styles
+8. `src/components/SettingsPage.tsx` — replace inline styles
+9. `src/components/CalendarEventSheet.tsx` — minor cleanup
+10. `src/components/CalendarAgendaSheet.tsx` — replace inline styles
+11. `src/pages/Onboarding.tsx` — replace inline styles
+12. `src/components/ui/button.tsx` — replace hardcoded amber/rgba in `cta` variant
+13. `src/components/ui/NightSkyBackground.tsx` — use CSS vars for gradient colors
 
