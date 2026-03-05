@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.transcribe-voice]
 verify_jwt = false
+
+[functions.smart-reorder]
+verify_jwt = false

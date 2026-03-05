@@ -20,11 +20,12 @@ interface Props {
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body">>) => void;
   onDelete: (id: string) => void;
+  suggestion?: string;
 }
 
 const APP_URL = "https://anren.app";
 
-export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Props) {
+export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, suggestion }: Props) {
   const [body, setBody] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -182,6 +183,24 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete }: Pro
             </p>
           )}
         </div>
+
+        {/* AI Suggestion */}
+        {suggestion && (
+          <div
+            className="mx-5 mb-3 px-4 py-3 rounded-xl"
+            style={{
+              background: "hsl(var(--surface) / 0.4)",
+              border: "1px solid hsl(var(--divider) / 0.15)",
+            }}
+          >
+            <p className="text-xs font-medium mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              ✦ Thinking partner
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--text-secondary))" }}>
+              {suggestion}
+            </p>
+          </div>
+        )}
 
         {/* Bottom actions */}
         <div className="px-5 pb-6 pt-2 space-y-2">

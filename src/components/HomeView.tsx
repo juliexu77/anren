@@ -38,9 +38,11 @@ interface Props {
   onSchedule: (card: BrainCard) => void;
   onOpenCamera: () => void;
   onOpenBrainDump: () => void;
+  onReorder: () => void;
+  reordering: boolean;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering }: Props) {
   const [meditativeIndex, setMeditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -234,6 +236,23 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
               onComplete={() => onComplete(card.id)}
             />
           ))}
+          {/* Reorder button */}
+          <button
+            onClick={onReorder}
+            disabled={reordering}
+            className="w-full flex items-center justify-center gap-2 py-2.5 text-caption transition-colors active:opacity-60"
+            style={{
+              color: "hsl(var(--text-muted))",
+              borderTop: "1px solid hsl(var(--divider) / 0.08)",
+            }}
+          >
+            {reordering ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <span>✦</span>
+            )}
+            {reordering ? "Organizing…" : "Help me get organized"}
+          </button>
         </Section>
       )}
 
