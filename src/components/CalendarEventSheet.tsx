@@ -27,16 +27,16 @@ export function CalendarEventSheet({ event, open, onClose, onDelete }: Props) {
         </SheetHeader>
         <div className="mt-4 space-y-3">
           {event.start.dateTime && (
-            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
+            <p className="text-sm text-text-muted-color">
               {format(parseISO(event.start.dateTime), "EEEE, MMM d · h:mm a")}
               {event.end.dateTime && ` – ${format(parseISO(event.end.dateTime), "h:mm a")}`}
             </p>
           )}
           {event.start.date && !event.start.dateTime && (
-            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>All day</p>
+            <p className="text-sm text-text-muted-color">All day</p>
           )}
           {event.description && (
-            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>{event.description}</p>
+            <p className="text-sm text-text-muted-color">{event.description}</p>
           )}
           <div className="flex gap-2 pt-2">
             {event.htmlLink && (

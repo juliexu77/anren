@@ -227,7 +227,7 @@
   .bg-primary,
   button.bg-primary {
     background: hsl(var(--accent-1)) !important;
-    color: hsl(40 30% 97%) !important;
+    color: hsl(var(--accent-foreground)) !important;
     font-weight: 500;
     box-shadow: 0 1px 3px rgba(25,20,15,0.15);
   }
@@ -544,7 +544,7 @@
   .confidence-badge {
     @apply rounded-full px-3 py-2 text-label font-medium;
     background: hsl(var(--accent-1));
-    color: hsl(40 30% 97%);
+    color: hsl(var(--accent-foreground));
   }
 
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -559,9 +559,50 @@
   .fab-button {
     @apply w-14 h-14 rounded-full shadow-lg flex items-center justify-center;
     background: hsl(var(--accent-1));
-    color: hsl(40 30% 97%);
+    color: hsl(var(--accent-foreground));
     box-shadow: 0 4px 12px rgba(25, 20, 15, 0.15),
                 0 1px 3px rgba(25, 20, 15, 0.1);
+  }
+
+  /* Sanctuary card — glass container with depth */
+  .sanctuary-card {
+    @apply rounded-xl overflow-hidden;
+    background: var(--sanctuary-surface);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--depth-shadow), var(--inner-highlight);
+  }
+
+  /* Sanctuary button — action button with surface styling */
+  .sanctuary-btn {
+    @apply rounded-xl transition-all active:scale-[0.97];
+    background: var(--sanctuary-surface);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--depth-shadow), var(--inner-highlight);
+    color: hsl(var(--text));
+  }
+
+  /* Accent button — primary CTA */
+  .accent-btn {
+    @apply rounded-lg font-medium transition-colors;
+    background: hsl(var(--accent-1));
+    color: hsl(var(--accent-foreground));
+  }
+  .accent-btn:disabled {
+    @apply opacity-30;
+  }
+
+  /* Item row — repeated list row with divider */
+  .item-row {
+    @apply flex items-center gap-2 px-3 py-2 transition-colors;
+    border-bottom: 1px solid hsl(var(--divider) / 0.08);
+  }
+
+  /* Orientation card — glass gradient container */
+  .orientation-card {
+    @apply rounded-xl px-4 py-3;
+    background: linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--depth-shadow), var(--inner-highlight);
   }
 }
 

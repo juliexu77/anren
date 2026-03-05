@@ -37,7 +37,6 @@ export function SettingsPage() {
 
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
-  // Fetch calendar list when section opens
   useEffect(() => {
     if (showCalendarPicker && calendars.length === 0) {
       fetchCalendarList();
@@ -64,7 +63,6 @@ export function SettingsPage() {
       const next = current.includes(calId)
         ? current.filter((c) => c !== calId)
         : [...current, calId];
-      // Don't allow empty
       if (next.length === 0) return;
       updateSettings({ calendars: next });
     },
@@ -92,18 +90,12 @@ export function SettingsPage() {
       {settingsLoaded && (
         <section>
           <h2 className="text-section-header text-muted-foreground mb-4">Daily Brief</h2>
-          <div
-            className="rounded-2xl border p-4 space-y-4"
-            style={{
-              borderColor: "hsl(var(--divider) / 0.25)",
-              background: "hsl(var(--card-bg) / 0.5)",
-            }}
-          >
+          <div className="rounded-2xl border border-divider-color/25 p-4 space-y-4 bg-card-bg-color/50">
             {/* Enable / disable */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4" style={{ color: "hsl(var(--text-muted))" }} />
-                <span className="text-caption" style={{ color: "hsl(var(--text))" }}>
+                <Bell className="w-4 h-4 text-text-muted-color" />
+                <span className="text-caption text-text-primary">
                   Morning brief
                 </span>
               </div>
@@ -114,18 +106,13 @@ export function SettingsPage() {
               <>
                 {/* Delivery time */}
                 <div className="space-y-2">
-                  <label className="text-label" style={{ color: "hsl(var(--text-muted))" }}>
+                  <label className="text-label text-text-muted-color">
                     Delivery time
                   </label>
                   <select
                     value={settings.delivery_time}
                     onChange={handleTimeChange}
                     className="w-full rounded-lg px-3 py-2.5 text-caption appearance-none"
-                    style={{
-                      background: "hsl(var(--surface))",
-                      border: "1px solid hsl(var(--divider) / 0.3)",
-                      color: "hsl(var(--text))",
-                    }}
                   >
                     {timeSlots.map((slot) => (
                       <option key={slot} value={slot}>
@@ -133,7 +120,7 @@ export function SettingsPage() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-micro" style={{ color: "hsl(var(--text-muted))" }}>
+                  <p className="text-micro text-text-muted-color">
                     {Intl.DateTimeFormat().resolvedOptions().timeZone}
                   </p>
                 </div>
@@ -144,17 +131,16 @@ export function SettingsPage() {
                     onClick={() => setShowCalendarPicker(!showCalendarPicker)}
                     className="flex items-center justify-between w-full text-left"
                   >
-                    <label className="text-label" style={{ color: "hsl(var(--text-muted))" }}>
+                    <label className="text-label text-text-muted-color">
                       Calendars
                     </label>
                     <ChevronDown
-                      className={cn("w-3.5 h-3.5 transition-transform", showCalendarPicker && "rotate-180")}
-                      style={{ color: "hsl(var(--text-muted))" }}
+                      className={cn("w-3.5 h-3.5 transition-transform text-text-muted-color", showCalendarPicker && "rotate-180")}
                     />
                   </button>
 
                   {!showCalendarPicker && (
-                    <p className="text-micro" style={{ color: "hsl(var(--text-muted))" }}>
+                    <p className="text-micro text-text-muted-color">
                       {settings.calendars.includes("primary")
                         ? "Primary calendar"
                         : `${settings.calendars.length} calendar${settings.calendars.length > 1 ? "s" : ""}`}
@@ -164,7 +150,7 @@ export function SettingsPage() {
                   {showCalendarPicker && (
                     <div className="space-y-1.5">
                       {calendarsLoading ? (
-                        <p className="text-micro py-2" style={{ color: "hsl(var(--text-muted))" }}>
+                        <p className="text-micro py-2 text-text-muted-color">
                           Loading calendars…
                         </p>
                       ) : (
@@ -176,10 +162,10 @@ export function SettingsPage() {
                               <button
                                 key={cal.id}
                                 onClick={() => toggleCalendar(cal.id)}
-                                className="flex items-center gap-2.5 w-full py-1.5 px-2 rounded-lg transition-colors"
-                                style={{
-                                  background: isSelected ? "hsl(var(--surface) / 0.6)" : "transparent",
-                                }}
+                                className={cn(
+                                  "flex items-center gap-2.5 w-full py-1.5 px-2 rounded-lg transition-colors",
+                                  isSelected ? "bg-surface-color/60" : "bg-transparent"
+                                )}
                               >
                                 {cal.backgroundColor && (
                                   <div
@@ -187,25 +173,22 @@ export function SettingsPage() {
                                     style={{ background: cal.backgroundColor }}
                                   />
                                 )}
-                                <span
-                                  className="text-caption flex-1 text-left truncate"
-                                  style={{ color: "hsl(var(--text))" }}
-                                >
+                                <span className="text-caption flex-1 text-left truncate text-text-primary">
                                   {cal.summary}
                                   {cal.primary && (
-                                    <span className="text-micro ml-1.5" style={{ color: "hsl(var(--text-muted))" }}>
+                                    <span className="text-micro ml-1.5 text-text-muted-color">
                                       (primary)
                                     </span>
                                   )}
                                 </span>
                                 {isSelected && (
-                                  <Check className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(var(--accent-1))" }} />
+                                  <Check className="w-3.5 h-3.5 shrink-0 text-accent-1" />
                                 )}
                               </button>
                             );
                           })}
                           {settings.calendars.length > 1 && (
-                            <p className="text-micro pt-1" style={{ color: "hsl(var(--accent-1))" }}>
+                            <p className="text-micro pt-1 text-accent-1">
                               One calendar keeps the brief focused.
                             </p>
                           )}

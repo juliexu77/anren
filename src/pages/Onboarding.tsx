@@ -37,7 +37,6 @@ export default function Onboarding() {
   const [birthdaysOn, setBirthdaysOn] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
 
-  // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -49,14 +48,12 @@ export default function Onboarding() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // After auth arrives at step 4, migrate and advance
   useEffect(() => {
     if (user && step === 4) {
       migrateLocalCards().then(() => nextStep());
     }
   }, [user, step]);
 
-  // Fetch calendar list when reaching step 5
   useEffect(() => {
     if (user && step === 5) {
       fetchCalendarList();
@@ -95,7 +92,6 @@ export default function Onboarding() {
     await handleGoogleSignIn();
   };
 
-  // After auth, check if returning user has completed onboarding
   useEffect(() => {
     if (user && step === 1) {
       (async () => {
@@ -114,7 +110,6 @@ export default function Onboarding() {
     }
   }, [user]);
 
-  // Voice recording helpers
   const cleanupRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (streamRef.current) {
@@ -202,7 +197,6 @@ export default function Onboarding() {
         body: { audioBase64, mimeType, extractItems: true },
       });
       if (error) throw error;
-      // Handle multi-item response
       if (data?.items && Array.isArray(data.items)) {
         const titles: string[] = [];
         for (const item of data.items) {
@@ -255,7 +249,7 @@ export default function Onboarding() {
   const timeStr = `${mins}:${secs.toString().padStart(2, "0")}`;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--bg))" }}>
+    <div className="min-h-screen flex flex-col bg-bg-color">
       {/* Progress bar */}
       <div className="px-6 pt-4">
         <Progress value={progress} className="h-1" />
@@ -265,45 +259,26 @@ export default function Onboarding() {
         {/* Step 1: Emotional hook */}
         {step === 1 && (
           <div className="text-center max-w-sm animate-fade-in">
-            <h1
-              className="font-display text-5xl font-semibold mb-6"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <h1 className="font-display text-5xl font-semibold mb-6 text-text-primary">
               ANREN
             </h1>
-            <p
-              className="text-xl font-display mb-3"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <p className="text-xl font-display mb-3 text-text-primary">
               Where the mental load rests.
             </p>
-            <p
-              className="text-sm leading-relaxed mb-12"
-              style={{ color: "hsl(var(--text-muted) / 0.7)" }}
-            >
+            <p className="text-sm leading-relaxed mb-12 text-text-muted-color/70">
               The appointments you're juggling. The things you can't forget.
               The invisible weight no one sees. Set it all down here.
             </p>
             <button
               onClick={nextStep}
-              className="w-full py-3.5 rounded-full text-button font-medium"
-              style={{
-                background: "hsl(var(--accent))",
-                color: "hsl(var(--bg))",
-              }}
+              className="accent-btn w-full py-3.5 rounded-full text-button"
             >
               Begin
             </button>
             <button
               onClick={handleReturningUserSignIn}
               disabled={signingIn}
-              className="mt-3 py-2 px-4 text-xs underline underline-offset-2"
-              style={{
-                color: "hsl(var(--text-muted) / 0.7)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className="mt-3 py-2 px-4 text-xs underline underline-offset-2 bg-transparent border-none cursor-pointer text-text-muted-color/70"
             >
               Already have an account? Sign in
             </button>
@@ -313,10 +288,7 @@ export default function Onboarding() {
         {/* Step 2: How it works */}
         {step === 2 && (
           <div className="text-center max-w-sm animate-fade-in">
-            <p
-              className="text-xl font-display mb-8"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <p className="text-xl font-display mb-8 text-text-primary">
               How Anren works
             </p>
             <div className="space-y-6 mb-10 text-left">
@@ -338,26 +310,14 @@ export default function Onboarding() {
                 },
               ].map((item) => (
                 <div key={item.num} className="flex gap-4 items-start">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-medium"
-                    style={{
-                      background: "hsl(var(--accent) / 0.15)",
-                      color: "hsl(var(--accent))",
-                    }}
-                  >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-medium bg-accent/15 text-accent">
                     {item.num}
                   </div>
                   <div>
-                    <p
-                      className="text-sm font-medium mb-0.5"
-                      style={{ color: "hsl(var(--text))" }}
-                    >
+                    <p className="text-sm font-medium mb-0.5 text-text-primary">
                       {item.title}
                     </p>
-                    <p
-                      className="text-xs leading-relaxed"
-                      style={{ color: "hsl(var(--text-muted))" }}
-                    >
+                    <p className="text-xs leading-relaxed text-text-muted-color">
                       {item.desc}
                     </p>
                   </div>
@@ -366,11 +326,7 @@ export default function Onboarding() {
             </div>
             <button
               onClick={nextStep}
-              className="w-full py-3.5 rounded-full text-button font-medium"
-              style={{
-                background: "hsl(var(--accent))",
-                color: "hsl(var(--bg))",
-              }}
+              className="accent-btn w-full py-3.5 rounded-full text-button"
             >
               Let's try it
             </button>
@@ -380,16 +336,10 @@ export default function Onboarding() {
         {/* Step 3: Voice-first capture */}
         {step === 3 && !isTranscribing && capturedItems.length === 0 && (
           <div className="w-full max-w-sm animate-fade-in text-center">
-            <p
-              className="text-2xl font-display mb-2"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <p className="text-2xl font-display mb-2 text-text-primary">
               What are you holding?
             </p>
-            <p
-              className="text-sm mb-8"
-              style={{ color: "hsl(var(--text-muted))" }}
-            >
+            <p className="text-sm mb-8 text-text-muted-color">
               Small things. Big things. Just say it out loud.
             </p>
 
@@ -418,42 +368,29 @@ export default function Onboarding() {
                       fill="hsl(0 70% 55%)"
                     />
                   ) : (
-                    <Mic
-                      className="w-8 h-8"
-                      style={{ color: "hsl(var(--accent))" }}
-                    />
+                    <Mic className="w-8 h-8 text-accent" />
                   )}
                 </button>
 
                 {isRecording ? (
-                  <span
-                    className="text-xl font-mono tabular-nums"
-                    style={{ color: "hsl(var(--text) / 0.8)" }}
-                  >
+                  <span className="text-xl font-mono tabular-nums text-text-primary/80">
                     {timeStr}
                   </span>
                 ) : (
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: "hsl(var(--accent))" }}
-                  >
+                  <span className="text-sm font-medium text-accent">
                     Speak
                   </span>
                 )}
 
                 {recordingError && (
-                  <p className="text-xs" style={{ color: "hsl(0 70% 55%)" }}>
+                  <p className="text-xs text-destructive">
                     {recordingError}
                   </p>
                 )}
 
-                {/* Example phrases */}
                 {!isRecording && (
                   <div className="mt-4 space-y-2">
-                    <p
-                      className="text-[11px] uppercase tracking-wider mb-2"
-                      style={{ color: "hsl(var(--text-muted) / 0.5)" }}
-                    >
+                    <p className="text-[11px] uppercase tracking-wider mb-2 text-text-muted-color/50">
                       Try something like
                     </p>
                     {[
@@ -465,8 +402,7 @@ export default function Onboarding() {
                     ].map((phrase) => (
                       <p
                         key={phrase}
-                        className="text-xs italic"
-                        style={{ color: "hsl(var(--text-muted) / 0.45)" }}
+                        className="text-xs italic text-text-muted-color/45"
                       >
                         "{phrase}"
                       </p>
@@ -484,12 +420,7 @@ export default function Onboarding() {
                   onChange={(e) => setTextInput(e.target.value)}
                   placeholder="Type what's on your mind…"
                   className="w-full resize-none rounded-xl px-4 py-3 text-sm mb-4 focus:outline-none"
-                  style={{
-                    background: "hsl(var(--surface))",
-                    border: "1px solid hsl(var(--divider) / 0.3)",
-                    color: "hsl(var(--text))",
-                    minHeight: "100px",
-                  }}
+                  style={{ minHeight: "100px" }}
                   autoFocus
                 />
               </div>
@@ -501,8 +432,7 @@ export default function Onboarding() {
                   cleanupRecording();
                   skipStep();
                 }}
-                className="flex-1 py-3 rounded-full text-sm"
-                style={{ color: "hsl(var(--text-muted))" }}
+                className="flex-1 py-3 rounded-full text-sm text-text-muted-color"
               >
                 Skip
               </button>
@@ -519,19 +449,14 @@ export default function Onboarding() {
                     nextStep();
                   }}
                   disabled={!textInput.trim()}
-                  className="flex-1 py-3 rounded-full text-button font-medium disabled:opacity-40"
-                  style={{
-                    background: "hsl(var(--accent))",
-                    color: "hsl(var(--bg))",
-                  }}
+                  className="accent-btn flex-1 py-3 rounded-full text-button disabled:opacity-40"
                 >
                   Hold this for me
                 </button>
               ) : (
                 <button
                   onClick={() => setShowTextFallback(true)}
-                  className="flex-1 py-3 rounded-full text-sm"
-                  style={{ color: "hsl(var(--text-muted))" }}
+                  className="flex-1 py-3 rounded-full text-sm text-text-muted-color"
                 >
                   or type instead
                 </button>
@@ -543,11 +468,8 @@ export default function Onboarding() {
         {/* Step 3: Transcribing state */}
         {step === 3 && isTranscribing && (
           <div className="text-center animate-fade-in">
-            <Loader2
-              className="w-8 h-8 animate-spin mx-auto mb-3"
-              style={{ color: "hsl(var(--accent))" }}
-            />
-            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-accent" />
+            <p className="text-sm text-text-muted-color">
               Holding that for you…
             </p>
           </div>
@@ -556,34 +478,17 @@ export default function Onboarding() {
         {/* Step 3: Captured items confirmation */}
         {step === 3 && !isTranscribing && capturedItems.length > 0 && (
           <div className="w-full max-w-sm animate-fade-in text-center">
-            <p
-              className="text-lg font-display mb-5"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <p className="text-lg font-display mb-5 text-text-primary">
               Holding:
             </p>
             <div className="space-y-2.5 mb-8 text-left">
               {capturedItems.map((item, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 px-4 py-3 rounded-xl"
-                  style={{
-                    background: "hsl(var(--surface))",
-                    border: "1px solid hsl(var(--divider) / 0.2)",
-                  }}
+                  className="flex items-start gap-3 px-4 py-3 rounded-xl bg-surface-color border border-divider-color/20"
                 >
-                  <span
-                    className="text-xs mt-0.5"
-                    style={{ color: "hsl(var(--accent))" }}
-                  >
-                    •
-                  </span>
-                  <span
-                    className="text-sm"
-                    style={{ color: "hsl(var(--text))" }}
-                  >
-                    {item}
-                  </span>
+                  <span className="text-xs mt-0.5 text-accent">•</span>
+                  <span className="text-sm text-text-primary">{item}</span>
                 </div>
               ))}
             </div>
@@ -592,11 +497,7 @@ export default function Onboarding() {
                 setCapturedItems([]);
                 nextStep();
               }}
-              className="w-full py-3.5 rounded-full text-button font-medium"
-              style={{
-                background: "hsl(var(--accent))",
-                color: "hsl(var(--bg))",
-              }}
+              className="accent-btn w-full py-3.5 rounded-full text-button"
             >
               Hold these for me
             </button>
@@ -607,35 +508,22 @@ export default function Onboarding() {
         {step === 4 && !user && (
           <div className="w-full max-w-sm animate-fade-in text-center">
             {localCards.length > 0 && (
-              <p
-                className="text-sm mb-2"
-                style={{ color: "hsl(var(--text-muted))" }}
-              >
+              <p className="text-sm mb-2 text-text-muted-color">
                 You have {localCards.length}{" "}
                 {localCards.length === 1 ? "thing" : "things"} resting here.
               </p>
             )}
-            <p
-              className="text-xl font-display mb-2"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <p className="text-xl font-display mb-2 text-text-primary">
               Now let's anchor these to your day.
             </p>
-            <p
-              className="text-sm mb-8 leading-relaxed"
-              style={{ color: "hsl(var(--text-muted))" }}
-            >
+            <p className="text-sm mb-8 leading-relaxed text-text-muted-color">
               Your calendar gives Anren the rhythm of your life — so what you're
               holding finds its right place in time.
             </p>
             <button
               onClick={handleGoogleSignIn}
               disabled={signingIn}
-              className="w-full py-3.5 rounded-full text-button font-medium inline-flex items-center justify-center gap-2"
-              style={{
-                background: "hsl(var(--accent))",
-                color: "hsl(var(--bg))",
-              }}
+              className="accent-btn w-full py-3.5 rounded-full text-button inline-flex items-center justify-center gap-2"
             >
               {signingIn ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -667,11 +555,8 @@ export default function Onboarding() {
         {/* Step 4 loading (post-auth, migrating) */}
         {step === 4 && user && (
           <div className="text-center animate-fade-in">
-            <Loader2
-              className="w-8 h-8 animate-spin mx-auto mb-3"
-              style={{ color: "hsl(var(--accent))" }}
-            />
-            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-accent" />
+            <p className="text-sm text-text-muted-color">
               Setting things in place…
             </p>
           </div>
@@ -680,36 +565,23 @@ export default function Onboarding() {
         {/* Step 5: Calendar prefs */}
         {step === 5 && (
           <div className="w-full max-w-sm animate-fade-in">
-            <p
-              className="text-xl font-display mb-1"
-              style={{ color: "hsl(var(--text))" }}
-            >
+            <p className="text-xl font-display mb-1 text-text-primary">
               Which calendars feel like yours?
             </p>
-            <p
-              className="text-sm mb-6"
-              style={{ color: "hsl(var(--text-muted))" }}
-            >
+            <p className="text-sm mb-6 text-text-muted-color">
               Pick the ones that hold the rhythm of your life.
             </p>
 
             {calLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2
-                  className="w-6 h-6 animate-spin"
-                  style={{ color: "hsl(var(--text-muted))" }}
-                />
+                <Loader2 className="w-6 h-6 animate-spin text-text-muted-color" />
               </div>
             ) : (
               <div className="space-y-3 mb-8">
                 {calendars.map((cal) => (
                   <label
                     key={cal.id}
-                    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer"
-                    style={{
-                      background: "hsl(var(--surface))",
-                      border: `1px solid hsl(var(--divider) / 0.25)`,
-                    }}
+                    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer bg-surface-color border border-divider-color/25"
                   >
                     <Checkbox
                       checked={selectedCals.includes(cal.id)}
@@ -721,17 +593,11 @@ export default function Onboarding() {
                         style={{ background: cal.backgroundColor }}
                       />
                     )}
-                    <span
-                      className="text-sm truncate"
-                      style={{ color: "hsl(var(--text))" }}
-                    >
+                    <span className="text-sm truncate text-text-primary">
                       {cal.summary}
                     </span>
                     {cal.primary && (
-                      <span
-                        className="text-[10px] uppercase tracking-wider ml-auto shrink-0"
-                        style={{ color: "hsl(var(--text-muted))" }}
-                      >
+                      <span className="text-[10px] uppercase tracking-wider ml-auto shrink-0 text-text-muted-color">
                         Primary
                       </span>
                     )}
@@ -741,24 +607,12 @@ export default function Onboarding() {
             )}
 
             {/* Birthday toggle */}
-            <div
-              className="flex items-center justify-between p-4 rounded-xl mb-8"
-              style={{
-                background: "hsl(var(--surface))",
-                border: "1px solid hsl(var(--divider) / 0.25)",
-              }}
-            >
+            <div className="flex items-center justify-between p-4 rounded-xl mb-8 bg-surface-color border border-divider-color/25">
               <div>
-                <p
-                  className="text-sm font-medium"
-                  style={{ color: "hsl(var(--text))" }}
-                >
+                <p className="text-sm font-medium text-text-primary">
                   Hold birthdays & milestones
                 </p>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: "hsl(var(--text-muted))" }}
-                >
+                <p className="text-xs mt-0.5 text-text-muted-color">
                   From your contacts' calendars
                 </p>
               </div>
@@ -768,11 +622,7 @@ export default function Onboarding() {
             <button
               onClick={handleFinish}
               disabled={selectedCals.length === 0}
-              className="w-full py-3.5 rounded-full text-button font-medium disabled:opacity-40"
-              style={{
-                background: "hsl(var(--accent))",
-                color: "hsl(var(--bg))",
-              }}
+              className="accent-btn w-full py-3.5 rounded-full text-button disabled:opacity-40"
             >
               I'm ready
             </button>

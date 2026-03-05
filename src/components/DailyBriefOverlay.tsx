@@ -16,22 +16,17 @@ export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
     [cards, calendarEvents]
   );
 
-  // Auto-dismiss after 60 seconds
   useEffect(() => {
     const t = setTimeout(onDismiss, 60_000);
     return () => clearTimeout(t);
   }, [onDismiss]);
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-8 animate-in fade-in duration-700"
-      style={{ background: "hsl(var(--bg))" }}
-    >
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-8 animate-in fade-in duration-700 bg-bg-color">
       {/* Dismiss */}
       <button
         onClick={onDismiss}
-        className="absolute top-14 right-5 p-2 rounded-lg transition-colors"
-        style={{ color: "hsl(var(--text-muted))" }}
+        className="absolute top-14 right-5 p-2 rounded-lg transition-colors text-text-muted-color"
       >
         <X className="w-5 h-5" />
       </button>
@@ -39,30 +34,17 @@ export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
       {/* Content */}
       <div className="max-w-sm w-full space-y-6">
         <h1
-          className="text-h2 text-center"
+          className="text-h2 text-center text-text-primary"
           style={{
             fontFamily: "var(--font-serif)",
-            color: "hsl(var(--text))",
             fontWeight: 400,
           }}
         >
           Your day
         </h1>
 
-        <div
-          className="rounded-xl px-5 py-4"
-          style={{
-            background: "hsl(var(--card-bg) / 0.6)",
-            border: "1px solid hsl(var(--divider) / 0.15)",
-          }}
-        >
-          <div
-            className="text-body-sm font-sans space-y-0"
-            style={{
-              color: "hsl(var(--text-secondary))",
-              lineHeight: "1.7",
-            }}
-          >
+        <div className="sanctuary-card px-5 py-4 bg-card-bg-color/60">
+          <div className="text-body-sm font-sans space-y-0 text-text-secondary-color leading-relaxed">
             {orientation.map((line, i) =>
               line.type === "spacer" ? (
                 <div key={i} className="h-2" />
@@ -75,12 +57,7 @@ export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
 
         <button
           onClick={onDismiss}
-          className="w-full py-3 rounded-xl text-button transition-all active:scale-[0.98]"
-          style={{
-            background: "hsl(var(--surface) / 0.7)",
-            border: "1px solid hsl(var(--divider) / 0.25)",
-            color: "hsl(var(--text))",
-          }}
+          className="sanctuary-btn w-full py-3 text-button bg-surface-color/70"
         >
           I'm ready
         </button>

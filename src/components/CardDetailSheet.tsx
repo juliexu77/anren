@@ -31,7 +31,6 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { createEvent } = useGoogleCalendar();
 
-  // Event creation state
   const [showEventSheet, setShowEventSheet] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -126,10 +125,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex flex-col animate-in fade-in slide-in-from-right duration-200"
-        style={{ background: "hsl(var(--bg))" }}
-      >
+      <div className="fixed inset-0 z-50 flex flex-col animate-in fade-in slide-in-from-right duration-200 bg-bg-color">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <button onClick={handleClose} className="flex items-center gap-1 text-foreground/70 active:text-foreground">
@@ -152,7 +148,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
         {/* Title */}
         {card.title && (
           <div className="px-5 pt-2">
-            <h2 className="text-h3" style={{ color: "hsl(var(--text))" }}>{card.title}</h2>
+            <h2 className="text-h3 text-text-primary">{card.title}</h2>
           </div>
         )}
 
@@ -186,18 +182,11 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
 
         {/* AI Suggestion */}
         {suggestion && (
-          <div
-            className="mx-5 mb-3 px-4 py-3 rounded-xl"
-            style={{
-              background: "var(--sanctuary-surface)",
-              border: "1px solid var(--glass-border)",
-              boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-            }}
-          >
-            <p className="text-xs font-medium mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+          <div className="mx-5 mb-3 sanctuary-card px-4 py-3">
+            <p className="text-xs font-medium mb-1 text-text-muted-color">
               ✦ Thinking partner
             </p>
-            <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--text-secondary))" }}>
+            <p className="text-sm leading-relaxed text-text-secondary-color">
               {suggestion}
             </p>
           </div>
@@ -211,13 +200,7 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
           <button
             onClick={handleCreateEvent}
             disabled={extracting}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm transition-all active:scale-[0.97]"
-            style={{
-              background: "var(--sanctuary-surface)",
-              border: "1px solid var(--glass-border)",
-              boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-              color: "hsl(var(--text) / 0.7)",
-            }}
+            className="sanctuary-btn w-full flex items-center justify-center gap-2 py-3 text-sm text-text-primary/70"
           >
             {extracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
             Add to Calendar
