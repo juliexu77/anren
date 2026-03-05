@@ -13,7 +13,8 @@ export function usePushNotifications() {
   const registered = useRef(false);
 
   useEffect(() => {
-    if (!user || registered.current) return;
+    if (!user) return;
+    if (registered.current) return;
     if (!Capacitor.isNativePlatform()) return;
 
     const handles: { remove: () => Promise<void> }[] = [];
@@ -22,19 +23,29 @@ export function usePushNotifications() {
       try {
         const { PushNotifications } = await import("@capacitor/push-notifications");
 
+        // Check current permission status first
+        const permStatus = await PushNotifications.checkPermissions();
+        console.log("Push permission status:", permStatus.receive);
+
+        if (permStatus.receive === "denied") {
+          console.log("Push permission previously denied");
+          return;
+        }
+
+        // Request permissions (will show system prompt if not yet determined)
         const perm = await PushNotifications.requestPermissions();
+        console.log("Push permission after request:", perm.receive);
         if (perm.receive !== "granted") {
           console.log("Push permission not granted");
           return;
         }
 
-        await PushNotifications.register();
-
+        // Set up listeners BEFORE calling register()
         const regHandle = await PushNotifications.addListener("registration", async (token) => {
-          console.log("Push token:", token.value);
+          console.log("Push token received:", token.value);
           registered.current = true;
 
-          await supabase.from("device_tokens").upsert(
+          const { error } = await supabase.from("device_tokens").upsert(
             {
               user_id: user.id,
               token: token.value,
@@ -42,13 +53,19 @@ export function usePushNotifications() {
             },
             { onConflict: "user_id,token" }
           );
+          if (error) console.error("Failed to save push token:", error);
+          else console.log("Push token saved successfully");
         });
         handles.push(regHandle);
 
         const errHandle = await PushNotifications.addListener("registrationError", (err) => {
-          console.error("Push registration error:", err);
+          console.error("Push registration error:", JSON.stringify(err));
         });
         handles.push(errHandle);
+
+        // Now register with APNs
+        await PushNotifications.register();
+        console.log("PushNotifications.register() called");
       } catch (e) {
         console.error("Push setup error:", e);
       }
