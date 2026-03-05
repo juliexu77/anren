@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ExtensionOnboarding from "./components/ExtensionOnboarding";
 import CaptureUI from "./components/CaptureUI";
-import { getClient } from "./shared/supabaseClient";
+import { applyWebSessionToExtension, getClient } from "./shared/supabaseClient";
 import "./App.css";
 
 type AppState = "loading" | "onboarding" | "capture";
@@ -73,6 +73,103 @@ function App() {
     }
 
     checkState();
+  }, []);
+
+  // Listen for auth tokens coming from the web app via the content script bridge.
+  useEffect(() => {
+    const chromeAny = globalThis as unknown as {
+      chrome?: {
+        runtime?: {
+          onMessage: {
+            addListener: (
+              listener: (
+                message: unknown,
+                sender: { tab?: { id?: number } },
+                sendResponse: (response?: unknown) => void
+              ) => void
+            ) => void;
+            removeListener: (
+              listener: (
+                message: unknown,
+                sender: { tab?: { id?: number } },
+                sendResponse: (response?: unknown) => void
+              ) => void
+            ) => void;
+          };
+        };
+        tabs?: {
+          remove: (tabId: number, callback?: () => void) => void;
+        };
+      };
+    };
+
+    const runtime = chromeAny.chrome?.runtime;
+    if (!runtime?.onMessage) return;
+
+    const listener = (
+      message: any,
+      sender: { tab?: { id?: number } },
+      sendResponse: (response?: unknown) => void,
+    ) => {
+      if (!message || message.type !== "ANREN_EXTENSION_AUTH") {
+        return;
+      }
+
+      const accessToken = message.accessToken as string | undefined;
+      const refreshToken = message.refreshToken as string | undefined;
+      if (!accessToken || !refreshToken) return;
+
+      (async () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'X-Debug-Session-Id':'f4b487',
+          },
+          body:JSON.stringify({
+            sessionId:'f4b487',
+            runId:'auth-flow',
+            hypothesisId:'H4',
+            location:'extension/src/App.tsx:onMessage',
+            message:'Extension App received ANREN_EXTENSION_AUTH',
+            data:{ hasAccessToken:!!accessToken, hasRefreshToken:!!refreshToken, appStateBefore:appState },
+            timestamp:Date.now(),
+          }),
+        }).catch(()=>{});
+        // #endregion
+        const { error } = await applyWebSessionToExtension({
+          accessToken,
+          refreshToken,
+        });
+
+        if (!error) {
+          // We have a valid session now – show the capture UI.
+          setAppState("capture");
+
+          // Close the auth tab that initiated this message, if we can.
+          const tabs = chromeAny.chrome?.tabs;
+          const tabId = sender.tab?.id;
+          if (tabs && typeof tabId === "number") {
+            try {
+              tabs.remove(tabId);
+            } catch {
+              // Ignore failures to close the tab.
+            }
+          }
+        }
+
+        sendResponse({ ok: !error });
+      })();
+
+      // Indicate that we'll respond asynchronously.
+      return true;
+    };
+
+    runtime.onMessage.addListener(listener);
+    return () => {
+      runtime.onMessage.removeListener(listener);
+    };
   }, []);
 
   const handleOnboardingComplete = () => {

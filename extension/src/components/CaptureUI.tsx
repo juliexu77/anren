@@ -9,8 +9,8 @@ import {
   createCard,
   fetchRecentCards,
   getClient,
+  getWebAppAuthUrl,
   hasSupabaseConfig,
-  signInWithGoogle,
   type Card,
 } from "../shared/supabaseClient";
 
@@ -214,16 +214,38 @@ export default function CaptureUI() {
     }
   };
 
-  const handleSignIn = async () => {
-    setSigningIn(true);
+  const handleSignIn = () => {
     setAuthError(null);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      setAuthError("Sign in failed. Please try again.");
-      setSigningIn(false);
+    const url = getWebAppAuthUrl();
+    // #region agent log
+    fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Debug-Session-Id':'f4b487',
+      },
+      body:JSON.stringify({
+        sessionId:'f4b487',
+        runId:'auth-flow',
+        hypothesisId:'H1',
+        location:'extension/src/components/CaptureUI.tsx:handleSignIn',
+        message:'Extension handleSignIn invoked',
+        data:{ url },
+        timestamp:Date.now(),
+      }),
+    }).catch(()=>{});
+    // #endregion
+    try {
+      const chromeAny = globalThis as unknown as { chrome?: { tabs?: { create: (opts: { url: string }) => void } } };
+      if (chromeAny.chrome?.tabs?.create) {
+        chromeAny.chrome.tabs.create({ url });
+      } else {
+        window.open(url, "_blank");
+      }
+    } catch {
+      setAuthError("Could not open sign-in page.");
     }
-    // On success, Supabase opens OAuth in a new tab; when the user completes
-    // the flow and returns, the extension's Supabase client will have a session.
+    setSigningIn(false);
   };
 
   return (
@@ -248,6 +270,9 @@ export default function CaptureUI() {
             >
               Sign in with Google
             </button>
+            <p className="capture-status capture-muted" style={{ marginTop: 6, fontSize: 12 }}>
+              Opens the Anren app in a new tab. After signing in there, return here.
+            </p>
             {authError && (
               <p className="capture-status capture-error" role="alert">
                 {authError}

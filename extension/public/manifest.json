@@ -15,11 +15,26 @@
   "permissions": [
     "sidePanel",
     "storage",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "https://calendar.google.com/*",
-    "https://mail.google.com/*"
+    "https://mail.google.com/*",
+    "https://anren.lovable.app/*",
+    "https://anren.app/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://anren.lovable.app/*",
+        "https://anren.app/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
   ],
   "background": {
     "service_worker": "background.js",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { signInWithGoogle, getClient, migrateLocalCards } from "../shared/supabaseClient";
+import { getWebAppAuthUrl, getClient, migrateLocalCards } from "../shared/supabaseClient";
 import type { User } from "@supabase/supabase-js";
 
 type OnboardingStep = 1 | 2 | 3 | 4;
@@ -128,26 +128,48 @@ export default function ExtensionOnboarding({ pageContext, onComplete }: Props) 
     }
   }
 
-  const handleSignIn = async () => {
-    setSigningIn(true);
+  const openAuthTab = () => {
     setAuthError(null);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      setAuthError("Sign in failed. Please try again.");
-      setSigningIn(false);
+    const url = getWebAppAuthUrl();
+    // #region agent log
+    fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Debug-Session-Id':'f4b487',
+      },
+      body:JSON.stringify({
+        sessionId:'f4b487',
+        runId:'auth-flow',
+        hypothesisId:'H1',
+        location:'extension/src/components/ExtensionOnboarding.tsx:openAuthTab',
+        message:'Extension onboarding openAuthTab',
+        data:{ url, step },
+        timestamp:Date.now(),
+      }),
+    }).catch(()=>{});
+    // #endregion
+    try {
+      const chromeAny = globalThis as unknown as { chrome?: { tabs?: { create: (opts: { url: string }) => void } } };
+      if (chromeAny.chrome?.tabs?.create) {
+        chromeAny.chrome.tabs.create({ url });
+      } else {
+        window.open(url, "_blank");
+      }
+    } catch {
+      setAuthError("Could not open sign-in page.");
     }
-    // If no error, OAuth opens in a new tab.
-    // onAuthStateChange will pick up the session.
+    setSigningIn(false);
   };
 
-  const handleReturningUser = async () => {
+  const handleSignIn = () => {
     setSigningIn(true);
-    setAuthError(null);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      setAuthError("Sign in failed. Please try again.");
-      setSigningIn(false);
-    }
+    openAuthTab();
+  };
+
+  const handleReturningUser = () => {
+    setSigningIn(true);
+    openAuthTab();
   };
 
   const handleCapture = () => {

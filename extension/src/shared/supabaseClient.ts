@@ -107,6 +107,20 @@ export function getClient(): SupabaseClient | null {
   return client;
 }
 
+/** Base URL of the web app (used for auth-in-tab and redirects). */
+export function getWebAppOrigin(): string {
+  return (SUPABASE_URL || "").replace(/\/+$/, "").includes("supabase")
+    ? "https://anren.lovable.app"
+    : (import.meta.env.VITE_ANREN_WEB_ORIGIN as string | undefined) || "https://anren.app";
+}
+
+/** URL to open in a new tab so the user can sign in on the web app. */
+export function getWebAppAuthUrl(): string {
+  // The extension uses a dedicated auth start route that immediately
+  // triggers Google OAuth and then redirects to /extension-auth-complete.
+  return getWebAppOrigin() + "/extension-auth";
+}
+
 /**
  * Sign in with Google OAuth. Opens a new tab for Google consent.
  * The redirect points to the web app's callback; the extension picks up
@@ -116,9 +130,7 @@ export async function signInWithGoogle(): Promise<{ error: Error | null }> {
   const supabase = getClient();
   if (!supabase) return { error: new Error("Supabase not configured") };
 
-  const webAppOrigin = (SUPABASE_URL || "").replace(/\/+$/, "").includes("supabase")
-    ? "https://anren.lovable.app"
-    : window.location.origin;
+  const webAppOrigin = getWebAppOrigin();
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -130,6 +142,25 @@ export async function signInWithGoogle(): Promise<{ error: Error | null }> {
         scope: "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts.readonly",
       },
     },
+  });
+
+  return { error: error ? new Error(error.message) : null };
+}
+
+/**
+ * Apply a Supabase session that was created on the web app to the extension's
+ * Supabase client, using access + refresh tokens from the web.
+ */
+export async function applyWebSessionToExtension(params: {
+  accessToken: string;
+  refreshToken: string;
+}): Promise<{ error: Error | null }> {
+  const supabase = getClient();
+  if (!supabase) return { error: new Error("Supabase not configured") };
+
+  const { error } = await supabase.auth.setSession({
+    access_token: params.accessToken,
+    refresh_token: params.refreshToken,
   });
 
   return { error: error ? new Error(error.message) : null };

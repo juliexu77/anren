@@ -330,6 +330,10 @@
   color: hsl(0 60% 50%);
 }
 
+.capture-muted {
+  color: hsl(var(--text-muted));
+}
+
 .anren-supabase-notice {
   color: hsl(var(--text-muted));
   font-style: italic;
