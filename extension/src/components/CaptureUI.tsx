@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import {
   AnrenGuidanceTooltips,
   hasAnrenGuidanceBeenSeen,
@@ -70,10 +71,37 @@ export default function CaptureUI() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     hasAnrenGuidanceBeenSeen().then((seen) => setGuidanceSeen(seen));
   }, []);
+
+  // Track Supabase auth state so we know when the user is signed in and can
+  // hide the Account sign-in section.
+  useEffect(() => {
+    if (!hasSupabase) return;
+    const supabase = getClient();
+    if (!supabase) return;
+
+    let active = true;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (active) setUser(user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [hasSupabase]);
 
   const isSubmitting = status === "saving";
 
@@ -134,7 +162,7 @@ export default function CaptureUI() {
       const startedAt = Date.now();
       try {
         setDataStatus("loading");
-        const cards = await fetchRecentCards(20, "extension");
+        const cards = await fetchRecentCards(20);
         const elapsed = Date.now() - startedAt;
         const remaining = MIN_LOADING_MS - elapsed;
         if (remaining > 0) {
@@ -217,24 +245,6 @@ export default function CaptureUI() {
   const handleSignIn = () => {
     setAuthError(null);
     const url = getWebAppAuthUrl();
-    // #region agent log
-    fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'X-Debug-Session-Id':'f4b487',
-      },
-      body:JSON.stringify({
-        sessionId:'f4b487',
-        runId:'auth-flow',
-        hypothesisId:'H1',
-        location:'extension/src/components/CaptureUI.tsx:handleSignIn',
-        message:'Extension handleSignIn invoked',
-        data:{ url },
-        timestamp:Date.now(),
-      }),
-    }).catch(()=>{});
-    // #endregion
     try {
       const chromeAny = globalThis as unknown as { chrome?: { tabs?: { create: (opts: { url: string }) => void } } };
       if (chromeAny.chrome?.tabs?.create) {
@@ -257,7 +267,7 @@ export default function CaptureUI() {
       </header>
 
       <main className="anren-panel-main">
-        {hasSupabase && (
+        {hasSupabase && !user && (
           <section className="anren-section">
             <div className="anren-section-header">
               <span className="anren-section-title">Account</span>

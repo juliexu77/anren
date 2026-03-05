@@ -16,24 +16,6 @@ const ExtensionAuthComplete = () => {
         if (cancelled) return;
 
         const session = data.session;
-        // #region agent log
-        fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'X-Debug-Session-Id':'f4b487',
-          },
-          body:JSON.stringify({
-            sessionId:'f4b487',
-            runId:'auth-flow',
-            hypothesisId:'H2',
-            location:'src/pages/ExtensionAuthComplete.tsx:completeAuth',
-            message:'ExtensionAuthComplete session lookup',
-            data:{ hasSession: !!session },
-            timestamp:Date.now(),
-          }),
-        }).catch(()=>{});
-        // #endregion
         if (!session) {
           setStatus("No active session found. Redirecting\u2026");
           setTimeout(() => {

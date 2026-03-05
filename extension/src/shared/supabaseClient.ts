@@ -172,7 +172,7 @@ export async function applyWebSessionToExtension(params: {
  */
 export async function fetchRecentCards(
   limit = 20,
-  sourceFilter: string | null = "extension",
+  sourceFilter: string | null = null,
 ): Promise<Card[]> {
   const supabase = getClient();
   if (!supabase) return [];
@@ -183,7 +183,7 @@ export async function fetchRecentCards(
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (sourceFilter) {
+  if (sourceFilter != null) {
     query = query.eq("source", sourceFilter);
   }
 

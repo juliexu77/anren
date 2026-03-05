@@ -23,24 +23,6 @@ window.addEventListener("message", function (event) {
   if (!data.accessToken || !data.refreshToken) return;
 
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'X-Debug-Session-Id':'f4b487',
-      },
-      body:JSON.stringify({
-        sessionId:'f4b487',
-        runId:'auth-flow',
-        hypothesisId:'H3',
-        location:'extension/public/content.js:messageListener',
-        message:'Content script received ANREN_EXTENSION_AUTH',
-        data:{ hasAccessToken: !!data.accessToken, hasRefreshToken: !!data.refreshToken },
-        timestamp:Date.now(),
-      }),
-    }).catch(()=>{});
-    // #endregion
     if (!chrome || !chrome.runtime || !chrome.runtime.sendMessage) return;
 
     chrome.runtime.sendMessage(

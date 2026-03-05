@@ -12,24 +12,6 @@ const ExtensionAuthStart = () => {
 
     const startAuth = async () => {
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'X-Debug-Session-Id':'f4b487',
-          },
-          body:JSON.stringify({
-            sessionId:'f4b487',
-            runId:'auth-flow',
-            hypothesisId:'H1',
-            location:'src/pages/ExtensionAuthStart.tsx:startAuth',
-            message:'ExtensionAuthStart initiating lovable auth',
-            data:{ redirectUri:`${window.location.origin}/extension-auth-complete` },
-            timestamp:Date.now(),
-          }),
-        }).catch(()=>{});
-        // #endregion
         const { error } = await lovable.auth.signInWithOAuth("google", {
           redirect_uri: `${window.location.origin}/extension-auth-complete`,
           extraParams: {

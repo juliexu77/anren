@@ -131,24 +131,6 @@ export default function ExtensionOnboarding({ pageContext, onComplete }: Props) 
   const openAuthTab = () => {
     setAuthError(null);
     const url = getWebAppAuthUrl();
-    // #region agent log
-    fetch('http://127.0.0.1:7930/ingest/47541dce-e71a-46a9-a7f1-617457b3db45',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'X-Debug-Session-Id':'f4b487',
-      },
-      body:JSON.stringify({
-        sessionId:'f4b487',
-        runId:'auth-flow',
-        hypothesisId:'H1',
-        location:'extension/src/components/ExtensionOnboarding.tsx:openAuthTab',
-        message:'Extension onboarding openAuthTab',
-        data:{ url, step },
-        timestamp:Date.now(),
-      }),
-    }).catch(()=>{});
-    // #endregion
     try {
       const chromeAny = globalThis as unknown as { chrome?: { tabs?: { create: (opts: { url: string }) => void } } };
       if (chromeAny.chrome?.tabs?.create) {
