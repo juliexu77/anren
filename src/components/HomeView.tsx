@@ -7,19 +7,16 @@ import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrien
 import { useRef, useCallback } from "react";
 
 const LOADING_LINES = [
-  // Mary Oliver
   "Tell me, what is it you plan to do with your one wild and precious life?",
   "Someone I loved once gave me a box full of darkness. It took me years to understand that this too, was a gift.",
   "Keep some room in your heart for the unimaginable.",
   "I don't want to end up simply having visited this world.",
   "Attention is the beginning of devotion.",
-  // Rumi
   "Let yourself be silently drawn by the strange pull of what you really love.",
   "The wound is the place where the light enters you.",
   "Respond to every call that excites your spirit.",
   "Why do you stay in prison when the door is so wide open?",
   "Wherever you are, and whatever you do, be in love.",
-  // David Whyte
   "Anything or anyone that does not bring you alive is too small for you.",
   "The rest is yet to come.",
   "Sometimes it takes darkness and the sweet confinement of your aloneness to learn that anything or anyone that does not bring you alive is too small for you.",
@@ -93,17 +90,10 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
     return (
       <main className="px-4 pb-4 flex flex-col items-center justify-center" style={{ minHeight: "60vh" }}>
         <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div
-            className="w-8 h-8 rounded-full border-2 animate-spin"
-            style={{
-              borderColor: "hsl(var(--divider) / 0.2)",
-              borderTopColor: "hsl(var(--text-muted))",
-            }}
-          />
+          <div className="w-8 h-8 rounded-full border-2 animate-spin border-divider-color/20 border-t-text-muted-color" />
           <p
             key={meditativeIndex}
-            className="text-caption text-center italic max-w-[280px] animate-fade-in"
-            style={{ color: "hsl(var(--text-muted))", lineHeight: "1.6" }}
+            className="text-caption text-center italic max-w-[280px] animate-fade-in text-text-muted-color leading-relaxed"
           >
             {LOADING_LINES[meditativeIndex]}
           </p>
@@ -118,41 +108,22 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       <div className="flex gap-3">
         <button
           onClick={onOpenCamera}
-          className="py-3 px-4 rounded-xl transition-all active:scale-[0.97] shrink-0"
-          style={{
-            background: "var(--sanctuary-surface)",
-            border: "1px solid var(--glass-border)",
-            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-            color: "hsl(var(--text))",
-          }}
+          className="sanctuary-btn py-3 px-4 shrink-0"
           title="Capture screenshot"
         >
           <Camera className="w-5 h-5" />
         </button>
         <button
           onClick={onOpenBrainDump}
-          className="flex-1 py-3 rounded-xl text-button font-medium transition-all active:scale-[0.97]"
-          style={{
-            background: "var(--sanctuary-surface)",
-            border: "1px solid var(--glass-border)",
-            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-            color: "hsl(var(--text))",
-          }}
+          className="sanctuary-btn flex-1 py-3 text-button font-medium"
         >
           Clear your mind
         </button>
       </div>
 
       {/* ── Daily Orientation ── */}
-      <div
-        className="rounded-xl px-4 py-3"
-        style={{
-          background: "linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end))",
-          border: "1px solid var(--glass-border)",
-          boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-        }}
-      >
-        <div className="space-y-0" style={{ lineHeight: "1.6" }}>
+      <div className="orientation-card">
+        <div className="space-y-0 leading-relaxed">
           {orientationLines.map((line, i) => {
             if (line.type === "spacer") return <div key={i} className="h-2" />;
             const isClickable = line.type === "holding-more" || !!line.cardId || !!line.calendarEventId;
@@ -162,14 +133,9 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
                 role={isClickable ? "button" : undefined}
                 tabIndex={isClickable ? 0 : undefined}
                 onClick={isClickable ? () => handleOrientationTap(line) : undefined}
-                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""}`}
-                style={{
-                  color: line.type === "holding-more"
-                    ? "hsl(var(--text-muted))"
-                    : line.type === "section-header"
-                    ? "hsl(var(--text-secondary))"
-                    : "hsl(var(--text-secondary))",
-                }}
+                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""} ${
+                  line.type === "holding-more" ? "text-text-muted-color" : "text-text-secondary-color"
+                }`}
               >
                 {line.text}
               </div>
@@ -178,8 +144,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
           <div className="h-1" />
           <button
             onClick={onViewCalendar}
-            className="text-micro active:opacity-60 transition-opacity"
-            style={{ color: "hsl(var(--text-muted))" }}
+            className="text-micro active:opacity-60 transition-opacity text-text-muted-color"
           >
             View calendar →
           </button>
@@ -187,14 +152,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       </div>
 
       {(overdue.length > 0 || dueToday.length > 0) && (
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{
-            background: "var(--sanctuary-surface)",
-            border: "1px solid var(--glass-border)",
-            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-          }}
-        >
+        <div className="sanctuary-card">
           {overdue.map((card) => (
             <ItemRow key={card.id} card={card} overdue onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
           ))}
@@ -206,22 +164,11 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {/* ── PARSING ── */}
       {parsing.length > 0 && (
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{
-            background: "var(--sanctuary-surface)",
-            border: "1px solid var(--glass-border)",
-            boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-          }}
-        >
+        <div className="sanctuary-card">
           {parsing.map((card) => (
-            <div
-              key={card.id}
-              className="flex items-center gap-2 px-3 py-2.5"
-              style={{ borderBottom: "1px solid hsl(var(--divider) / 0.08)" }}
-            >
-              <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: "hsl(var(--text-muted))" }} />
-              <span className="text-caption" style={{ color: "hsl(var(--text-muted))" }}>
+            <div key={card.id} className="item-row">
+              <Loader2 className="w-4 h-4 animate-spin shrink-0 text-text-muted-color" />
+              <span className="text-caption text-text-muted-color">
                 Parsing image…
               </span>
             </div>
@@ -241,15 +188,10 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
               onComplete={() => onComplete(card.id)}
             />
           ))}
-          {/* Reorder button */}
           <button
             onClick={onReorder}
             disabled={reordering}
-            className="w-full flex items-center justify-center gap-2 py-2.5 text-caption transition-colors active:opacity-60"
-            style={{
-              color: "hsl(var(--text-muted))",
-              borderTop: "1px solid hsl(var(--divider) / 0.08)",
-            }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 text-caption transition-colors active:opacity-60 text-text-muted-color border-t border-divider-color/[0.08]"
           >
             {reordering ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -271,7 +213,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       )}
 
       {cards.length === 0 && !calendarLoading && (
-        <p className="text-caption text-center py-12" style={{ color: "hsl(var(--text-muted))" }}>
+        <p className="text-caption text-center py-12 text-text-muted-color">
           Nothing resting here yet.
         </p>
       )}
@@ -283,17 +225,10 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 function Section({ title, children, sectionRef }: { title: string; children: React.ReactNode; sectionRef?: React.RefObject<HTMLDivElement> }) {
   return (
     <div ref={sectionRef}>
-      <h2 className="text-label uppercase tracking-wider mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+      <h2 className="text-label uppercase tracking-wider mb-1 text-text-muted-color">
         {title}
       </h2>
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{
-          background: "var(--sanctuary-surface)",
-          border: "1px solid var(--glass-border)",
-          boxShadow: "var(--depth-shadow), var(--inner-highlight)",
-        }}
-      >
+      <div className="sanctuary-card">
         {children}
       </div>
     </div>
@@ -304,7 +239,7 @@ function Section({ title, children, sectionRef }: { title: string; children: Rea
 function EmptyRow({ text }: { text: string }) {
   return (
     <div className="px-3 py-2.5">
-      <span className="text-caption" style={{ color: "hsl(var(--text-muted))" }}>{text}</span>
+      <span className="text-caption text-text-muted-color">{text}</span>
     </div>
   );
 }
@@ -329,43 +264,29 @@ function ItemRow({
   const dateStr = showDate && card.dueAt ? format(parseISO(card.dueAt), "MMM d") : "";
 
   return (
-    <div
-      className="flex items-center gap-2 px-3 py-2 transition-colors"
-      style={{ borderBottom: "1px solid hsl(var(--divider) / 0.08)" }}
-    >
-      {/* Complete button */}
+    <div className="item-row">
       {onComplete && (
         <button
           onClick={(e) => { e.stopPropagation(); onComplete(); }}
-          className="w-4 h-4 rounded-full border shrink-0 transition-colors hover:border-foreground/40"
-          style={{ borderColor: "hsl(var(--divider) / 0.4)" }}
+          className="w-4 h-4 rounded-full border shrink-0 transition-colors hover:border-foreground/40 border-divider-color/40"
           title="Mark complete"
         />
       )}
 
       {dateStr && (
-        <span
-          className="text-micro font-medium w-[44px] shrink-0 text-right tabular-nums"
-          style={{ color: "hsl(var(--text-muted))" }}
-        >
+        <span className="text-micro font-medium w-[44px] shrink-0 text-right tabular-nums text-text-muted-color">
           {dateStr}
         </span>
       )}
 
       <button onClick={onClick} className="flex-1 text-left truncate min-w-0">
-        <span
-          className="text-caption truncate"
-          style={{ color: "hsl(var(--text))" }}
-        >
+        <span className="text-caption truncate text-text-primary">
           {card.title || card.body.split("\n")[0].substring(0, 60) || "Unnamed"}
         </span>
       </button>
 
       {typeLabel && (
-        <span
-          className="text-micro px-1.5 py-0.5 rounded shrink-0"
-          style={{ background: "hsl(var(--surface))", color: "hsl(var(--text-muted))" }}
-        >
+        <span className="text-micro px-1.5 py-0.5 rounded shrink-0 bg-surface-color text-text-muted-color">
           {typeLabel}
         </span>
       )}
@@ -373,8 +294,7 @@ function ItemRow({
       {onSchedule && (
         <button
           onClick={(e) => { e.stopPropagation(); onSchedule(); }}
-          className="p-1 rounded shrink-0 transition-colors hover:bg-foreground/[0.05]"
-          style={{ color: "hsl(var(--text-muted))" }}
+          className="p-1 rounded shrink-0 transition-colors hover:bg-foreground/[0.05] text-text-muted-color"
           title="Schedule"
         >
           <CalendarClock className="w-3.5 h-3.5" />
@@ -389,17 +309,11 @@ function EventRow({ event }: { event: CalendarEvent }) {
   const time = event.start.dateTime ? format(parseISO(event.start.dateTime), "h:mm a") : "All day";
 
   return (
-    <div
-      className="flex items-center gap-2 px-3 py-2"
-      style={{ borderBottom: "1px solid hsl(var(--divider) / 0.08)" }}
-    >
-      <span
-        className="text-micro font-medium w-[60px] shrink-0 text-right tabular-nums"
-        style={{ color: "hsl(var(--text-muted))" }}
-      >
+    <div className="item-row">
+      <span className="text-micro font-medium w-[60px] shrink-0 text-right tabular-nums text-text-muted-color">
         {time}
       </span>
-      <span className="text-caption flex-1 truncate" style={{ color: "hsl(var(--text))" }}>
+      <span className="text-caption flex-1 truncate text-text-primary">
         {event.summary}
       </span>
     </div>

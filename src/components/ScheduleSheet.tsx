@@ -64,13 +64,13 @@ export function ScheduleSheet({ card, open, onClose, onCreateEvent, onUpdateCard
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
-          <p className="text-caption truncate" style={{ color: "hsl(var(--text))" }}>
+          <p className="text-caption truncate text-text-primary">
             {card?.title || card?.body?.split("\n")[0]?.substring(0, 60) || ""}
           </p>
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-label mb-1 block" style={{ color: "hsl(var(--text-muted))" }}>Date</label>
+              <label className="text-label mb-1 block text-text-muted-color">Date</label>
               <input
                 type="date"
                 value={date}
@@ -79,7 +79,7 @@ export function ScheduleSheet({ card, open, onClose, onCreateEvent, onUpdateCard
               />
             </div>
             <div className="w-28">
-              <label className="text-label mb-1 block" style={{ color: "hsl(var(--text-muted))" }}>Time</label>
+              <label className="text-label mb-1 block text-text-muted-color">Time</label>
               <input
                 type="time"
                 value={time}
@@ -92,12 +92,7 @@ export function ScheduleSheet({ card, open, onClose, onCreateEvent, onUpdateCard
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-2.5 rounded-lg text-button font-medium transition-colors"
-            style={{
-              background: "hsl(var(--accent-1))",
-              color: "hsl(40 30% 97%)",
-              opacity: saving ? 0.6 : 1,
-            }}
+            className="accent-btn w-full py-2.5 text-button disabled:opacity-60"
           >
             {saving ? "Scheduling…" : "Add to Calendar"}
           </button>

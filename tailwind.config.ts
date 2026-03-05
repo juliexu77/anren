@@ -46,6 +46,15 @@ export default {
         'neon-yellow': 'hsl(43, 96%, 56%)',
         'neon-cyan': 'hsl(187, 94%, 53%)',
         'neon-purple': 'hsl(270, 80%, 60%)',
+        // Sanctuary design system tokens
+        'text-primary': 'hsl(var(--text))',
+        'text-secondary-color': 'hsl(var(--text-secondary))',
+        'text-muted-color': 'hsl(var(--text-muted))',
+        'surface-color': 'hsl(var(--surface))',
+        'divider-color': 'hsl(var(--divider))',
+        'accent-1': 'hsl(var(--accent-1))',
+        'card-bg-color': 'hsl(var(--card-bg))',
+        'bg-color': 'hsl(var(--bg))',
         // Gold accent
         gold: {
           DEFAULT: "hsl(var(--gold))",

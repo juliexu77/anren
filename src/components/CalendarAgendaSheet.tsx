@@ -20,7 +20,6 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [monthPickerDate, setMonthPickerDate] = useState<Date>(new Date());
 
-  // Touch/swipe state
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -33,7 +32,6 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
     if (touchStartX.current === null || touchStartY.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     const dy = e.changedTouches[0].clientY - touchStartY.current;
-    // Only register horizontal swipe if it clearly dominates vertical
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) {
       setSelectedDate((prev) => addDays(prev, dx < 0 ? 1 : -1));
     }
@@ -41,7 +39,6 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
     touchStartY.current = null;
   }, []);
 
-  // Generate day chips: 3 days before + selected + 3 days after
   const chipDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i - 3)),
     [selectedDate]
@@ -53,7 +50,6 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
     return format(date, "EEE");
   };
 
-  // Month picker grid
   const monthDays = useMemo(() => {
     const start = startOfMonth(monthPickerDate);
     const end = endOfMonth(monthPickerDate);
@@ -77,18 +73,18 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <SheetContent side="bottom" className="rounded-t-3xl h-[100dvh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="shrink-0 px-5 pb-2" style={{ background: "hsl(var(--background))", paddingTop: "max(20px, env(safe-area-inset-top, 20px))" }}>
+        <div className="shrink-0 px-5 pb-2 bg-background" style={{ paddingTop: "max(20px, env(safe-area-inset-top, 20px))" }}>
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={handleClose}
               className="flex items-center gap-1.5 p-1 -ml-1"
               aria-label="Back to home"
             >
-              <ChevronLeft className="w-5 h-5" style={{ color: "hsl(var(--text) / 0.5)" }} />
-              <span className="text-[13px] font-medium" style={{ color: "hsl(var(--text) / 0.5)" }}>Home</span>
+              <ChevronLeft className="w-5 h-5 text-text-primary/50" />
+              <span className="text-[13px] font-medium text-text-primary/50">Home</span>
             </button>
             <button onClick={handleClose} className="p-2 -mr-2">
-              <X className="w-5 h-5" style={{ color: "hsl(var(--text-muted))" }} />
+              <X className="w-5 h-5 text-text-muted-color" />
             </button>
           </div>
           <div className="flex items-center justify-between mb-2">
@@ -97,15 +93,12 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
                 setMonthPickerDate(selectedDate);
                 setShowMonthPicker((v) => !v);
               }}
-              className="font-display text-left flex items-center gap-2"
-              style={{ fontSize: "24px", fontWeight: 400, color: "hsl(var(--text))" }}
+              className="font-display text-left flex items-center gap-2 text-[24px] font-normal text-text-primary"
             >
               {format(selectedDate, "MMMM yyyy")}
               <span
-                className="inline-flex items-center justify-center rounded-full transition-colors"
+                className="inline-flex items-center justify-center rounded-full transition-colors w-7 h-7"
                 style={{
-                  width: "28px",
-                  height: "28px",
                   background: showMonthPicker ? "hsl(var(--primary) / 0.15)" : "hsl(var(--text) / 0.08)",
                 }}
               >
@@ -119,37 +112,33 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
           {/* Month picker dropdown */}
           {showMonthPicker && (
             <div className="pb-3 animate-in fade-in slide-in-from-top-2 duration-200">
-              {/* Month nav */}
               <div className="flex items-center justify-between mb-2">
                 <button
                   onClick={() => setMonthPickerDate((d) => subMonths(d, 1))}
                   className="p-1.5 rounded-lg hover:bg-foreground/5"
                 >
-                  <ChevronLeft className="w-4 h-4" style={{ color: "hsl(var(--text) / 0.5)" }} />
+                  <ChevronLeft className="w-4 h-4 text-text-primary/50" />
                 </button>
-                <span className="text-sm font-medium" style={{ color: "hsl(var(--text))" }}>
+                <span className="text-sm font-medium text-text-primary">
                   {format(monthPickerDate, "MMMM yyyy")}
                 </span>
                 <button
                   onClick={() => setMonthPickerDate((d) => addMonths(d, 1))}
                   className="p-1.5 rounded-lg hover:bg-foreground/5"
                 >
-                  <ChevronRight className="w-4 h-4" style={{ color: "hsl(var(--text) / 0.5)" }} />
+                  <ChevronRight className="w-4 h-4 text-text-primary/50" />
                 </button>
               </div>
 
-              {/* Day-of-week headers */}
               <div className="grid grid-cols-7 mb-1">
                 {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                  <div key={i} className="text-center text-[10px] font-medium" style={{ color: "hsl(var(--text) / 0.35)" }}>
+                  <div key={i} className="text-center text-[10px] font-medium text-text-primary/35">
                     {d}
                   </div>
                 ))}
               </div>
 
-              {/* Day grid */}
               <div className="grid grid-cols-7 gap-y-0.5">
-                {/* Empty cells for offset */}
                 {Array.from({ length: monthStartDow }).map((_, i) => (
                   <div key={`empty-${i}`} />
                 ))}
@@ -178,11 +167,9 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
             </div>
           )}
 
-          {/* Day chips – hidden when month picker is open (redundant) */}
+          {/* Day chips */}
           {!showMonthPicker && (
-            <div
-              className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar"
-            >
+            <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
               {chipDays.map((date, i) => {
                 const isSelected = isSameDay(date, selectedDate);
                 const isToday = isSameDay(date, new Date());
@@ -190,10 +177,9 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
                   <button
                     key={i}
                     onClick={() => setSelectedDate(startOfDay(date))}
-                    className="shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors"
+                    className="shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors min-w-[52px]"
                     style={{
                       background: isSelected ? "hsl(var(--primary) / 0.15)" : "transparent",
-                      minWidth: "52px",
                     }}
                   >
                     <span
@@ -226,9 +212,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
         </div>
 
         {/* Time grid */}
-        <div
-          className="flex-1 overflow-hidden"
-        >
+        <div className="flex-1 overflow-hidden">
           <CalendarTimeGrid
             dates={[selectedDate]}
             events={events}
