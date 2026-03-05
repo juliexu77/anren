@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { signInWithGoogleNative } from "@/lib/authNative";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Camera, Loader2 } from "lucide-react";
+import { Mic, Square, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Onboarding() {
@@ -36,6 +36,17 @@ export default function Onboarding() {
   const [selectedCals, setSelectedCals] = useState<string[]>(["primary"]);
   const [birthdaysOn, setBirthdaysOn] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [showTextFallback, setShowTextFallback] = useState(false);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // After auth arrives at step 4, migrate and advance
   useEffect(() => {
@@ -79,7 +90,6 @@ export default function Onboarding() {
     }
   };
 
-  // Returning user: sign in then check if onboarding is already complete
   const handleReturningUserSignIn = async () => {
     await handleGoogleSignIn();
   };
@@ -87,7 +97,6 @@ export default function Onboarding() {
   // After auth, check if returning user has completed onboarding
   useEffect(() => {
     if (user && step === 1) {
-      // User signed in from "Already have an account?" on step 1
       (async () => {
         const { data } = await supabase
           .from("profiles")
@@ -98,12 +107,118 @@ export default function Onboarding() {
           completeOnboarding();
           navigate("/", { replace: true });
         } else {
-          // Skip to calendar prefs
           setStep(5);
         }
       })();
     }
   }, [user]);
+
+  // Voice recording helpers
+  const cleanupRecording = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    chunksRef.current = [];
+    setIsRecording(false);
+    setElapsed(0);
+  }, []);
+
+  const startRecording = async () => {
+    try {
+      setRecordingError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      streamRef.current = stream;
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4";
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
+        const buffer = await blob.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        const chunkSize = 8192;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+          for (let j = 0; j < chunk.length; j++) {
+            binary += String.fromCharCode(chunk[j]);
+          }
+        }
+        const base64 = btoa(binary);
+        await handleTranscription(base64, recorder.mimeType);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000);
+      setIsRecording(true);
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } catch (err) {
+      if (err instanceof Error && err.name === "NotAllowedError") {
+        setRecordingError("Microphone access denied.");
+        setShowTextFallback(true);
+      } else {
+        setRecordingError("Could not start recording.");
+        setShowTextFallback(true);
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setIsRecording(false);
+  };
+
+  const handleTranscription = async (audioBase64: string, mimeType: string) => {
+    setIsTranscribing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("transcribe-voice", {
+        body: { audioBase64, mimeType },
+      });
+      if (error) throw error;
+      if (data?.title && data?.body) {
+        addLocalCard({
+          title: data.title,
+          body: data.body,
+          source: "voice",
+        });
+        toast.success("Held.");
+      }
+    } catch (err) {
+      console.error("Transcription error:", err);
+      toast.error("Couldn't process that. Try again or type instead.");
+      setShowTextFallback(true);
+      setIsTranscribing(false);
+      return;
+    }
+    setIsTranscribing(false);
+    nextStep();
+  };
 
   const handleFinish = async () => {
     await saveCalendarPrefs(selectedCals, birthdaysOn);
@@ -123,6 +238,9 @@ export default function Onboarding() {
   };
 
   const localCards = getLocalCards();
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const timeStr = `${mins}:${secs.toString().padStart(2, "0")}`;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(var(--bg))" }}>
@@ -132,17 +250,27 @@ export default function Onboarding() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        {/* Step 1: Welcome */}
+        {/* Step 1: Emotional hook */}
         {step === 1 && (
           <div className="text-center max-w-sm animate-fade-in">
-            <h1 className="font-display text-5xl font-semibold mb-4" style={{ color: "hsl(var(--text))" }}>
+            <h1
+              className="font-display text-5xl font-semibold mb-6"
+              style={{ color: "hsl(var(--text))" }}
+            >
               ANREN
             </h1>
-            <p className="text-lg mb-2" style={{ color: "hsl(var(--text-muted))" }}>
+            <p
+              className="text-xl font-display mb-3"
+              style={{ color: "hsl(var(--text))" }}
+            >
               Where the mental load rests.
             </p>
-            <p className="text-sm mb-10 leading-relaxed" style={{ color: "hsl(var(--text-muted) / 0.7)" }}>
-              A quiet place for everything you're carrying.
+            <p
+              className="text-sm leading-relaxed mb-12"
+              style={{ color: "hsl(var(--text-muted) / 0.7)" }}
+            >
+              The appointments you're juggling. The things you can't forget.
+              The invisible weight no one sees. Set it all down here.
             </p>
             <button
               onClick={nextStep}
@@ -158,108 +286,231 @@ export default function Onboarding() {
               onClick={handleReturningUserSignIn}
               disabled={signingIn}
               className="mt-3 py-2 px-4 text-xs underline underline-offset-2"
-              style={{ color: "hsl(var(--text-muted) / 0.7)", background: "transparent", border: "none", cursor: "pointer" }}
+              style={{
+                color: "hsl(var(--text-muted) / 0.7)",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
             >
               Already have an account? Sign in
             </button>
           </div>
         )}
 
-        {/* Step 2: First capture */}
+        {/* Step 2: How it works */}
         {step === 2 && (
-          <div className="w-full max-w-sm animate-fade-in">
-            <p className="text-xl font-display mb-1" style={{ color: "hsl(var(--text))" }}>
-              What's one thing on your mind right now?
+          <div className="text-center max-w-sm animate-fade-in">
+            <p
+              className="text-xl font-display mb-8"
+              style={{ color: "hsl(var(--text))" }}
+            >
+              How Anren works
             </p>
-            <p className="text-sm mb-6" style={{ color: "hsl(var(--text-muted))" }}>
-              Something small. Something heavy. Whatever it is, set it down.
-            </p>
-            <textarea
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder="It can be anything…"
-              className="w-full resize-none rounded-xl px-4 py-3 text-sm mb-6 focus:outline-none"
+            <div className="space-y-6 mb-10 text-left">
+              {[
+                {
+                  num: "1",
+                  title: "Capture anything",
+                  desc: "Say it, type it, snap it. Anren holds it all.",
+                },
+                {
+                  num: "2",
+                  title: "It finds its place",
+                  desc: "Notes become cards, organized by what matters.",
+                },
+                {
+                  num: "3",
+                  title: "Your day, clear",
+                  desc: "Calendar, to-dos, and reminders — all in one quiet view.",
+                },
+              ].map((item) => (
+                <div key={item.num} className="flex gap-4 items-start">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-medium"
+                    style={{
+                      background: "hsl(var(--accent) / 0.15)",
+                      color: "hsl(var(--accent))",
+                    }}
+                  >
+                    {item.num}
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm font-medium mb-0.5"
+                      style={{ color: "hsl(var(--text))" }}
+                    >
+                      {item.title}
+                    </p>
+                    <p
+                      className="text-xs leading-relaxed"
+                      style={{ color: "hsl(var(--text-muted))" }}
+                    >
+                      {item.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={nextStep}
+              className="w-full py-3.5 rounded-full text-button font-medium"
               style={{
-                background: "hsl(var(--surface))",
-                border: "1px solid hsl(var(--divider) / 0.3)",
-                color: "hsl(var(--text))",
-                minHeight: "120px",
+                background: "hsl(var(--accent))",
+                color: "hsl(var(--bg))",
               }}
-              autoFocus
-            />
+            >
+              Let's try it
+            </button>
+          </div>
+        )}
+
+        {/* Step 3: Voice-first capture */}
+        {step === 3 && !isTranscribing && (
+          <div className="w-full max-w-sm animate-fade-in text-center">
+            <p
+              className="text-xl font-display mb-2"
+              style={{ color: "hsl(var(--text))" }}
+            >
+              What's one thing you're holding?
+            </p>
+            <p
+              className="text-sm mb-8"
+              style={{ color: "hsl(var(--text-muted))" }}
+            >
+              Say it out loud. Anren will remember it for you.
+            </p>
+
+            {/* Mic button */}
+            {!showTextFallback && (
+              <div className="flex flex-col items-center gap-5 mb-6">
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className="relative w-24 h-24 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    background: isRecording
+                      ? "hsl(0 70% 55% / 0.15)"
+                      : "hsl(var(--accent) / 0.12)",
+                  }}
+                >
+                  {isRecording && (
+                    <div
+                      className="absolute inset-0 rounded-full animate-ping"
+                      style={{ background: "hsl(0 70% 55% / 0.08)" }}
+                    />
+                  )}
+                  {isRecording ? (
+                    <Square
+                      className="w-8 h-8"
+                      style={{ color: "hsl(0 70% 55%)" }}
+                      fill="hsl(0 70% 55%)"
+                    />
+                  ) : (
+                    <Mic
+                      className="w-8 h-8"
+                      style={{ color: "hsl(var(--accent))" }}
+                    />
+                  )}
+                </button>
+
+                {isRecording ? (
+                  <span
+                    className="text-xl font-mono tabular-nums"
+                    style={{ color: "hsl(var(--text) / 0.8)" }}
+                  >
+                    {timeStr}
+                  </span>
+                ) : (
+                  <span
+                    className="text-xs"
+                    style={{ color: "hsl(var(--text-muted) / 0.6)" }}
+                  >
+                    Tap to record
+                  </span>
+                )}
+
+                {recordingError && (
+                  <p className="text-xs" style={{ color: "hsl(0 70% 55%)" }}>
+                    {recordingError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Text fallback */}
+            {showTextFallback && (
+              <div className="mb-6">
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Type what's on your mind…"
+                  className="w-full resize-none rounded-xl px-4 py-3 text-sm mb-4 focus:outline-none"
+                  style={{
+                    background: "hsl(var(--surface))",
+                    border: "1px solid hsl(var(--divider) / 0.3)",
+                    color: "hsl(var(--text))",
+                    minHeight: "100px",
+                  }}
+                  autoFocus
+                />
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
-                onClick={skipStep}
+                onClick={() => {
+                  cleanupRecording();
+                  skipStep();
+                }}
                 className="flex-1 py-3 rounded-full text-sm"
                 style={{ color: "hsl(var(--text-muted))" }}
               >
                 Skip
               </button>
-              <button
-                onClick={() => {
-                  if (textInput.trim()) {
-                    addLocalCard({ title: textInput.trim(), body: textInput.trim(), source: "text" });
-                    setTextInput("");
-                  }
-                  nextStep();
-                }}
-                className="flex-1 py-3 rounded-full text-button font-medium"
-                style={{
-                  background: "hsl(var(--accent))",
-                  color: "hsl(var(--bg))",
-                }}
-              >
-                Hold this for me
-              </button>
+              {showTextFallback ? (
+                <button
+                  onClick={() => {
+                    if (textInput.trim()) {
+                      addLocalCard({
+                        title: textInput.trim().split("\n")[0].slice(0, 100),
+                        body: textInput.trim(),
+                        source: "text",
+                      });
+                    }
+                    nextStep();
+                  }}
+                  disabled={!textInput.trim()}
+                  className="flex-1 py-3 rounded-full text-button font-medium disabled:opacity-40"
+                  style={{
+                    background: "hsl(var(--accent))",
+                    color: "hsl(var(--bg))",
+                  }}
+                >
+                  Hold this for me
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowTextFallback(true)}
+                  className="flex-1 py-3 rounded-full text-sm"
+                  style={{ color: "hsl(var(--text-muted))" }}
+                >
+                  or type instead
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {/* Step 3: Visual capture */}
-        {step === 3 && (
-          <div className="w-full max-w-sm animate-fade-in text-center">
-            <p className="text-xl font-display mb-1" style={{ color: "hsl(var(--text))" }}>
-              Notice something you want to hold onto?
+        {/* Step 3: Transcribing state */}
+        {step === 3 && isTranscribing && (
+          <div className="text-center animate-fade-in">
+            <Loader2
+              className="w-8 h-8 animate-spin mx-auto mb-3"
+              style={{ color: "hsl(var(--accent))" }}
+            />
+            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
+              Holding that for you…
             </p>
-            <p className="text-sm mb-8" style={{ color: "hsl(var(--text-muted))" }}>
-              A photo, a screenshot, a moment. Anren will keep it safe.
-            </p>
-            <label
-              className="inline-flex flex-col items-center gap-2 cursor-pointer p-8 rounded-2xl mb-6"
-              style={{
-                background: "hsl(var(--surface))",
-                border: "1px dashed hsl(var(--divider) / 0.4)",
-              }}
-            >
-              <Camera className="w-8 h-8" style={{ color: "hsl(var(--text-muted))" }} />
-              <span className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
-                Tap to capture
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const url = URL.createObjectURL(file);
-                    addLocalCard({ title: "Visual capture", body: "", source: "image", imageUrl: url });
-                    toast.success("Held.");
-                    nextStep();
-                  }
-                }}
-              />
-            </label>
-            <div>
-              <button
-                onClick={skipStep}
-                className="py-3 px-6 rounded-full text-sm"
-                style={{ color: "hsl(var(--text-muted))" }}
-              >
-                Skip for now
-              </button>
-            </div>
           </div>
         )}
 
@@ -267,15 +518,26 @@ export default function Onboarding() {
         {step === 4 && !user && (
           <div className="w-full max-w-sm animate-fade-in text-center">
             {localCards.length > 0 && (
-              <p className="text-sm mb-2" style={{ color: "hsl(var(--text-muted))" }}>
-                You have {localCards.length} {localCards.length === 1 ? "thing" : "things"} resting here.
+              <p
+                className="text-sm mb-2"
+                style={{ color: "hsl(var(--text-muted))" }}
+              >
+                You have {localCards.length}{" "}
+                {localCards.length === 1 ? "thing" : "things"} resting here.
               </p>
             )}
-            <p className="text-xl font-display mb-2" style={{ color: "hsl(var(--text))" }}>
+            <p
+              className="text-xl font-display mb-2"
+              style={{ color: "hsl(var(--text))" }}
+            >
               Now let's anchor these to your day.
             </p>
-            <p className="text-sm mb-8 leading-relaxed" style={{ color: "hsl(var(--text-muted))" }}>
-              Your calendar gives Anren the rhythm of your life — so what you're holding finds its right place in time.
+            <p
+              className="text-sm mb-8 leading-relaxed"
+              style={{ color: "hsl(var(--text-muted))" }}
+            >
+              Your calendar gives Anren the rhythm of your life — so what you're
+              holding finds its right place in time.
             </p>
             <button
               onClick={handleGoogleSignIn}
@@ -290,10 +552,22 @@ export default function Onboarding() {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  <path
+                    fill="currentColor"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                  />
+                  <path
+                    fill="currentColor"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="currentColor"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  />
+                  <path
+                    fill="currentColor"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
                 </svg>
               )}
               Sign in with Google
@@ -304,24 +578,38 @@ export default function Onboarding() {
         {/* Step 4 loading (post-auth, migrating) */}
         {step === 4 && user && (
           <div className="text-center animate-fade-in">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: "hsl(var(--accent))" }} />
-            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>Setting things in place…</p>
+            <Loader2
+              className="w-8 h-8 animate-spin mx-auto mb-3"
+              style={{ color: "hsl(var(--accent))" }}
+            />
+            <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
+              Setting things in place…
+            </p>
           </div>
         )}
 
         {/* Step 5: Calendar prefs */}
         {step === 5 && (
           <div className="w-full max-w-sm animate-fade-in">
-            <p className="text-xl font-display mb-1" style={{ color: "hsl(var(--text))" }}>
+            <p
+              className="text-xl font-display mb-1"
+              style={{ color: "hsl(var(--text))" }}
+            >
               Which calendars feel like yours?
             </p>
-            <p className="text-sm mb-6" style={{ color: "hsl(var(--text-muted))" }}>
+            <p
+              className="text-sm mb-6"
+              style={{ color: "hsl(var(--text-muted))" }}
+            >
               Pick the ones that hold the rhythm of your life.
             </p>
 
             {calLoading ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin" style={{ color: "hsl(var(--text-muted))" }} />
+                <Loader2
+                  className="w-6 h-6 animate-spin"
+                  style={{ color: "hsl(var(--text-muted))" }}
+                />
               </div>
             ) : (
               <div className="space-y-3 mb-8">
@@ -344,11 +632,17 @@ export default function Onboarding() {
                         style={{ background: cal.backgroundColor }}
                       />
                     )}
-                    <span className="text-sm truncate" style={{ color: "hsl(var(--text))" }}>
+                    <span
+                      className="text-sm truncate"
+                      style={{ color: "hsl(var(--text))" }}
+                    >
                       {cal.summary}
                     </span>
                     {cal.primary && (
-                      <span className="text-[10px] uppercase tracking-wider ml-auto shrink-0" style={{ color: "hsl(var(--text-muted))" }}>
+                      <span
+                        className="text-[10px] uppercase tracking-wider ml-auto shrink-0"
+                        style={{ color: "hsl(var(--text-muted))" }}
+                      >
                         Primary
                       </span>
                     )}
@@ -366,10 +660,16 @@ export default function Onboarding() {
               }}
             >
               <div>
-                <p className="text-sm font-medium" style={{ color: "hsl(var(--text))" }}>
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: "hsl(var(--text))" }}
+                >
                   Hold birthdays & milestones
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "hsl(var(--text-muted))" }}>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: "hsl(var(--text-muted))" }}
+                >
                   From your contacts' calendars
                 </p>
               </div>
