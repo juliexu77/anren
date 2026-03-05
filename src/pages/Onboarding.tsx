@@ -43,6 +43,7 @@ export default function Onboarding() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showTextFallback, setShowTextFallback] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [capturedItems, setCapturedItems] = useState<string[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -198,16 +199,28 @@ export default function Onboarding() {
     setIsTranscribing(true);
     try {
       const { data, error } = await supabase.functions.invoke("transcribe-voice", {
-        body: { audioBase64, mimeType },
+        body: { audioBase64, mimeType, extractItems: true },
       });
       if (error) throw error;
-      if (data?.title && data?.body) {
+      // Handle multi-item response
+      if (data?.items && Array.isArray(data.items)) {
+        const titles: string[] = [];
+        for (const item of data.items) {
+          addLocalCard({
+            title: item.title,
+            body: item.body || item.title,
+            source: "voice",
+          });
+          titles.push(item.title);
+        }
+        setCapturedItems(titles);
+      } else if (data?.title && data?.body) {
         addLocalCard({
           title: data.title,
           body: data.body,
           source: "voice",
         });
-        toast.success("Held.");
+        setCapturedItems([data.title]);
       }
     } catch (err) {
       console.error("Transcription error:", err);
@@ -217,7 +230,6 @@ export default function Onboarding() {
       return;
     }
     setIsTranscribing(false);
-    nextStep();
   };
 
   const handleFinish = async () => {
@@ -366,24 +378,24 @@ export default function Onboarding() {
         )}
 
         {/* Step 3: Voice-first capture */}
-        {step === 3 && !isTranscribing && (
+        {step === 3 && !isTranscribing && capturedItems.length === 0 && (
           <div className="w-full max-w-sm animate-fade-in text-center">
             <p
-              className="text-xl font-display mb-2"
+              className="text-2xl font-display mb-2"
               style={{ color: "hsl(var(--text))" }}
             >
-              What's one thing you're holding?
+              What are you holding?
             </p>
             <p
               className="text-sm mb-8"
               style={{ color: "hsl(var(--text-muted))" }}
             >
-              Say it out loud. Anren will remember it for you.
+              Small things. Big things. Just say it out loud.
             </p>
 
             {/* Mic button */}
             {!showTextFallback && (
-              <div className="flex flex-col items-center gap-5 mb-6">
+              <div className="flex flex-col items-center gap-4 mb-6">
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
                   className="relative w-24 h-24 rounded-full flex items-center justify-center transition-all"
@@ -422,10 +434,10 @@ export default function Onboarding() {
                   </span>
                 ) : (
                   <span
-                    className="text-xs"
-                    style={{ color: "hsl(var(--text-muted) / 0.6)" }}
+                    className="text-sm font-medium"
+                    style={{ color: "hsl(var(--accent))" }}
                   >
-                    Tap to record
+                    Speak
                   </span>
                 )}
 
@@ -433,6 +445,33 @@ export default function Onboarding() {
                   <p className="text-xs" style={{ color: "hsl(0 70% 55%)" }}>
                     {recordingError}
                   </p>
+                )}
+
+                {/* Example phrases */}
+                {!isRecording && (
+                  <div className="mt-4 space-y-2">
+                    <p
+                      className="text-[11px] uppercase tracking-wider mb-2"
+                      style={{ color: "hsl(var(--text-muted) / 0.5)" }}
+                    >
+                      Try something like
+                    </p>
+                    {[
+                      "Schedule a parent-teacher conference for Sage.",
+                      "Pick up tomatoes for dinner.",
+                      "Plan our summer trip.",
+                      "Book a dentist appointment for me.",
+                      "Remember school early pickup on Friday.",
+                    ].map((phrase) => (
+                      <p
+                        key={phrase}
+                        className="text-xs italic"
+                        style={{ color: "hsl(var(--text-muted) / 0.45)" }}
+                      >
+                        "{phrase}"
+                      </p>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -511,6 +550,56 @@ export default function Onboarding() {
             <p className="text-sm" style={{ color: "hsl(var(--text-muted))" }}>
               Holding that for you…
             </p>
+          </div>
+        )}
+
+        {/* Step 3: Captured items confirmation */}
+        {step === 3 && !isTranscribing && capturedItems.length > 0 && (
+          <div className="w-full max-w-sm animate-fade-in text-center">
+            <p
+              className="text-lg font-display mb-5"
+              style={{ color: "hsl(var(--text))" }}
+            >
+              Holding:
+            </p>
+            <div className="space-y-2.5 mb-8 text-left">
+              {capturedItems.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                  style={{
+                    background: "hsl(var(--surface))",
+                    border: "1px solid hsl(var(--divider) / 0.2)",
+                  }}
+                >
+                  <span
+                    className="text-xs mt-0.5"
+                    style={{ color: "hsl(var(--accent))" }}
+                  >
+                    •
+                  </span>
+                  <span
+                    className="text-sm"
+                    style={{ color: "hsl(var(--text))" }}
+                  >
+                    {item}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setCapturedItems([]);
+                nextStep();
+              }}
+              className="w-full py-3.5 rounded-full text-button font-medium"
+              style={{
+                background: "hsl(var(--accent))",
+                color: "hsl(var(--bg))",
+              }}
+            >
+              Hold these for me
+            </button>
           </div>
         )}
 
