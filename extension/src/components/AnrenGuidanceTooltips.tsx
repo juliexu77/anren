@@ -4,7 +4,7 @@ import { X, ChevronRight, ChevronLeft } from "lucide-react";
 
 const GUIDANCE_STEPS = [
   {
-    title: "A quiet holding place.",
+    title: "Where the mental load rests",
     content:
       "Notice something on your mind. Capture it here — you can decide what to do with it later.",
     icon: "○",

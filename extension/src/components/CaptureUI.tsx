@@ -10,6 +10,7 @@ import {
   fetchRecentCards,
   getClient,
   hasSupabaseConfig,
+  signInWithGoogle,
   type Card,
 } from "../shared/supabaseClient";
 
@@ -67,6 +68,8 @@ export default function CaptureUI() {
   const [noteText, setNoteText] = useState("");
   const [guidanceSeen, setGuidanceSeen] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [signingIn, setSigningIn] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     hasAnrenGuidanceBeenSeen().then((seen) => setGuidanceSeen(seen));
@@ -105,7 +108,11 @@ export default function CaptureUI() {
 
       const { pageTitle, pageUrl, selectedText } = raw;
       if (selectedText && selectedText.trim()) {
-        setPreviewText(selectedText.trim());
+        setNoteText(selectedText.trim());
+        const context = [pageTitle, pageUrl].filter(Boolean).join("\n");
+        if (context) {
+          setPreviewText(context);
+        }
       } else if (pageTitle || pageUrl) {
         setPreviewText([pageTitle, pageUrl].filter(Boolean).join("\n"));
       }
@@ -123,9 +130,16 @@ export default function CaptureUI() {
     let cancelled = false;
 
     async function load() {
+      const MIN_LOADING_MS = 2000;
+      const startedAt = Date.now();
       try {
         setDataStatus("loading");
         const cards = await fetchRecentCards(20, "extension");
+        const elapsed = Date.now() - startedAt;
+        const remaining = MIN_LOADING_MS - elapsed;
+        if (remaining > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remaining));
+        }
         if (cancelled) return;
         setRestingItems(cards.map(mapCardToResting));
         setDataStatus("ready");
@@ -200,6 +214,18 @@ export default function CaptureUI() {
     }
   };
 
+  const handleSignIn = async () => {
+    setSigningIn(true);
+    setAuthError(null);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setAuthError("Sign in failed. Please try again.");
+      setSigningIn(false);
+    }
+    // On success, Supabase opens OAuth in a new tab; when the user completes
+    // the flow and returns, the extension's Supabase client will have a session.
+  };
+
   return (
     <>
       <header className="anren-panel-header">
@@ -209,6 +235,26 @@ export default function CaptureUI() {
       </header>
 
       <main className="anren-panel-main">
+        {hasSupabase && (
+          <section className="anren-section">
+            <div className="anren-section-header">
+              <span className="anren-section-title">Account</span>
+            </div>
+            <button
+              type="button"
+              className="capture-button"
+              onClick={handleSignIn}
+              disabled={signingIn}
+            >
+              Sign in with Google
+            </button>
+            {authError && (
+              <p className="capture-status capture-error" role="alert">
+                {authError}
+              </p>
+            )}
+          </section>
+        )}
         {dataStatus === "ready" && restingItems.length === 0 && !guidanceSeen && (
           <section className="anren-section anren-guidance-section">
             <AnrenGuidanceTooltips

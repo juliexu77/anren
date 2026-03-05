@@ -32,16 +32,6 @@ function getChromeStorage() {
   return chromeAny.chrome?.storage?.local ?? null;
 }
 
-function getLocalCards(): LocalCard[] {
-  const storage = getChromeStorage();
-  if (!storage) {
-    try {
-      return JSON.parse(localStorage.getItem("anren_local_cards") || "[]");
-    } catch { return []; }
-  }
-  return []; // sync access not possible; we read async where needed
-}
-
 function saveLocalCard(card: Omit<LocalCard, "id">) {
   const storage = getChromeStorage();
   const newCard = { ...card, id: crypto.randomUUID() };
@@ -188,6 +178,12 @@ export default function ExtensionOnboarding({ pageContext, onComplete }: Props) 
     }
     markOnboardingDone();
     onComplete();
+    // Open the main Anren app so the user can link calendars just like on web/iOS.
+    try {
+      window.open("https://anren.app?open=calendar", "_blank");
+    } catch {
+      // ignore if window.open is blocked
+    }
   };
 
   const progress = (step / 4) * 100;
@@ -326,15 +322,17 @@ export default function ExtensionOnboarding({ pageContext, onComplete }: Props) 
         {/* Step 4: Calendar prefs (simplified for extension) */}
         {step === 4 && (
           <div className="onboarding-step onboarding-step-center">
-            <p className="onboarding-heading">You're all set.</p>
+            <p className="onboarding-heading">Connect your calendar.</p>
             <p className="onboarding-body">
-              You can fine-tune your calendars and preferences in the Anren app anytime.
+              In the Anren app, you can link Google Calendar and choose which calendars
+              to include in your brief. Everything you hold here will sit alongside
+              your day there.
             </p>
             <button
               className="onboarding-btn-primary"
               onClick={handleFinishCalendarPrefs}
             >
-              I'm ready
+              Open Anren
             </button>
           </div>
         )}

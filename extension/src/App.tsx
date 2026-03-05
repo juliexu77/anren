@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { getClient } from "./shared/supabaseClient";
 import ExtensionOnboarding from "./components/ExtensionOnboarding";
 import CaptureUI from "./components/CaptureUI";
-import type { User } from "@supabase/supabase-js";
+import { getClient } from "./shared/supabaseClient";
 import "./App.css";
 
 type AppState = "loading" | "onboarding" | "capture";
