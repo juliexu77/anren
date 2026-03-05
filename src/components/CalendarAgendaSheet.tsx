@@ -22,18 +22,23 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
 
   // Touch/swipe state
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   }, []);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(diff) > 60) {
-      setSelectedDate((prev) => addDays(prev, diff < 0 ? 1 : -1));
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    // Only register horizontal swipe if it clearly dominates vertical
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2) {
+      setSelectedDate((prev) => addDays(prev, dx < 0 ? 1 : -1));
     }
     touchStartX.current = null;
+    touchStartY.current = null;
   }, []);
 
   // Generate day chips: 3 days before + selected + 3 days after
@@ -70,7 +75,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[85vh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
+      <SheetContent side="bottom" className="rounded-t-3xl h-[100dvh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
         {/* Header */}
         <div className="shrink-0 px-5 pb-2" style={{ background: "hsl(var(--background))", paddingTop: "max(20px, env(safe-area-inset-top, 20px))" }}>
           <div className="flex items-center justify-between mb-3">
@@ -173,58 +178,56 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
             </div>
           )}
 
-          {/* Day chips – scrollable */}
-          <div
-            className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {chipDays.map((date, i) => {
-              const isSelected = isSameDay(date, selectedDate);
-              const isToday = isSameDay(date, new Date());
-              return (
-                <button
-                  key={i}
-                  onClick={() => setSelectedDate(startOfDay(date))}
-                  className="shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors"
-                  style={{
-                    background: isSelected ? "hsl(var(--primary) / 0.15)" : "transparent",
-                    minWidth: "52px",
-                  }}
-                >
-                  <span
-                    className="text-[11px] font-medium"
+          {/* Day chips – hidden when month picker is open (redundant) */}
+          {!showMonthPicker && (
+            <div
+              className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar"
+            >
+              {chipDays.map((date, i) => {
+                const isSelected = isSameDay(date, selectedDate);
+                const isToday = isSameDay(date, new Date());
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedDate(startOfDay(date))}
+                    className="shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors"
                     style={{
-                      color: isSelected
-                        ? "hsl(var(--primary))"
-                        : "hsl(var(--text) / 0.4)",
+                      background: isSelected ? "hsl(var(--primary) / 0.15)" : "transparent",
+                      minWidth: "52px",
                     }}
                   >
-                    {getChipLabel(date)}
-                  </span>
-                  <span
-                    className="text-[15px] font-medium mt-0.5"
-                    style={{
-                      color: isSelected
-                        ? "hsl(var(--primary))"
-                        : isToday
-                          ? "hsl(var(--text))"
-                          : "hsl(var(--text) / 0.6)",
-                    }}
-                  >
-                    {format(date, "d")}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <span
+                      className="text-[11px] font-medium"
+                      style={{
+                        color: isSelected
+                          ? "hsl(var(--primary))"
+                          : "hsl(var(--text) / 0.4)",
+                      }}
+                    >
+                      {getChipLabel(date)}
+                    </span>
+                    <span
+                      className="text-[15px] font-medium mt-0.5"
+                      style={{
+                        color: isSelected
+                          ? "hsl(var(--primary))"
+                          : isToday
+                            ? "hsl(var(--text))"
+                            : "hsl(var(--text) / 0.6)",
+                      }}
+                    >
+                      {format(date, "d")}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Time grid – swipeable */}
+        {/* Time grid */}
         <div
           className="flex-1 overflow-hidden"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
         >
           <CalendarTimeGrid
             dates={[selectedDate]}
