@@ -92,7 +92,9 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         }
         const base64 = btoa(binary);
 
-        toast.info("Transcribing…");
+        // Show transcribing status on screen
+        setPhase("transcribing");
+
         const { data, error } = await supabase.functions.invoke("transcribe-voice", {
           body: { audioBase64: base64, mimeType: recorder.mimeType },
         });
@@ -104,10 +106,27 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         }
 
         const transcript = data.body || data.text || "";
-        setText((prev) => (prev ? prev + "\n\n" + transcript : transcript));
-        toast.success("Heard you");
-        // Move to typing phase so user can review/edit and submit
-        setPhase("typing");
+        setText(transcript);
+
+        // Skip typing, go straight to processing → review
+        setPhase("processing");
+        try {
+          const { data: processData, error: processError } = await supabase.functions.invoke("process-brain-dump", {
+            body: { text: transcript.trim() },
+          });
+
+          if (processError || !processData || processData.error) {
+            toast.error(processData?.error || "Processing failed. Try again.");
+            setPhase("typing");
+            return;
+          }
+
+          setItems(processData.items || []);
+          setPhase("review");
+        } catch {
+          toast.error("Something went wrong");
+          setPhase("typing");
+        }
       };
 
       mediaRecorderRef.current = recorder;
