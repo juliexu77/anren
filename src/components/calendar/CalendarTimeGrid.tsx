@@ -68,20 +68,20 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Day header row — Google Calendar style */}
-      <div className="flex border-b border-border px-0">
-        {/* Gutter: day number + weekday for single-day view */}
+      {/* Day header row */}
+      <div className="flex border-b border-divider-color/25 px-0">
+        {/* Gutter */}
         <div className="w-12 shrink-0 flex flex-col items-center justify-center py-1.5">
           {dates.length === 1 && (
             <>
-              <span className="text-[11px] font-medium text-muted-foreground uppercase leading-none">
+              <span className="text-[11px] font-medium text-text-muted-color uppercase leading-none">
                 {format(dates[0], "EEE")}
               </span>
               <span
                 className={`text-[22px] font-bold leading-none mt-0.5 w-9 h-9 flex items-center justify-center rounded-full ${
                   isSameDay(dates[0], now)
                     ? "bg-primary text-primary-foreground"
-                    : "text-foreground"
+                    : "text-text-primary"
                 }`}
               >
                 {format(dates[0], "d")}
@@ -95,12 +95,12 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
               const isToday = isSameDay(date, now);
               return (
                 <div key={i} className="flex-1 flex flex-col items-center py-1.5 min-w-0">
-                  <span className="text-[11px] font-medium text-muted-foreground uppercase leading-none">
+                  <span className="text-[11px] font-medium text-text-muted-color uppercase leading-none">
                     {format(date, "EEE")}
                   </span>
                   <span
                     className={`text-[22px] font-bold leading-none mt-0.5 w-9 h-9 flex items-center justify-center rounded-full ${
-                      isToday ? "bg-primary text-primary-foreground" : "text-foreground"
+                      isToday ? "bg-primary text-primary-foreground" : "text-text-primary"
                     }`}
                   >
                     {format(date, "d")}
@@ -113,7 +113,7 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
 
       {/* All-day events strip */}
       {hasAllDay && (
-        <div className="flex border-b border-border px-0">
+        <div className="flex border-b border-divider-color/25 px-0">
           <div className="w-12 shrink-0" />
           <div className="flex flex-1">
             {dates.map((date, i) => (
@@ -141,7 +141,7 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
             {HOURS.map((h) => (
               <div
                 key={h}
-                className="absolute right-2 text-[10px] text-muted-foreground leading-none"
+                className="absolute right-2 text-[10px] text-text-muted-color leading-none"
                 style={{ top: h * HOUR_HEIGHT - 5 }}
               >
                 {h === 0 ? "" : format(new Date(2000, 0, 1, h), "h a")}
@@ -161,16 +161,13 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
               return (
                 <div
                   key={colIdx}
-                  className="flex-1 relative"
-                  style={{
-                    borderLeft: colIdx > 0 ? "1px solid hsl(var(--border))" : undefined,
-                  }}
+                  className={`flex-1 relative ${colIdx > 0 ? "border-l border-divider-color/25" : ""}`}
                 >
                   {/* Hour lines */}
                   {HOURS.map((h) => (
                     <div
                       key={h}
-                      className="absolute left-0 right-0 border-t border-border/50"
+                      className="absolute left-0 right-0 border-t border-divider-color/15"
                       style={{ top: h * HOUR_HEIGHT }}
                     />
                   ))}
@@ -179,7 +176,7 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
                   {HOURS.map((h) => (
                     <div
                       key={`half-${h}`}
-                      className="absolute left-0 right-0 border-t border-border/20"
+                      className="absolute left-0 right-0 border-t border-divider-color/8"
                       style={{ top: h * HOUR_HEIGHT + HOUR_HEIGHT / 2 }}
                     />
                   ))}
@@ -192,19 +189,17 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
                       <button
                         key={event.id}
                         onClick={() => onEventClick?.(event)}
-                        className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-0.5 overflow-hidden text-left transition-opacity hover:opacity-80"
+                        className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-0.5 overflow-hidden text-left transition-opacity hover:opacity-80 bg-primary/20 border-l-[3px] border-primary"
                         style={{
                           top: pos.top,
                           height: Math.max(pos.height, 18),
-                          background: "hsl(var(--primary) / 0.2)",
-                          borderLeft: "3px solid hsl(var(--primary))",
                         }}
                       >
-                        <p className="text-[10px] font-medium text-foreground truncate leading-tight">
+                        <p className="text-[10px] font-medium text-text-primary truncate leading-tight">
                           {event.summary}
                         </p>
                         {pos.height > 30 && event.start.dateTime && (
-                          <p className="text-[9px] text-muted-foreground leading-tight">
+                          <p className="text-[9px] text-text-muted-color leading-tight">
                             {format(parseISO(event.start.dateTime), "h:mm a")}
                           </p>
                         )}
@@ -212,7 +207,7 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
                     );
                   })}
 
-                  {/* Current time indicator */}
+                  {/* Current time indicator — accent color, not red */}
                   {isToday && (
                     <div
                       ref={nowLineRef}
@@ -220,8 +215,8 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
                       style={{ top: nowTop }}
                     >
                       <div className="flex items-center">
-                        <div className="w-2 h-2 rounded-full -ml-1" style={{ background: "hsl(var(--primary))" }} />
-                        <div className="flex-1 h-[1.5px]" style={{ background: "hsl(var(--primary))" }} />
+                        <div className="w-2 h-2 rounded-full -ml-1 bg-accent-1" />
+                        <div className="flex-1 h-[1.5px] bg-accent-1" />
                       </div>
                     </div>
                   )}

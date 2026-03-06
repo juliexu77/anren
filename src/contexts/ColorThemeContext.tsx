@@ -216,6 +216,9 @@ export const ColorThemeProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--sanctuary-surface', `hsl(${currentTheme.cardBg} / 0.85)`);
     root.style.setProperty('--sanctuary-surface-hover', `hsl(${currentTheme.cardBg} / 0.95)`);
 
+    // Fog — derived from surface for theme-aware NightSkyBackground
+    root.style.setProperty('--fog', currentTheme.surface);
+
     // Body background
     document.body.style.background = `hsl(${currentTheme.bgPrimary})`;
 

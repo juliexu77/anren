@@ -97,12 +97,11 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
             >
               {format(selectedDate, "MMMM yyyy")}
               <span
-                className="inline-flex items-center justify-center rounded-full transition-colors w-7 h-7"
-                style={{
-                  background: showMonthPicker ? "hsl(var(--primary) / 0.15)" : "hsl(var(--text) / 0.08)",
-                }}
+                className={`inline-flex items-center justify-center rounded-full transition-colors w-7 h-7 ${
+                  showMonthPicker ? "bg-primary/15" : "bg-text-primary/8"
+                }`}
               >
-                <span className="text-[12px]" style={{ color: showMonthPicker ? "hsl(var(--primary))" : "hsl(var(--text) / 0.5)" }}>
+                <span className={`text-[12px] ${showMonthPicker ? "text-primary" : "text-text-primary/50"}`}>
                   {showMonthPicker ? "▲" : "▼"}
                 </span>
               </span>
@@ -115,7 +114,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
               <div className="flex items-center justify-between mb-2">
                 <button
                   onClick={() => setMonthPickerDate((d) => subMonths(d, 1))}
-                  className="p-1.5 rounded-lg hover:bg-foreground/5"
+                  className="p-1.5 rounded-lg hover:bg-surface-color/60"
                 >
                   <ChevronLeft className="w-4 h-4 text-text-primary/50" />
                 </button>
@@ -124,7 +123,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
                 </span>
                 <button
                   onClick={() => setMonthPickerDate((d) => addMonths(d, 1))}
-                  className="p-1.5 rounded-lg hover:bg-foreground/5"
+                  className="p-1.5 rounded-lg hover:bg-surface-color/60"
                 >
                   <ChevronRight className="w-4 h-4 text-text-primary/50" />
                 </button>
@@ -149,15 +148,13 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
                     <button
                       key={day.toISOString()}
                       onClick={() => handleSelectFromMonth(day)}
-                      className="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-[13px] font-medium transition-colors"
-                      style={{
-                        background: isSelected ? "hsl(var(--primary))" : "transparent",
-                        color: isSelected
-                          ? "hsl(var(--primary-foreground))"
+                      className={`flex items-center justify-center h-8 w-8 mx-auto rounded-full text-[13px] font-medium transition-colors ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
                           : isToday
-                            ? "hsl(var(--primary))"
-                            : "hsl(var(--text) / 0.7)",
-                      }}
+                            ? "text-primary"
+                            : "text-text-primary/70"
+                      }`}
                     >
                       {format(day, "d")}
                     </button>
@@ -177,30 +174,25 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
                   <button
                     key={i}
                     onClick={() => setSelectedDate(startOfDay(date))}
-                    className="shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors min-w-[52px]"
-                    style={{
-                      background: isSelected ? "hsl(var(--primary) / 0.15)" : "transparent",
-                    }}
+                    className={`shrink-0 flex flex-col items-center rounded-xl px-3 py-1.5 transition-colors min-w-[52px] ${
+                      isSelected ? "bg-primary/15" : ""
+                    }`}
                   >
                     <span
-                      className="text-[11px] font-medium"
-                      style={{
-                        color: isSelected
-                          ? "hsl(var(--primary))"
-                          : "hsl(var(--text) / 0.4)",
-                      }}
+                      className={`text-[11px] font-medium ${
+                        isSelected ? "text-primary" : "text-text-primary/40"
+                      }`}
                     >
                       {getChipLabel(date)}
                     </span>
                     <span
-                      className="text-[15px] font-medium mt-0.5"
-                      style={{
-                        color: isSelected
-                          ? "hsl(var(--primary))"
+                      className={`text-[15px] font-medium mt-0.5 ${
+                        isSelected
+                          ? "text-primary"
                           : isToday
-                            ? "hsl(var(--text))"
-                            : "hsl(var(--text) / 0.6)",
-                      }}
+                            ? "text-text-primary"
+                            : "text-text-primary/60"
+                      }`}
                     >
                       {format(date, "d")}
                     </span>

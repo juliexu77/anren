@@ -73,11 +73,11 @@ export function SettingsPage() {
     <main className="px-5 pb-8 space-y-8">
       {/* Account */}
       <section>
-        <h2 className="text-section-header text-muted-foreground mb-4">Account</h2>
-        <div className="rounded-2xl border border-border p-4 flex items-center justify-between">
+        <h2 className="text-section-header text-text-muted-color mb-4">Account</h2>
+        <div className="rounded-2xl border border-divider-color/25 p-4 flex items-center justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
-            <p className="text-xs text-muted-foreground">Signed in with Google</p>
+            <p className="text-sm font-medium text-text-primary truncate">{user?.email}</p>
+            <p className="text-xs text-text-muted-color">Signed in with Google</p>
           </div>
           <Button variant="ghost" size="sm" onClick={signOut} className="shrink-0">
             <LogOut className="w-4 h-4 mr-1.5" />
@@ -89,7 +89,7 @@ export function SettingsPage() {
       {/* Daily Brief */}
       {settingsLoaded && (
         <section>
-          <h2 className="text-section-header text-muted-foreground mb-4">Daily Brief</h2>
+          <h2 className="text-section-header text-text-muted-color mb-4">Daily Brief</h2>
           <div className="rounded-2xl border border-divider-color/25 p-4 space-y-4 bg-card-bg-color/50">
             {/* Enable / disable */}
             <div className="flex items-center justify-between">
@@ -205,7 +205,7 @@ export function SettingsPage() {
 
       {/* Theme */}
       <section>
-        <h2 className="text-section-header text-muted-foreground mb-4">Theme</h2>
+        <h2 className="text-section-header text-text-muted-color mb-4">Theme</h2>
         <div className="grid grid-cols-2 gap-3">
           {themes.map((theme) => {
             const isActive = currentTheme.id === theme.id;

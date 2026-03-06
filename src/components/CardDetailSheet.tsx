@@ -128,18 +128,18 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
       <div className="fixed inset-0 z-50 flex flex-col animate-in fade-in slide-in-from-right duration-200 bg-bg-color">
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <button onClick={handleClose} className="flex items-center gap-1 text-foreground/70 active:text-foreground">
+          <button onClick={handleClose} className="flex items-center gap-1 text-text-primary/70 active:text-text-primary">
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
           </button>
           {typeLabel && (
-            <span className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">
+            <span className="text-xs text-text-muted-color/60 font-medium uppercase tracking-wider">
               {typeLabel}
             </span>
           )}
           <button
             onClick={() => { onDelete(card.id); onClose(); }}
-            className="text-destructive/70 active:text-destructive p-1"
+            className="text-text-muted-color/70 active:text-text-muted-color p-1"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -170,12 +170,12 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
               ref={textareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              className="w-full h-full bg-transparent border-none outline-none resize-none text-base leading-relaxed text-foreground/90 placeholder:text-muted-foreground/40"
+              className="w-full h-full bg-transparent border-none outline-none resize-none text-base leading-relaxed text-text-primary/90 placeholder:text-text-muted-color/40"
               placeholder="Tap to write…"
             />
           ) : (
-            <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
-              {body || <span className="text-muted-foreground/40 italic">Tap to write…</span>}
+            <p className="text-base leading-relaxed text-text-primary/90 whitespace-pre-wrap">
+              {body || <span className="text-text-muted-color/40 italic">Tap to write…</span>}
             </p>
           )}
         </div>
@@ -218,16 +218,16 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
             <Input placeholder="Event title" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} autoFocus />
             <Textarea placeholder="Description" value={eventDesc} onChange={(e) => setEventDesc(e.target.value)} className="resize-none" rows={2} />
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Date</label>
+              <label className="text-xs text-text-muted-color mb-1 block">Date</label>
               <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="text-xs text-muted-foreground mb-1 block">Start</label>
+                <label className="text-xs text-text-muted-color mb-1 block">Start</label>
                 <Input type="time" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
               </div>
               <div className="flex-1">
-                <label className="text-xs text-muted-foreground mb-1 block">End</label>
+                <label className="text-xs text-text-muted-color mb-1 block">End</label>
                 <Input type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
               </div>
             </div>

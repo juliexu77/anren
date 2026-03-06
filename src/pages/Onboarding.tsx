@@ -348,27 +348,17 @@ export default function Onboarding() {
               <div className="flex flex-col items-center gap-4 mb-6">
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
-                  className="relative w-24 h-24 rounded-full flex items-center justify-center transition-all"
-                  style={{
-                    background: isRecording
-                      ? "hsl(0 70% 55% / 0.15)"
-                      : "hsl(var(--accent) / 0.12)",
-                  }}
+                  className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all ${
+                    isRecording ? "bg-accent-1/15" : "bg-accent-1/12"
+                  }`}
                 >
                   {isRecording && (
-                    <div
-                      className="absolute inset-0 rounded-full animate-ping"
-                      style={{ background: "hsl(0 70% 55% / 0.08)" }}
-                    />
+                    <div className="absolute inset-0 rounded-full animate-ping bg-accent-1/8" />
                   )}
                   {isRecording ? (
-                    <Square
-                      className="w-8 h-8"
-                      style={{ color: "hsl(0 70% 55%)" }}
-                      fill="hsl(0 70% 55%)"
-                    />
+                    <Square className="w-8 h-8 text-accent-1 fill-accent-1" />
                   ) : (
-                    <Mic className="w-8 h-8 text-accent" />
+                    <Mic className="w-8 h-8 text-accent-1" />
                   )}
                 </button>
 
