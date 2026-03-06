@@ -55,6 +55,9 @@
     /* Atmospheric warmth */
     --radial-glow: 30 30% 85%;
     
+    /* Fog — derived from surface for NightSkyBackground */
+    --fog: 18 22% 40%;
+    
     /* Card elevation — soft paper/linen feel */
     --card-bg: 18 25% 22%;
     --card-border: 20 18% 28%;

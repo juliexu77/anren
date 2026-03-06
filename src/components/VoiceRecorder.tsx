@@ -58,7 +58,6 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
         const buffer = await blob.arrayBuffer();
         const bytes = new Uint8Array(buffer);
-        // Convert to base64 in chunks to avoid call stack issues
         let binary = "";
         const chunkSize = 8192;
         for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -108,17 +107,10 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
   const timeStr = `${mins}:${secs.toString().padStart(2, "0")}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "hsl(var(--bg) / 0.9)" }}>
-      <div
-        className="rounded-2xl p-8 flex flex-col items-center gap-6 min-w-[280px]"
-        style={{
-          background: "hsl(var(--card-bg) / 0.95)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid hsl(var(--divider) / 0.3)",
-        }}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-color/90 backdrop-blur-sm">
+      <div className="sanctuary-card rounded-2xl p-8 flex flex-col items-center gap-6 min-w-[280px] relative">
         {/* Close */}
-        <button onClick={() => { cleanup(); onClose(); }} className="absolute top-4 right-4 text-muted-foreground">
+        <button onClick={() => { cleanup(); onClose(); }} className="absolute top-4 right-4 text-text-muted-color">
           <X className="w-5 h-5" />
         </button>
 
@@ -126,34 +118,34 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
         <div className="relative">
           <div
             className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
-              isRecording ? "bg-destructive/20" : "bg-muted/30"
+              isRecording ? "bg-accent-1/20" : "bg-surface-color/50"
             }`}
           >
             {isRecording && (
-              <div className="absolute inset-0 rounded-full bg-destructive/10 animate-ping" />
+              <div className="absolute inset-0 rounded-full bg-accent-1/10 animate-ping" />
             )}
-            <Mic className={`w-8 h-8 ${isRecording ? "text-destructive" : "text-foreground/60"}`} />
+            <Mic className={`w-8 h-8 ${isRecording ? "text-accent-1" : "text-text-primary/60"}`} />
           </div>
         </div>
 
         {/* Timer */}
-        <span className="text-2xl font-mono text-foreground/80 tabular-nums">{timeStr}</span>
+        <span className="text-2xl font-mono text-text-primary/80 tabular-nums">{timeStr}</span>
 
         {/* Error */}
-        {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        {error && <p className="text-sm text-accent-1 text-center">{error}</p>}
 
         {/* Controls */}
         {!isRecording ? (
           <button
             onClick={startRecording}
-            className="px-6 py-3 rounded-xl text-sm font-medium bg-foreground/10 hover:bg-foreground/15 text-foreground transition-colors"
+            className="sanctuary-btn px-6 py-3 text-sm font-medium text-text-primary"
           >
             Tap to Record
           </button>
         ) : (
           <button
             onClick={stopRecording}
-            className="px-6 py-3 rounded-xl text-sm font-medium bg-destructive/15 hover:bg-destructive/25 text-destructive transition-colors flex items-center gap-2"
+            className="sanctuary-btn px-6 py-3 text-sm font-medium text-accent-1 flex items-center gap-2"
           >
             <Square className="w-4 h-4 fill-current" />
             Stop Recording
