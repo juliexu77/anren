@@ -156,6 +156,22 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </div>
       </div>
 
+      {/* ── Help me get organized ── */}
+      {active.length >= 2 && (
+        <button
+          onClick={onReorder}
+          disabled={reordering}
+          className="sanctuary-btn w-full flex items-center justify-center gap-2 py-3 text-button font-medium"
+        >
+          {reordering ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <span>✦</span>
+          )}
+          {reordering ? "Organizing…" : "Help me get organized"}
+        </button>
+      )}
+
       {(overdue.length > 0 || dueToday.length > 0) && (
         <div className="sanctuary-card">
           {overdue.map((card) => (
@@ -193,18 +209,6 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
               onComplete={() => onComplete(card.id)}
             />
           ))}
-          <button
-            onClick={onReorder}
-            disabled={reordering}
-            className="w-full flex items-center justify-center gap-2 py-2.5 text-caption transition-colors active:opacity-60 text-text-muted-color border-t border-divider-color/[0.08]"
-          >
-            {reordering ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <span>✦</span>
-            )}
-            {reordering ? "Organizing…" : "Help me get organized"}
-          </button>
         </Section>
       )}
 
