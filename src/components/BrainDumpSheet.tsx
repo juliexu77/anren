@@ -226,7 +226,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
         <span className="text-label uppercase tracking-widest text-text-muted-color">
-          {phase === "voice" ? "Speak freely" : phase === "typing" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
+          {phase === "voice" ? "Speak freely" : phase === "transcribing" ? "Listening…" : phase === "typing" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
         </span>
         <div className="w-9" />
       </div>
