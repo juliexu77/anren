@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { X, Mic, Square, Send, Check, Pencil, Loader2 } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { X, Mic, Square, Send, Check, Pencil, Loader2, Keyboard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ItemType } from "@/types/card";
@@ -17,20 +17,22 @@ interface Props {
   onConfirm: (items: ExtractedItem[]) => Promise<void>;
 }
 
-type Phase = "capture" | "processing" | "review";
+type Phase = "voice" | "typing" | "processing" | "review";
 
 export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
-  const [phase, setPhase] = useState<Phase>("capture");
+  const [phase, setPhase] = useState<Phase>("voice");
   const [text, setText] = useState("");
   const [items, setItems] = useState<ExtractedItem[]>([]);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [micError, setMicError] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const autoStartedRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -46,15 +48,18 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
   const handleClose = () => {
     cleanup();
-    setPhase("capture");
+    setPhase("voice");
     setText("");
     setItems([]);
     setEditingIdx(null);
+    setMicError(false);
+    autoStartedRef.current = false;
     onClose();
   };
 
   const startRecording = async () => {
     try {
+      setMicError(false);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true },
       });
@@ -94,12 +99,15 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
         if (error || !data || data.error) {
           toast.error("Couldn't transcribe. Type instead?");
+          setPhase("typing");
           return;
         }
 
         const transcript = data.body || data.text || "";
         setText((prev) => (prev ? prev + "\n\n" + transcript : transcript));
         toast.success("Heard you");
+        // Move to typing phase so user can review/edit and submit
+        setPhase("typing");
       };
 
       mediaRecorderRef.current = recorder;
@@ -108,6 +116,9 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       setElapsed(0);
       timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
     } catch {
+      setMicError(true);
+      // Auto-fall back to typing if mic denied
+      setPhase("typing");
       toast.error("Microphone access denied");
     }
   };
@@ -119,9 +130,18 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     }
     setIsRecording(false);
   };
+
+  // Auto-start recording when sheet opens in voice phase
+  useEffect(() => {
+    if (open && phase === "voice" && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      startRecording();
+    }
+  }, [open, phase]);
 
   const handleSubmit = async () => {
     if (!text.trim()) return;
@@ -134,7 +154,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
       if (error || !data || data.error) {
         toast.error(data?.error || "Processing failed. Try again.");
-        setPhase("capture");
+        setPhase("typing");
         return;
       }
 
@@ -142,7 +162,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       setPhase("review");
     } catch {
       toast.error("Something went wrong");
-      setPhase("capture");
+      setPhase("typing");
     }
   };
 
@@ -187,16 +207,62 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
         <span className="text-label uppercase tracking-widest text-text-muted-color">
-          {phase === "capture" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
+          {phase === "voice" ? "Speak freely" : phase === "typing" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
         </span>
         <div className="w-9" />
       </div>
 
-      {/* ── CAPTURE PHASE ── */}
-      {phase === "capture" && (
+      {/* ── VOICE PHASE ── */}
+      {phase === "voice" && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-5 pb-6">
+          <p className="text-body-sm text-text-muted-color text-center">
+            Say everything that's on your mind.
+          </p>
+
+          {/* Pulsing mic indicator */}
+          <div className="relative">
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-colors ${
+              isRecording ? "bg-accent-1/20" : "bg-surface-color/50"
+            }`}>
+              {isRecording && (
+                <div className="absolute inset-0 rounded-full bg-accent-1/10 animate-ping" />
+              )}
+              <Mic className={`w-10 h-10 ${isRecording ? "text-accent-1" : "text-text-primary/60"}`} />
+            </div>
+          </div>
+
+          {/* Timer */}
+          {isRecording && (
+            <span className="text-2xl font-mono text-text-primary/80 tabular-nums">{timeStr}</span>
+          )}
+
+          {/* Stop button */}
+          {isRecording && (
+            <button
+              onClick={stopRecording}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg transition-colors bg-accent-1/10 border border-accent-1/20 text-accent-1"
+            >
+              <Square className="w-4 h-4 fill-current" />
+              <span className="text-button-sm">Done speaking</span>
+            </button>
+          )}
+
+          {/* Type instead */}
+          <button
+            onClick={() => { cleanup(); setPhase("typing"); }}
+            className="text-button-sm text-text-muted-color underline underline-offset-2"
+          >
+            <Keyboard className="w-3.5 h-3.5 inline mr-1.5" />
+            Type instead
+          </button>
+        </div>
+      )}
+
+      {/* ── TYPING PHASE ── */}
+      {phase === "typing" && (
         <div className="flex-1 flex flex-col px-5 pb-6">
           <p className="text-caption mb-3 text-text-muted-color">
-            Say what's on your mind. I'll hold it.
+            {text ? "Review or add more, then let go." : "What's weighing on you…"}
           </p>
 
           <textarea
@@ -209,23 +275,13 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           />
 
           <div className="flex items-center gap-3 mt-4">
-            {!isRecording ? (
-              <button
-                onClick={startRecording}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-colors bg-surface-color border border-divider-color/30 text-text-secondary-color"
-              >
-                <Mic className="w-4 h-4" />
-                <span className="text-button-sm">Speak</span>
-              </button>
-            ) : (
-              <button
-                onClick={stopRecording}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-colors bg-destructive/10 border border-destructive/20 text-destructive"
-              >
-                <Square className="w-3.5 h-3.5 fill-current" />
-                <span className="text-button-sm font-mono tabular-nums">{timeStr}</span>
-              </button>
-            )}
+            <button
+              onClick={() => { setPhase("voice"); autoStartedRef.current = false; }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-colors bg-surface-color border border-divider-color/30 text-text-secondary-color"
+            >
+              <Mic className="w-4 h-4" />
+              <span className="text-button-sm">Speak</span>
+            </button>
 
             <div className="flex-1" />
 
@@ -287,7 +343,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
               Confirm — {items.length} item{items.length !== 1 ? "s" : ""}
             </button>
             <button
-              onClick={() => { setPhase("capture"); setItems([]); }}
+              onClick={() => { setPhase("typing"); setItems([]); }}
               className="w-full py-2.5 mt-2 rounded-lg text-button-sm transition-colors text-text-muted-color"
             >
               Back to editing
