@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { isToday, isPast, parseISO, format } from "date-fns";
-import { CalendarClock, Loader2, Camera } from "lucide-react";
+import { CalendarClock, Loader2, Camera, ChevronDown } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
