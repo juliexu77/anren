@@ -35,7 +35,9 @@ const Index = () => {
   const [showAgenda, setShowAgenda] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
+  const [suggestionSources, setSuggestionSources] = useState<Record<string, string[]>>({});
   const [reorderMessage, setReorderMessage] = useState<string | null>(null);
+  const [researching, setResearching] = useState(false);
 
   // Fetch calendar events for today + 7 days
   useEffect(() => {
@@ -101,6 +103,27 @@ const Index = () => {
       setReordering(false);
     }
   }, [cards]);
+
+  const handleResearch = useCallback(async (cardId: string, title: string, body: string, type: string | null) => {
+    setResearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("research-next-step", {
+        body: { title, body, type },
+      });
+      if (error || !data || data.error) {
+        toast.error(data?.error || "Couldn't get a suggestion right now. Try again.");
+        return;
+      }
+      setSuggestions((prev) => ({ ...prev, [cardId]: data.suggestion }));
+      if (data.sources) {
+        setSuggestionSources((prev) => ({ ...prev, [cardId]: data.sources }));
+      }
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setResearching(false);
+    }
+  }, []);
 
   if (showSettings) {
     return (
@@ -169,6 +192,9 @@ const Index = () => {
         onUpdate={updateCard}
         onDelete={deleteCard}
         suggestion={selectedCard ? suggestions[selectedCard.id] : undefined}
+        suggestionSources={selectedCard ? suggestionSources[selectedCard.id] : undefined}
+        onResearch={handleResearch}
+        researching={researching}
       />
 
       <ScheduleSheet

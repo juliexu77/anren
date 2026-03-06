@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.smart-reorder]
 verify_jwt = false
+
+[functions.research-next-step]
+verify_jwt = false
