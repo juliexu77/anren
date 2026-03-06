@@ -37,9 +37,10 @@ interface Props {
   onOpenBrainDump: () => void;
   onReorder: () => void;
   reordering: boolean;
+  reorderMessage?: string | null;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage }: Props) {
   const [meditativeIndex, setMeditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -158,18 +159,25 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {/* ── Help me get organized ── */}
       {active.length >= 2 && (
-        <button
-          onClick={onReorder}
-          disabled={reordering}
-          className="sanctuary-btn w-full flex items-center justify-center gap-2 py-3 text-button font-medium"
-        >
-          {reordering ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <span>✦</span>
+        <>
+          <button
+            onClick={onReorder}
+            disabled={reordering}
+            className="sanctuary-btn w-full flex items-center justify-center gap-2 py-3 text-button font-medium"
+          >
+            {reordering ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <span>✦</span>
+            )}
+            {reordering ? "Organizing…" : "Help me get organized"}
+          </button>
+          {reorderMessage && (
+            <p className="text-caption italic text-text-muted-color text-center mt-1.5 px-2">
+              {reorderMessage}
+            </p>
           )}
-          {reordering ? "Organizing…" : "Help me get organized"}
-        </button>
+        </>
       )}
 
       {(overdue.length > 0 || dueToday.length > 0) && (

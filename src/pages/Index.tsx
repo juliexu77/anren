@@ -35,6 +35,7 @@ const Index = () => {
   const [showAgenda, setShowAgenda] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
+  const [reorderMessage, setReorderMessage] = useState<string | null>(null);
 
   // Fetch calendar events for today + 7 days
   useEffect(() => {
@@ -93,7 +94,7 @@ const Index = () => {
         return supabase.from("cards").update({ created_at: ts }).eq("id", card.id);
       });
       await Promise.all(updates);
-      toast("I've organized your list. Tap one to see how we can move it forward.");
+      setReorderMessage("I've organized your list. Tap one to see how we can move it forward.");
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
@@ -155,8 +156,9 @@ const Index = () => {
         onSchedule={handleSchedule}
         onOpenCamera={() => setShowCamera(true)}
         onOpenBrainDump={() => setShowBrainDump(true)}
-        onReorder={handleReorder}
+        onReorder={() => { setReorderMessage(null); handleReorder(); }}
         reordering={reordering}
+        reorderMessage={reorderMessage}
       />
 
       {/* Sheets */}
