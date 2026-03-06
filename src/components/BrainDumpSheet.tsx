@@ -17,7 +17,7 @@ interface Props {
   onConfirm: (items: ExtractedItem[]) => Promise<void>;
 }
 
-type Phase = "voice" | "typing" | "processing" | "review";
+type Phase = "voice" | "transcribing" | "typing" | "processing" | "review";
 
 export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const [phase, setPhase] = useState<Phase>("voice");
@@ -92,7 +92,9 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         }
         const base64 = btoa(binary);
 
-        toast.info("Transcribing…");
+        // Show transcribing status on screen
+        setPhase("transcribing");
+
         const { data, error } = await supabase.functions.invoke("transcribe-voice", {
           body: { audioBase64: base64, mimeType: recorder.mimeType },
         });
@@ -104,10 +106,27 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         }
 
         const transcript = data.body || data.text || "";
-        setText((prev) => (prev ? prev + "\n\n" + transcript : transcript));
-        toast.success("Heard you");
-        // Move to typing phase so user can review/edit and submit
-        setPhase("typing");
+        setText(transcript);
+
+        // Skip typing, go straight to processing → review
+        setPhase("processing");
+        try {
+          const { data: processData, error: processError } = await supabase.functions.invoke("process-brain-dump", {
+            body: { text: transcript.trim() },
+          });
+
+          if (processError || !processData || processData.error) {
+            toast.error(processData?.error || "Processing failed. Try again.");
+            setPhase("typing");
+            return;
+          }
+
+          setItems(processData.items || []);
+          setPhase("review");
+        } catch {
+          toast.error("Something went wrong");
+          setPhase("typing");
+        }
       };
 
       mediaRecorderRef.current = recorder;
@@ -207,7 +226,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
         <span className="text-label uppercase tracking-widest text-text-muted-color">
-          {phase === "voice" ? "Speak freely" : phase === "typing" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
+          {phase === "voice" ? "Speak freely" : phase === "transcribing" ? "Listening…" : phase === "typing" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
         </span>
         <div className="w-9" />
       </div>
@@ -255,6 +274,15 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
             <Keyboard className="w-3.5 h-3.5 inline mr-1.5" />
             Type instead
           </button>
+        </div>
+      )}
+      {/* ── TRANSCRIBING PHASE ── */}
+      {phase === "transcribing" && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-5">
+          <Loader2 className="w-8 h-8 animate-spin text-accent-1" />
+          <p className="text-caption text-text-muted-color">
+            Transcribing what you said…
+          </p>
         </div>
       )}
 
