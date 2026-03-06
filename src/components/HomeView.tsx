@@ -44,13 +44,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
     Math.floor(Math.random() * LOADING_LINES.length)
   );
 
-  useEffect(() => {
-    if (!cardsLoading) return;
-    const interval = setInterval(() => {
-      setMeditativeIndex((prev) => (prev + 1) % LOADING_LINES.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [cardsLoading]);
+  const [meditativeDismissed, setMeditativeDismissed] = useState(false);
   const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@"), [cards]);
   const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
   const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
@@ -86,17 +80,28 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
     }
   }, [cards, calendarEvents, onCardClick, onCalendarEventClick]);
 
-  if (cardsLoading) {
+  if (cardsLoading || !meditativeDismissed) {
     return (
       <main className="px-4 pb-4 flex flex-col items-center justify-center" style={{ minHeight: "60vh" }}>
-        <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="w-8 h-8 rounded-full border-2 animate-spin border-divider-color/20 border-t-text-muted-color" />
+        <div className="flex flex-col items-center gap-6 animate-fade-in max-w-[300px]">
+          {cardsLoading && (
+            <div className="w-8 h-8 rounded-full border-2 animate-spin border-divider-color/20 border-t-text-muted-color" />
+          )}
           <p
             key={meditativeIndex}
-            className="text-caption text-center italic max-w-[280px] animate-fade-in text-text-muted-color leading-relaxed"
+            className="text-caption text-center italic animate-fade-in text-text-muted-color leading-relaxed"
           >
             {LOADING_LINES[meditativeIndex]}
           </p>
+          {!cardsLoading && (
+            <button
+              onClick={() => setMeditativeDismissed(true)}
+              className="mt-2 flex items-center gap-1.5 text-micro tracking-wider uppercase transition-opacity active:opacity-60 text-text-muted-color"
+            >
+              <span>Continue</span>
+              <span className="text-xs">→</span>
+            </button>
+          )}
         </div>
       </main>
     );
