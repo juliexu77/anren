@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { isToday, isPast, parseISO, format } from "date-fns";
-import { CalendarClock, Loader2, Camera } from "lucide-react";
+import { CalendarClock, Loader2, Camera, ChevronDown } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
@@ -207,7 +207,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {/* ── RESTING HERE ── */}
       {active.length > 0 && (
-        <Section title="Resting here" sectionRef={restingSectionRef}>
+        <CollapsibleSection title="Resting here" count={active.length} sectionRef={restingSectionRef}>
           {active.map((card) => (
             <ItemRow
               key={card.id}
@@ -217,7 +217,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
               onComplete={() => onComplete(card.id)}
             />
           ))}
-        </Section>
+        </CollapsibleSection>
       )}
 
       {/* ── IN MOTION ── */}
@@ -248,6 +248,39 @@ function Section({ title, children, sectionRef }: { title: string; children: Rea
       <div className="sanctuary-card">
         {children}
       </div>
+    </div>
+  );
+}
+
+/* ── Collapsible Section ── */
+function CollapsibleSection({ title, count, children, sectionRef }: { title: string; count: number; children: React.ReactNode; sectionRef?: React.RefObject<HTMLDivElement> }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div ref={sectionRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between mb-1 group"
+      >
+        <h2 className="text-label uppercase tracking-wider text-text-muted-color">
+          {title}
+        </h2>
+        <ChevronDown className={`w-4 h-4 text-text-muted-color transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full sanctuary-card px-3 py-3 text-left"
+        >
+          <p className="text-caption italic text-text-muted-color">
+            I'll hold {count === 1 ? "this" : `these ${count} items`} for you. Tap to open.
+          </p>
+        </button>
+      ) : (
+        <div className="sanctuary-card">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
