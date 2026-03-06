@@ -276,6 +276,15 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           </button>
         </div>
       )}
+      {/* ── TRANSCRIBING PHASE ── */}
+      {phase === "transcribing" && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-5">
+          <Loader2 className="w-8 h-8 animate-spin text-accent-1" />
+          <p className="text-caption text-text-muted-color">
+            Transcribing what you said…
+          </p>
+        </div>
+      )}
 
       {/* ── TYPING PHASE ── */}
       {phase === "typing" && (
