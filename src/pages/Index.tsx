@@ -35,7 +35,7 @@ const Index = () => {
   const [showAgenda, setShowAgenda] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
-  const [suggestionSources, setSuggestionSources] = useState<Record<string, string[]>>({});
+  
   const [reorderMessage, setReorderMessage] = useState<string | null>(null);
   const [researching, setResearching] = useState(false);
 
@@ -115,9 +115,6 @@ const Index = () => {
         return;
       }
       setSuggestions((prev) => ({ ...prev, [cardId]: data.suggestion }));
-      if (data.sources) {
-        setSuggestionSources((prev) => ({ ...prev, [cardId]: data.sources }));
-      }
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
@@ -192,7 +189,7 @@ const Index = () => {
         onUpdate={updateCard}
         onDelete={deleteCard}
         suggestion={selectedCard ? suggestions[selectedCard.id] : undefined}
-        suggestionSources={selectedCard ? suggestionSources[selectedCard.id] : undefined}
+        
         onResearch={handleResearch}
         researching={researching}
       />
