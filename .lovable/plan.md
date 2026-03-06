@@ -1,64 +1,60 @@
 
 
-# Consolidate Hardcoded Styles into the Design System
+# Sanctuary Visual Review — Remaining Issues
 
-## Problem
-Across ~16 component files, styling is applied via inline `style={{}}` attributes with hardcoded `hsl(var(--text-muted))`, `hsl(var(--accent-1))`, `hsl(40 30% 97%)`, etc. instead of using Tailwind utility classes that reference the existing design system tokens. This means:
-- Styles don't consistently respect theme changes
-- Hardcoded values like `hsl(40 30% 97%)` (a cream white) won't adapt across themes
-- The sanctuary depth tokens (`--sanctuary-surface`, `--glass-border`, etc.) aren't used everywhere they should be
+## Current State
+After reviewing all screens and components, the design system consolidation is mostly working — `.sanctuary-card`, `.sanctuary-btn`, `.accent-btn`, `.item-row` classes are in place, and most components use Tailwind tokens. However, several components still have **hardcoded inline `style={{}}` attributes** and inconsistencies that break the sanctuary feel.
 
-## What Changes
+## Issues Found
 
-### 1. Add Missing Tailwind Color Tokens
-Add new color mappings in `tailwind.config.ts` so we can use classes like `text-text-muted`, `bg-surface`, `border-divider` instead of inline styles:
-- `text-primary-color` → `hsl(var(--text))`  
-- `text-secondary-color` → `hsl(var(--text-secondary))`
-- `text-muted-color` → `hsl(var(--text-muted))`
-- `surface` → `hsl(var(--surface))`
-- `divider` → `hsl(var(--divider))`
-- `accent-1` → `hsl(var(--accent-1))`
-- `card-bg` → `hsl(var(--card-bg))`
+### 1. NightSkyBackground — Hardcoded fog HSL values (not theme-aware)
+`NightSkyBackground.tsx` lines 69-74 use hardcoded `hsl(35 25% 80%)`, `hsl(30 20% 75%)` etc. for fog gradients. These warm cream tones look wrong on Forest, Ink, or Mustard themes. Should derive fog colors from `var(--text-muted)` or `var(--surface)`.
 
-### 2. Create Reusable Component Classes
-Add Tailwind `@layer components` classes in `src/index.css` for repeated patterns:
-- `.sanctuary-card` — the rounded-xl container with glass border, depth shadow, inner highlight
-- `.sanctuary-btn` — action button with sanctuary surface styling  
-- `.accent-btn` — primary action (currently hardcoded `hsl(var(--accent-1))` + `hsl(40 30% 97%)`)
-- `.item-row` — the repeated item row with bottom divider border
+### 2. CalendarAgendaSheet — Heavy inline styles throughout
+Lines 99-208 contain ~15 inline `style={{}}` blocks for chip backgrounds, text colors, month picker buttons. Uses `hsl(var(--primary) / 0.15)`, `hsl(var(--text) / 0.4)` etc. as inline styles rather than Tailwind classes.
 
-### 3. Replace Inline Styles Across Components
-Convert all `style={{}}` to Tailwind classes in these files:
+### 3. CalendarTimeGrid — Inline styles for events and time indicator
+Lines 154-227 use inline `style={{}}` for event blocks (`hsl(var(--primary) / 0.2)`), border-left colors, and the current-time indicator. Also uses `text-muted-foreground` and `text-foreground` (old Tailwind tokens) instead of `text-text-muted-color` / `text-text-primary`.
 
-| File | Issue |
-|------|-------|
-| **HomeView.tsx** | ~25 inline styles for colors, borders, backgrounds |
-| **CardDetailSheet.tsx** | ~10 inline styles on suggestion box, buttons, text |
-| **BrainDumpSheet.tsx** | ~15 inline styles, hardcoded `hsl(40 30% 97%)` on buttons |
-| **ScheduleSheet.tsx** | Hardcoded `hsl(40 30% 97%)` on save button |
-| **DailyBriefOverlay.tsx** | ~8 inline styles for backgrounds and text colors |
-| **SettingsPage.tsx** | ~12 inline styles for labels, borders, inputs |
-| **CalendarEventSheet.tsx** | Minor inline color styles |
-| **CalendarAgendaSheet.tsx** | Inline styles on date chips and grid |
-| **Onboarding.tsx** | ~15 inline styles, hardcoded accent colors |
-| **NightSkyBackground.tsx** | Hardcoded gradient HSL values (needs theme-aware CSS vars) |
-| **button.tsx** | `cta` variant has hardcoded `amber-400` and `rgba(212,175,55,...)` — should use accent tokens |
+### 4. VoiceRecorder — Fully unstyled with inline HSL
+Lines 111-163 use inline `style={{}}` for backdrop, card background, border. Uses old tokens like `text-muted-foreground`, `bg-muted/30`, `bg-destructive/20`. No sanctuary depth applied — feels like a generic modal, not a sanctuary space.
 
-### 4. Fix the Worst Offender: Hardcoded `hsl(40 30% 97%)`
-This cream-white is used as the text color on accent buttons in BrainDumpSheet, ScheduleSheet, and Onboarding. It should be `hsl(var(--accent-foreground))` or the Tailwind class `text-accent-foreground` so it adapts per theme.
+### 5. Auth page — Old tokens, no sanctuary feel
+Uses `text-foreground`, `text-muted-foreground` instead of design system tokens. The sign-in page is the first thing returning users see and should feel grounded.
 
-## Files to Edit
-1. `tailwind.config.ts` — add color token mappings
-2. `src/index.css` — add `.sanctuary-card`, `.sanctuary-btn`, `.accent-btn` component classes
-3. `src/components/HomeView.tsx` — replace all inline styles
-4. `src/components/CardDetailSheet.tsx` — replace all inline styles
-5. `src/components/BrainDumpSheet.tsx` — replace all inline styles
-6. `src/components/ScheduleSheet.tsx` — replace inline styles
-7. `src/components/DailyBriefOverlay.tsx` — replace inline styles
-8. `src/components/SettingsPage.tsx` — replace inline styles
-9. `src/components/CalendarEventSheet.tsx` — minor cleanup
-10. `src/components/CalendarAgendaSheet.tsx` — replace inline styles
-11. `src/pages/Onboarding.tsx` — replace inline styles
-12. `src/components/ui/button.tsx` — replace hardcoded amber/rgba in `cta` variant
-13. `src/components/ui/NightSkyBackground.tsx` — use CSS vars for gradient colors
+### 6. Onboarding Step 3 — Mic button has inline `style={{}}` with hardcoded HSL
+Lines 351-373 use inline styles for the mic button background (`hsl(0 70% 55% / 0.15)`, `hsl(var(--accent) / 0.12)`). The recording state uses red/destructive tones which contradict the "no anxiety" principle.
+
+### 7. SettingsPage — Theme swatches use inline `style={{}}` (acceptable)
+The theme picker buttons at lines 223-237 use inline styles to preview each theme's actual colors — this is intentionally dynamic and should stay. However, the Account section (line 77) uses `border-border` and `text-foreground` instead of sanctuary tokens.
+
+### 8. CardDetailSheet — Uses old Tailwind tokens
+Lines 131-178 use `text-foreground/70`, `text-muted-foreground/60`, `text-foreground/90`, `text-muted-foreground/40` — these should be `text-text-primary`, `text-text-muted-color`, `text-text-secondary-color`.
+
+### 9. Extension Onboarding — Separate CSS, not in scope
+`ExtensionOnboarding.tsx` uses its own CSS classes (`onboarding-btn-primary`, etc.) which is expected for the Chrome extension context.
+
+## Plan
+
+### Files to Edit
+
+1. **`src/components/ui/NightSkyBackground.tsx`** — Replace hardcoded fog HSL values with CSS variables derived from theme. Add new vars `--fog-color` in `index.css` that themes can override.
+
+2. **`src/components/CalendarAgendaSheet.tsx`** — Replace all inline `style={{}}` with Tailwind classes using the design system tokens. Convert chip selected/unselected states, month grid button styles.
+
+3. **`src/components/calendar/CalendarTimeGrid.tsx`** — Replace inline styles for event blocks and time indicator with Tailwind classes. Swap old tokens (`text-muted-foreground`, `text-foreground`) for sanctuary tokens.
+
+4. **`src/components/VoiceRecorder.tsx`** — Restyle as a sanctuary overlay. Replace inline styles with sanctuary tokens. Use `bg-bg-color/90` backdrop, `sanctuary-card` for the modal, `sanctuary-btn` for controls. Remove red/destructive recording colors in favor of the accent color.
+
+5. **`src/pages/Auth.tsx`** — Replace `text-foreground`, `text-muted-foreground` with `text-text-primary`, `text-text-muted-color`. Use `accent-btn` class for the sign-in button instead of Button variant="cta".
+
+6. **`src/pages/Onboarding.tsx`** — Replace inline mic button styles with Tailwind classes using accent tokens instead of hardcoded red for recording state.
+
+7. **`src/components/CardDetailSheet.tsx`** — Swap all `text-foreground/*`, `text-muted-foreground/*` references to `text-text-primary`, `text-text-secondary-color`, `text-text-muted-color`.
+
+8. **`src/components/SettingsPage.tsx`** — Minor: swap `text-muted-foreground` → `text-text-muted-color`, `text-foreground` → `text-text-primary`, `border-border` → `border-divider-color/25` in Account section.
+
+9. **`src/index.css`** — Add `--fog-color` CSS variable (derived from theme surface) for the NightSkyBackground fog layer.
+
+10. **`src/contexts/ColorThemeContext.tsx`** — Add `--fog-color` to theme derivation so fog adapts per theme.
 
