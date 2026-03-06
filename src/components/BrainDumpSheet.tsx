@@ -17,7 +17,7 @@ interface Props {
   onConfirm: (items: ExtractedItem[]) => Promise<void>;
 }
 
-type Phase = "voice" | "typing" | "processing" | "review";
+type Phase = "voice" | "transcribing" | "typing" | "processing" | "review";
 
 export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const [phase, setPhase] = useState<Phase>("voice");
