@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import type { BrainCard } from "@/types/card";
-import { Trash2, ChevronLeft, Calendar, Loader2 } from "lucide-react";
+import { Trash2, ChevronLeft, Calendar, Loader2, Sparkles, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
@@ -21,11 +21,14 @@ interface Props {
   onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body">>) => void;
   onDelete: (id: string) => void;
   suggestion?: string;
+  suggestionSources?: string[];
+  onResearch?: (cardId: string, title: string, body: string, type: string | null) => void;
+  researching?: boolean;
 }
 
 const APP_URL = "https://anren.app";
 
-export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, suggestion }: Props) {
+export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, suggestion, suggestionSources, onResearch, researching }: Props) {
   const [body, setBody] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -189,6 +192,26 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
             <p className="text-sm leading-relaxed text-text-secondary-color">
               {suggestion}
             </p>
+            {suggestionSources && suggestionSources.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {suggestionSources.map((url, i) => {
+                  let domain = url;
+                  try { domain = new URL(url).hostname.replace("www.", ""); } catch {}
+                  return (
+                    <a
+                      key={i}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-text-muted-color/70 hover:text-text-primary transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      {domain}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -197,6 +220,14 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
           {isEditing && (
             <Button className="w-full" onClick={handleSave}>Save</Button>
           )}
+          <button
+            onClick={() => card && onResearch?.(card.id, card.title, body || card.body, card.type)}
+            disabled={researching}
+            className="sanctuary-btn w-full flex items-center justify-center gap-2 py-3 text-sm text-text-primary/70"
+          >
+            {researching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {researching ? "Thinking…" : "What's my next step?"}
+          </button>
           <button
             onClick={handleCreateEvent}
             disabled={extracting}
