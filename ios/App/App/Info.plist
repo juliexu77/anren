@@ -35,6 +35,8 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>ANREN uses your contacts so you can add people to your circle.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ANREN uses your microphone to capture voice notes and thoughts.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
