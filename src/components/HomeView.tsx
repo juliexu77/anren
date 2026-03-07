@@ -218,14 +218,14 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
       {/* ── RESTING HERE ── */}
       {active.length > 0 && (
-        <CollapsibleSection title="Resting here" count={active.length} sectionRef={restingSectionRef}>
+        <CollapsibleSection title={readOnly ? "They're holding" : "Resting here"} count={active.length} sectionRef={restingSectionRef}>
           {active.map((card) => (
             <ItemRow
               key={card.id}
               card={card}
               onClick={() => onCardClick(card)}
-              onSchedule={() => onSchedule(card)}
-              onComplete={() => onComplete(card.id)}
+              onSchedule={readOnly ? undefined : () => onSchedule(card)}
+              onComplete={readOnly ? undefined : () => onComplete(card.id)}
             />
           ))}
         </CollapsibleSection>
