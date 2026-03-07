@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.research-next-step]
 verify_jwt = false
+
+[functions.accept-invite]
+verify_jwt = false
+
+[functions.nudge-partner]
+verify_jwt = false

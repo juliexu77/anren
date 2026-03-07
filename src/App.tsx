@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import CardDeepLink from "./pages/CardDeepLink";
 import ExtensionAuthStart from "./pages/ExtensionAuthStart";
 import ExtensionAuthComplete from "./pages/ExtensionAuthComplete";
+import InviteJoin from "./pages/InviteJoin";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/extension-auth" element={<ExtensionAuthStart />} />
               <Route path="/extension-auth-complete" element={<ExtensionAuthComplete />} />
+              <Route path="/invite/:token" element={<InviteJoin />} />
               <Route path="/google-callback" element={<ProtectedRoute><GoogleCallback /></ProtectedRoute>} />
               <Route path="/~oauth/callback" element={<LovableOAuthCallback />} />
               <Route path="/privacy" element={<Privacy />} />

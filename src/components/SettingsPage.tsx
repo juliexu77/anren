@@ -8,6 +8,7 @@ import { Check, LogOut, Bell, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useCallback, useState } from "react";
+import { SettingsPartnerSection } from "@/components/SettingsPartnerSection";
 
 /** Convert "HH:MM:SS" → display "h:mm AM/PM" */
 function formatTime(time24: string): string {
@@ -85,6 +86,9 @@ export function SettingsPage() {
           </Button>
         </div>
       </section>
+
+      {/* Partner */}
+      <SettingsPartnerSection />
 
       {/* Daily Brief */}
       {settingsLoaded && (

@@ -4,13 +4,16 @@ import { useAuth } from "@/hooks/useAuth";
 import type { BrainCard, ItemType, ItemStatus, CardSource } from "@/types/card";
 import { mapStatus, mapType } from "@/types/card";
 
-export function useCards() {
+export function useCards(overrideUserId?: string | null) {
   const { user } = useAuth();
   const [cards, setCards] = useState<BrainCard[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const effectiveUserId = overrideUserId || user?.id;
+  const isReadOnly = !!overrideUserId;
+
   useEffect(() => {
-    if (!user) {
+    if (!effectiveUserId) {
       setCards([]);
       setLoading(false);
       return;
@@ -21,7 +24,7 @@ export function useCards() {
       const { data, error } = await supabase
         .from("cards")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -64,16 +67,16 @@ export function useCards() {
     fetchCards();
 
     const channel = supabase
-      .channel("cards-changes")
+      .channel(`cards-changes-${effectiveUserId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "cards", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "cards", filter: `user_id=eq.${effectiveUserId}` },
         () => fetchCards()
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [effectiveUserId]);
 
   const addCard = useCallback(
     async (data: {

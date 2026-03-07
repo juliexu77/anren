@@ -12,7 +12,16 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
+    if (user) {
+      // Check for pending invite token
+      const pendingToken = localStorage.getItem("pending_invite_token");
+      if (pendingToken) {
+        localStorage.removeItem("pending_invite_token");
+        navigate(`/invite/${pendingToken}`, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {

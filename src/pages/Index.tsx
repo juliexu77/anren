@@ -4,6 +4,7 @@ import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useHousehold } from "@/hooks/useHousehold";
 import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
@@ -21,7 +22,8 @@ import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
 
 const Index = () => {
-  const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards();
+  const household = useHousehold();
+  const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
   usePushNotifications();
@@ -179,6 +181,8 @@ const Index = () => {
         onReorder={() => { setReorderMessage(null); handleReorder(); }}
         reordering={reordering}
         reorderMessage={reorderMessage}
+        readOnly={household.isViewer}
+        viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
       />
 
       {/* Sheets */}
