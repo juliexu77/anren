@@ -1,6 +1,16 @@
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
-import { isToday, isPast, parseISO, format, differenceInDays } from "date-fns";
+import { isToday, isPast, parseISO, format, differenceInDays, startOfDay } from "date-fns";
+
+/** Parse a calendar date string, treating date-only values (YYYY-MM-DD) as local midnight */
+function parseCalendarDate(value: string): Date {
+  // Date-only strings like "2026-03-08" should be local, not UTC
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return parseISO(value);
+}
 
 const MILESTONE_KEYWORDS = ["birthday", "anniversary", "bday", "b-day"];
 
@@ -28,7 +38,7 @@ export function generateDailyOrientation(
   const seenEvents = new Set<string>();
   const todayEvents = calendarEvents.filter((e) => {
     const start = e.start.dateTime || e.start.date;
-    if (!start || !isToday(parseISO(start))) return false;
+    if (!start || !isToday(parseCalendarDate(start))) return false;
     const key = `${(e.summary || "").trim().toLowerCase()}|${start}`;
     if (seenEvents.has(key)) return false;
     seenEvents.add(key);
@@ -40,8 +50,8 @@ export function generateDailyOrientation(
     .filter(isMilestoneEvent)
     .map((e) => {
       const start = e.start.dateTime || e.start.date;
-      const startDate = start ? parseISO(start) : new Date();
-      const daysAway = differenceInDays(startDate, new Date());
+      const startDate = start ? parseCalendarDate(start) : new Date();
+      const daysAway = differenceInDays(startOfDay(startDate), startOfDay(new Date()));
       return { ...e, startDate, daysAway };
     })
     .filter((e) => {
