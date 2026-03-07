@@ -38,7 +38,7 @@ export function generateDailyOrientation(
   const seenEvents = new Set<string>();
   const todayEvents = calendarEvents.filter((e) => {
     const start = e.start.dateTime || e.start.date;
-    if (!start || !isToday(parseISO(start))) return false;
+    if (!start || !isToday(parseCalendarDate(start))) return false;
     const key = `${(e.summary || "").trim().toLowerCase()}|${start}`;
     if (seenEvents.has(key)) return false;
     seenEvents.add(key);
@@ -50,8 +50,8 @@ export function generateDailyOrientation(
     .filter(isMilestoneEvent)
     .map((e) => {
       const start = e.start.dateTime || e.start.date;
-      const startDate = start ? parseISO(start) : new Date();
-      const daysAway = differenceInDays(startDate, new Date());
+      const startDate = start ? parseCalendarDate(start) : new Date();
+      const daysAway = differenceInDays(startOfDay(startDate), startOfDay(new Date()));
       return { ...e, startDate, daysAway };
     })
     .filter((e) => {
