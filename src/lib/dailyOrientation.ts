@@ -1,6 +1,16 @@
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
-import { isToday, isPast, parseISO, format, differenceInDays } from "date-fns";
+import { isToday, isPast, parseISO, format, differenceInDays, startOfDay } from "date-fns";
+
+/** Parse a calendar date string, treating date-only values (YYYY-MM-DD) as local midnight */
+function parseCalendarDate(value: string): Date {
+  // Date-only strings like "2026-03-08" should be local, not UTC
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return parseISO(value);
+}
 
 const MILESTONE_KEYWORDS = ["birthday", "anniversary", "bday", "b-day"];
 
