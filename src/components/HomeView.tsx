@@ -38,9 +38,11 @@ interface Props {
   onReorder: () => void;
   reordering: boolean;
   reorderMessage?: string | null;
+  readOnly?: boolean;
+  viewerBanner?: string | null;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner }: Props) {
   const [meditativeIndex, setMeditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -110,22 +112,31 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
   return (
     <main className="px-4 space-y-5 pb-4">
+      {/* ── Viewer banner ── */}
+      {readOnly && viewerBanner && (
+        <div className="rounded-xl px-4 py-3 bg-surface-color/60 text-center">
+          <p className="text-caption italic text-text-muted-color">{viewerBanner}</p>
+        </div>
+      )}
+
       {/* ── Action buttons (top) ── */}
-      <div className="flex gap-3">
-        <button
-          onClick={onOpenCamera}
-          className="sanctuary-btn py-3 px-4 shrink-0"
-          title="Capture screenshot"
-        >
-          <Camera className="w-5 h-5" />
-        </button>
-        <button
-          onClick={onOpenBrainDump}
-          className="sanctuary-btn flex-1 py-3 text-button font-medium"
-        >
-          Clear your mind
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="flex gap-3">
+          <button
+            onClick={onOpenCamera}
+            className="sanctuary-btn py-3 px-4 shrink-0"
+            title="Capture screenshot"
+          >
+            <Camera className="w-5 h-5" />
+          </button>
+          <button
+            onClick={onOpenBrainDump}
+            className="sanctuary-btn flex-1 py-3 text-button font-medium"
+          >
+            Clear your mind
+          </button>
+        </div>
+      )}
 
       {/* ── Daily Orientation ── */}
       <div className="orientation-card">
@@ -158,7 +169,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       </div>
 
       {/* ── Help me get organized ── */}
-      {active.length >= 2 && (
+      {!readOnly && active.length >= 2 && (
         <>
           <button
             onClick={onReorder}
