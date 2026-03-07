@@ -1,53 +1,79 @@
 
 
-# Smarter "Thinking Partner" with Research
+## Household Partner Invite Feature
 
-## Current State
+### Overview
+Primary user generates an invite link in Settings. Partner opens link, creates an account, joins the household. Partner sees a read-only mirror of the primary user's app. A weekly push notification nudges the partner to appreciate what their partner is holding.
 
-The "thinking partner" suggestion shown in `CardDetailSheet` comes from the `smart-reorder` edge function -- it's a brief nudge generated during the "Help me get organized" flow. It has no web research capability and only sees the card's title/body.
+### Database (4 new tables, 1 migration)
 
-## Proposed Design
+**`households`** — id, owner_id (uuid), created_at
 
-Add a **"What's my next step?"** button inside each card's detail view. When tapped, it calls a new edge function that:
+**`household_members`** — id, household_id (FK), user_id (uuid), role (text, default 'viewer'), joined_at
 
-1. Takes the card's title, body, and type
-2. Uses AI (Gemini 2.5 Flash) to reason about what the logical next step is
-3. Optionally does web research via Perplexity (if connected) to ground the suggestion in real information -- e.g. looking up business hours, finding relevant links, checking prices
-4. Returns a richer, more actionable suggestion that replaces the current thinking partner area
+**`household_invites`** — id, household_id (FK), token (unique text), expires_at (default now + 30 days), used_by (uuid[], tracks who joined but does NOT invalidate the token), created_at
 
-The user explicitly triggers this per card (not automatic), keeping costs controlled and making it feel intentional.
+**`household_nudges`** — tracking table so the weekly nudge cron knows who to notify
 
-## Architecture
+**RLS policies:**
+- `households`: owner full CRUD; members SELECT
+- `household_members`: owner INSERT/DELETE; member SELECT own row
+- `household_invites`: owner INSERT/SELECT/DELETE; anon/authenticated SELECT by token (for join page)
+- `cards`, `profiles`, `daily_brief_settings`: add SELECT policy allowing household members to read the owner's rows via a `is_household_member(auth.uid(), owner_id)` security definer function
 
-### New Edge Function: `research-next-step`
+### Security Definer Function
 
-- Accepts `{ title, body, type, cardId }`
-- Two-phase approach:
-  - **Phase 1 (always)**: AI reasons about the card content and suggests a concrete next step with any research queries it would want answered
-  - **Phase 2 (if Perplexity connected)**: Runs those queries through Perplexity search, then synthesizes a grounded answer
-  - **Fallback**: If no Perplexity, just returns the AI's best reasoning without web grounding
-- Returns `{ suggestion: string, sources?: string[] }`
+```sql
+create or replace function public.is_household_member(_user_id uuid, _owner_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.household_members hm
+    join public.households h on h.id = hm.household_id
+    where hm.user_id = _user_id and h.owner_id = _owner_id
+  )
+$$;
+```
+
+### Edge Function: `accept-invite`
+- Validates token exists and hasn't expired
+- Creates household membership for the authenticated user
+- Appends user to `used_by` array on the invite (but keeps invite active)
+
+### Edge Function: `nudge-partner` (cron, weekly)
+- Queries household members with role='viewer' who have device tokens
+- Counts the owner's active cards
+- Sends APNs push: "Your partner is holding X things right now. Take a moment to notice."
 
 ### Frontend Changes
 
-**`CardDetailSheet.tsx`**:
-- Add a "What's my next step?" button (using the ✦ icon) above the "Add to Calendar" button
-- On tap, shows a loading state, calls the edge function
-- Displays the result in the existing thinking partner card area, replacing any prior suggestion
-- If sources are returned, show them as small linked references
+1. **Settings — "Partner" section** (below Account)
+   - "Invite Partner" button → generates invite token, copies link
+   - If invite exists, show the link with copy/share button and option to revoke
+   - If partner has joined, show their name with option to remove
 
-**`Index.tsx`**:
-- Add state + handler for per-card research suggestions
-- These persist in local state (same pattern as current `suggestions` record)
+2. **`/invite/:token` route** (new page, public)
+   - Fetches invite details (owner's display name)
+   - Shows: "You've been invited to join [Name]'s household"
+   - CTA: "Join" → if not logged in, redirect to auth with `?redirect=/invite/:token`
+   - After auth, call `accept-invite` edge function → redirect to home
 
-### Without Perplexity
+3. **Post-auth redirect handling**
+   - Auth page stores redirect URL, navigates there after successful login
+   - `/invite/:token` page detects authenticated user and auto-triggers join
 
-The feature works without the Perplexity connector -- the AI will still reason about the card and suggest a next step based on its knowledge. If the user later connects Perplexity, research becomes grounded in real-time web data.
+4. **Read-only partner home**
+   - New hook `useHousehold` — detects if current user is a viewer in any household, returns owner_id
+   - `useCards` — if viewer, fetch owner's cards (RLS handles access)
+   - `HomeView` — if viewer mode: hide add/edit/delete/brain dump/reorder controls, show banner "Viewing [Name]'s list"
+   - Calendar and daily brief similarly fetch owner's data
 
-## Files to Create/Edit
+5. **App.tsx** — add `/invite/:token` route
 
-1. **Create** `supabase/functions/research-next-step/index.ts` -- new edge function
-2. **Edit** `supabase/config.toml` -- register function with `verify_jwt = false`
-3. **Edit** `src/components/CardDetailSheet.tsx` -- add "What's my next step?" button and display
-4. **Edit** `src/pages/Index.tsx` -- add state management for research suggestions
+### Key Design Decisions
+- Invite tokens are **reusable** (not single-use) and expire after **30 days**
+- Owner can regenerate/revoke the link
+- Weekly nudge push: "Your partner is holding X things right now. Take a moment to notice."
+- One household per user (owner), one viewer per household (can expand later)
 
