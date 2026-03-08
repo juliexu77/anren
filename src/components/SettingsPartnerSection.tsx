@@ -141,7 +141,7 @@ export function SettingsPartnerSection() {
                 <Users className="w-4 h-4 mr-1.5" />
               )}
               {generating ? "Creating…" : "Invite partner"}
-            </Button>
+            </button>
           </>
         )}
       </div>
