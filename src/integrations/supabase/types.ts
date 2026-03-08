@@ -315,6 +315,42 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_syntheses: {
+        Row: {
+          created_at: string
+          dismissed: boolean
+          domains: Json
+          id: string
+          narrative: string
+          stale_items: Json
+          total_cards_analyzed: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed?: boolean
+          domains?: Json
+          id?: string
+          narrative?: string
+          stale_items?: Json
+          total_cards_analyzed?: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          dismissed?: boolean
+          domains?: Json
+          id?: string
+          narrative?: string
+          stale_items?: Json
+          total_cards_analyzed?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
