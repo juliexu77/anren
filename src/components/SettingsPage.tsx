@@ -116,7 +116,7 @@ export function SettingsPage() {
                   <select
                     value={settings.delivery_time}
                     onChange={handleTimeChange}
-                    className="w-full rounded-lg px-3 py-2.5 text-caption appearance-none"
+                    className="w-full rounded-lg px-3 py-2.5 text-caption appearance-none bg-surface-color text-text-primary border border-divider-color/25"
                   >
                     {timeSlots.map((slot) => (
                       <option key={slot} value={slot}>
