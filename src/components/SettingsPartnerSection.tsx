@@ -130,11 +130,10 @@ export function SettingsPartnerSection() {
             <p className="text-caption text-text-muted-color">
               Invite your partner to see what you're holding. They'll get a read-only view of your items.
             </p>
-            <Button
+            <button
               onClick={handleGenerate}
               disabled={generating}
-              className="w-full"
-              variant="outline"
+              className="accent-btn w-full py-3 rounded-full text-button inline-flex items-center justify-center gap-1.5 disabled:opacity-40"
             >
               {generating ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
@@ -142,7 +141,7 @@ export function SettingsPartnerSection() {
                 <Users className="w-4 h-4 mr-1.5" />
               )}
               {generating ? "Creating…" : "Invite partner"}
-            </Button>
+            </button>
           </>
         )}
       </div>

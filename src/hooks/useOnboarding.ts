@@ -26,8 +26,8 @@ export function useOnboarding() {
     localStorage.setItem(ONBOARDING_STEP_KEY, String(step));
   }, [step]);
 
-  const nextStep = useCallback(() => setStep((s) => Math.min(s + 1, 5)), []);
-  const skipStep = useCallback(() => setStep((s) => Math.min(s + 1, 5)), []);
+  const nextStep = useCallback(() => setStep((s) => Math.min(s + 1, 6)), []);
+  const skipStep = useCallback(() => setStep((s) => Math.min(s + 1, 6)), []);
 
   // Local card management (pre-auth)
   const getLocalCards = useCallback((): LocalCard[] => {

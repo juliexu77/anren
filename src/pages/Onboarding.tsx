@@ -5,14 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useGoogleCalendarList } from "@/hooks/useGoogleCalendarList";
 import { useBirthdaySync } from "@/hooks/useBirthdaySync";
+import { useColorTheme } from "@/contexts/ColorThemeContext";
 import { lovable } from "@/integrations/lovable/index";
 import { Capacitor } from "@capacitor/core";
 import { signInWithGoogleNative } from "@/lib/authNative";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Mic, Square, Loader2 } from "lucide-react";
+import { Mic, Square, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+const TOTAL_STEPS = 6;
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -31,6 +35,7 @@ export default function Onboarding() {
 
   const { calendars, loading: calLoading, fetchCalendarList } = useGoogleCalendarList();
   const { syncBirthdays } = useBirthdaySync();
+  const { currentTheme, setTheme, themes } = useColorTheme();
 
   const [textInput, setTextInput] = useState("");
   const [selectedCals, setSelectedCals] = useState<string[]>(["primary"]);
@@ -48,19 +53,21 @@ export default function Onboarding() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Step 5 = Auth, migrate cards then advance
   useEffect(() => {
-    if (user && step === 4) {
+    if (user && step === 5) {
       migrateLocalCards().then(() => nextStep());
     }
   }, [user, step]);
 
+  // Step 6 = Calendar prefs, fetch list
   useEffect(() => {
-    if (user && step === 5) {
+    if (user && step === 6) {
       fetchCalendarList();
     }
   }, [user, step]);
 
-  const progress = (step / 5) * 100;
+  const progress = (step / TOTAL_STEPS) * 100;
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true);
@@ -104,7 +111,7 @@ export default function Onboarding() {
           completeOnboarding();
           navigate("/", { replace: true });
         } else {
-          setStep(5);
+          setStep(6);
         }
       })();
     }
@@ -333,8 +340,57 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 3: Voice-first capture */}
-        {step === 3 && !isTranscribing && capturedItems.length === 0 && (
+        {/* Step 3: Theme selection */}
+        {step === 3 && (
+          <div className="w-full max-w-sm animate-fade-in text-center">
+            <p className="text-xl font-display mb-2 text-text-primary">
+              Choose your atmosphere
+            </p>
+            <p className="text-sm mb-6 text-text-muted-color">
+              Set the tone. You can always change this later.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              {themes.map((theme) => {
+                const isActive = currentTheme.id === theme.id;
+                return (
+                  <button
+                    key={theme.id}
+                    onClick={() => setTheme(theme.id)}
+                    className={cn(
+                      "relative rounded-2xl p-4 text-left transition-all duration-200 border",
+                      isActive
+                        ? "border-primary/40 shadow-md"
+                        : "border-border hover:border-primary/20 hover:shadow-sm"
+                    )}
+                    style={{ background: `hsl(${theme.cardBg})` }}
+                  >
+                    <div className="flex gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full border border-black/5" style={{ background: `hsl(${theme.bgPrimary})` }} />
+                      <div className="w-8 h-8 rounded-full" style={{ background: `hsl(${theme.accent1})` }} />
+                      <div className="w-8 h-8 rounded-full" style={{ background: `hsl(${theme.accent2})` }} />
+                    </div>
+                    <p className="text-sm font-medium" style={{ color: `hsl(${theme.textPrimary})` }}>{theme.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: `hsl(${theme.textMuted})` }}>{theme.description}</p>
+                    {isActive && (
+                      <div className="absolute top-3 right-3">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={nextStep}
+              className="accent-btn w-full py-3.5 rounded-full text-button"
+            >
+              Continue
+            </button>
+          </div>
+        )}
+
+        {/* Step 4: Voice-first capture */}
+        {step === 4 && !isTranscribing && capturedItems.length === 0 && (
           <div className="w-full max-w-sm animate-fade-in text-center">
             <p className="text-2xl font-display mb-2 text-text-primary">
               What are you holding?
@@ -455,8 +511,8 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 3: Transcribing state */}
-        {step === 3 && isTranscribing && (
+        {/* Step 4: Transcribing state */}
+        {step === 4 && isTranscribing && (
           <div className="text-center animate-fade-in">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-accent" />
             <p className="text-sm text-text-muted-color">
@@ -465,8 +521,8 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 3: Captured items confirmation */}
-        {step === 3 && !isTranscribing && capturedItems.length > 0 && (
+        {/* Step 4: Captured items confirmation */}
+        {step === 4 && !isTranscribing && capturedItems.length > 0 && (
           <div className="w-full max-w-sm animate-fade-in text-center">
             <p className="text-lg font-display mb-5 text-text-primary">
               Holding:
@@ -494,8 +550,8 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 4: Value bridge + Auth */}
-        {step === 4 && !user && (
+        {/* Step 5: Value bridge + Auth */}
+        {step === 5 && !user && (
           <div className="w-full max-w-sm animate-fade-in text-center">
             {localCards.length > 0 && (
               <p className="text-sm mb-2 text-text-muted-color">
@@ -542,8 +598,8 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 4 loading (post-auth, migrating) */}
-        {step === 4 && user && (
+        {/* Step 5 loading (post-auth, migrating) */}
+        {step === 5 && user && (
           <div className="text-center animate-fade-in">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-accent" />
             <p className="text-sm text-text-muted-color">
@@ -552,8 +608,8 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 5: Calendar prefs */}
-        {step === 5 && (
+        {/* Step 6: Calendar prefs */}
+        {step === 6 && (
           <div className="w-full max-w-sm animate-fade-in">
             <p className="text-xl font-display mb-1 text-text-primary">
               Which calendars feel like yours?
