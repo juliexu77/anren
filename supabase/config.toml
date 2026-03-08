@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.nudge-partner]
 verify_jwt = false
+
+[functions.send-weekly-synthesis]
+verify_jwt = false
