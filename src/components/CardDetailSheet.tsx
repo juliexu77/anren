@@ -28,7 +28,7 @@ interface Props {
 
 const APP_URL = "https://anren.app";
 
-export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, suggestion, onResearch, researching }: Props) {
+export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, onComplete, suggestion, onResearch, researching }: Props) {
   const [body, setBody] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
