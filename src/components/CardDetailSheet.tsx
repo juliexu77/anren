@@ -140,12 +140,21 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, onCom
               {typeLabel}
             </span>
           )}
-          <button
-            onClick={() => { onDelete(card.id); onClose(); }}
-            className="text-text-muted-color/70 active:text-text-muted-color p-1"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { onComplete?.(card.id); onClose(); }}
+              className="text-green-500/70 active:text-green-500 p-1"
+              title="Mark complete"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => { onDelete(card.id); onClose(); }}
+              className="text-text-muted-color/70 active:text-text-muted-color p-1"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Title */}

@@ -216,6 +216,7 @@ const Index = () => {
         onClose={() => setSelectedCard(null)}
         onUpdate={updateCard}
         onDelete={deleteCard}
+        onComplete={handleComplete}
         suggestion={selectedCard ? suggestions[selectedCard.id] : undefined}
         
         onResearch={handleResearch}
