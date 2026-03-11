@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import type { BrainCard } from "@/types/card";
-import { Trash2, ChevronLeft, Calendar, Loader2, Sparkles } from "lucide-react";
+import { Trash2, ChevronLeft, Calendar, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
