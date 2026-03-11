@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body">>) => void;
   onDelete: (id: string) => void;
+  onComplete?: (id: string) => void;
   suggestion?: string;
   onResearch?: (cardId: string, title: string, body: string, type: string | null) => void;
   researching?: boolean;
