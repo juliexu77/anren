@@ -19,6 +19,7 @@ import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
+import { DesktopCalendarPanel } from "@/components/DesktopCalendarPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
@@ -129,7 +130,7 @@ const Index = () => {
 
   if (showSettings) {
     return (
-      <div className="min-h-screen max-w-xl mx-auto">
+      <div className="min-h-screen max-w-5xl mx-auto">
         <header className="sticky top-0 z-40 px-5 pt-16 pb-2">
           <div className="flex items-center justify-between">
             <div className="w-12" />
@@ -145,7 +146,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen pb-6 max-w-xl mx-auto">
+    <div className="min-h-screen max-w-5xl mx-auto">
       {/* Weekly Synthesis Overlay (shown before daily brief) */}
       {weeklySynthesis && !showBrief && (
         <WeeklySynthesisOverlay
@@ -175,25 +176,38 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Home */}
-      <HomeView
-        cards={cards}
-        cardsLoading={cardsLoading}
-        calendarEvents={calendarEvents}
-        calendarLoading={calendarLoading}
-        onCardClick={(card) => setSelectedCard(card)}
-        onCalendarEventClick={(event) => setSelectedCalEvent(event)}
-        onViewCalendar={() => setShowAgenda(true)}
-        onComplete={handleComplete}
-        onSchedule={handleSchedule}
-        onOpenCamera={() => setShowCamera(true)}
-        onOpenBrainDump={() => setShowBrainDump(true)}
-        onReorder={() => { setReorderMessage(null); handleReorder(); }}
-        reordering={reordering}
-        reorderMessage={reorderMessage}
-        readOnly={household.isViewer}
-        viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
-      />
+      {/* Two-panel layout: main + calendar sidebar on lg+ */}
+      <div className="flex gap-0 lg:gap-6 lg:px-4">
+        {/* Main column */}
+        <div className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 lg:max-w-none lg:flex-[3]">
+          <HomeView
+            cards={cards}
+            cardsLoading={cardsLoading}
+            calendarEvents={calendarEvents}
+            calendarLoading={calendarLoading}
+            onCardClick={(card) => setSelectedCard(card)}
+            onCalendarEventClick={(event) => setSelectedCalEvent(event)}
+            onViewCalendar={() => setShowAgenda(true)}
+            onComplete={handleComplete}
+            onSchedule={handleSchedule}
+            onOpenCamera={() => setShowCamera(true)}
+            onOpenBrainDump={() => setShowBrainDump(true)}
+            onReorder={() => { setReorderMessage(null); handleReorder(); }}
+            reordering={reordering}
+            reorderMessage={reorderMessage}
+            readOnly={household.isViewer}
+            viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
+          />
+        </div>
+
+        {/* Calendar sidebar — visible on lg+ */}
+        <aside className="hidden lg:block lg:flex-[2] sticky top-[88px] h-[calc(100vh-88px)] sanctuary-card overflow-hidden">
+          <DesktopCalendarPanel
+            events={calendarEvents}
+            onEventClick={(event) => setSelectedCalEvent(event)}
+          />
+        </aside>
+      </div>
 
       {/* Sheets */}
       <CardDetailSheet
