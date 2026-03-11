@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import type { BrainCard } from "@/types/card";
-import { Trash2, ChevronLeft, Calendar, Loader2, Sparkles } from "lucide-react";
+import { Trash2, ChevronLeft, Calendar, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Pick<BrainCard, "title" | "summary" | "body">>) => void;
   onDelete: (id: string) => void;
+  onComplete?: (id: string) => void;
   suggestion?: string;
   onResearch?: (cardId: string, title: string, body: string, type: string | null) => void;
   researching?: boolean;
@@ -27,7 +28,7 @@ interface Props {
 
 const APP_URL = "https://anren.app";
 
-export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, suggestion, onResearch, researching }: Props) {
+export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, onComplete, suggestion, onResearch, researching }: Props) {
   const [body, setBody] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,12 +140,21 @@ export function CardDetailSheet({ card, open, onClose, onUpdate, onDelete, sugge
               {typeLabel}
             </span>
           )}
-          <button
-            onClick={() => { onDelete(card.id); onClose(); }}
-            className="text-text-muted-color/70 active:text-text-muted-color p-1"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { onComplete?.(card.id); onClose(); }}
+              className="text-green-500/70 active:text-green-500 p-1"
+              title="Mark complete"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => { onDelete(card.id); onClose(); }}
+              className="text-text-muted-color/70 active:text-text-muted-color p-1"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Title */}
