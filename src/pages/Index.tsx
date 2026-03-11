@@ -19,6 +19,7 @@ import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays } from "date-fns";
+import { DesktopCalendarPanel } from "@/components/DesktopCalendarPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
