@@ -51,7 +51,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
   // All non-completed, non-parsing items in one list
   const allItems = useMemo(
     () => cards.filter((c) =>
-      (c.status === "active" || c.status === "scheduled") &&
+      c.status === "active" &&
       c.body !== "@@PARSING@@" &&
       c.body !== "@@PARSE_FAILED@@"
     ),
