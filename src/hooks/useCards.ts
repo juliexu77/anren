@@ -144,18 +144,15 @@ export function useCards(overrideUserId?: string | null) {
     }>) => {
       if (!user) return;
 
-      const now = new Date();
       const rows = items.map((item) => {
-        // Don't schedule items with past due dates
-        const hasFutureDue = item.dueAt ? new Date(item.dueAt) > now : false;
         return {
           user_id: user.id,
           title: item.title,
           body: "",
           source: "brain_dump",
           routed_type: item.type,
-          status: hasFutureDue ? "scheduled" : "active",
-          due_at: hasFutureDue ? item.dueAt : null,
+          status: "active",
+          due_at: item.dueAt ?? null,
         };
       });
 

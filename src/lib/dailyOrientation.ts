@@ -28,9 +28,7 @@ export function generateDailyOrientation(
   cards: BrainCard[],
   calendarEvents: CalendarEvent[]
 ): OrientationLine[] {
-  const active = cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@");
-  const scheduled = cards.filter((c) => c.status === "scheduled");
-  const allItems = active.length + scheduled.length;
+  const allItems = cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@").length;
 
   // Deduplicated milestones within 7 days
   const seenMilestones = new Set<string>();

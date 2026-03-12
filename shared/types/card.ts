@@ -3,7 +3,7 @@
  */
 
 export type ItemType = "task" | "ongoing" | "event";
-export type ItemStatus = "active" | "scheduled" | "complete";
+export type ItemStatus = "active" | "complete";
 export type CardSource = "text" | "screenshot" | "voice" | "brain_dump" | "extension";
 
 export interface BrainCard {
@@ -24,10 +24,6 @@ export interface BrainCard {
 
 export function mapStatus(raw: string): ItemStatus {
   switch (raw) {
-    case "active": return "active";
-    case "inbox": return "active";
-    case "scheduled": return "scheduled";
-    case "routed": return "scheduled";
     case "complete": return "complete";
     case "done": return "complete";
     default: return "active";

@@ -53,7 +53,7 @@ export function useBirthdaySync() {
         body: "",
         source: "birthday_scan",
         routed_type: "event",
-        status: "scheduled",
+        status: "active",
         due_at: b.date + "T00:00:00Z",
         category: "milestone",
       }));

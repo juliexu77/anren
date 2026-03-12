@@ -32,7 +32,7 @@ interface Props {
   onCalendarEventClick: (event: CalendarEvent) => void;
   onViewCalendar: () => void;
   onComplete: (id: string) => void;
-  onSchedule: (card: BrainCard) => void;
+  
   onOpenCamera: () => void;
   onOpenBrainDump: () => void;
   onReorder: () => void;
@@ -42,7 +42,7 @@ interface Props {
   viewerBanner?: string | null;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner }: Props) {
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -51,7 +51,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
   // All non-completed, non-parsing items in one list
   const allItems = useMemo(
     () => cards.filter((c) =>
-      (c.status === "active" || c.status === "scheduled") &&
+      c.status === "active" &&
       c.body !== "@@PARSING@@" &&
       c.body !== "@@PARSE_FAILED@@"
     ),
