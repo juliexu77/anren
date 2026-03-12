@@ -1,46 +1,53 @@
 
 
-## Soft Exhale: Simplify the Home Screen
+# Smarter "Thinking Partner" with Research
 
-### What changes
+## Current State
 
-**1. Rewrite Daily Orientation as a gentle note** (`src/lib/dailyOrientation.ts`)
-- Remove all section headers ("Today:", "Holding:", "Coming up:")
-- Remove bullet points — just flowing prose-like sentences
-- Remove "(overdue)" labels entirely
-- Remove the "Holding" preview and "Coming up" preview (these duplicate Resting Here)
-- Keep: greeting, milestones, today's calendar events woven in naturally
-- When nothing is happening: "Nothing pressing. A quiet day."
-- The tone shifts from structured summary → a short, warm note about your day
+The "thinking partner" suggestion shown in `CardDetailSheet` comes from the `smart-reorder` edge function -- it's a brief nudge generated during the "Help me get organized" flow. It has no web research capability and only sees the card's title/body.
 
-Example output:
-```
-Good morning.
+## Proposed Design
 
-🎂 Mom's Birthday — Tomorrow
+Add a **"What's my next step?"** button inside each card's detail view. When tapped, it calls a new edge function that:
 
-You have a call at 10:00 AM, then lunch with Sara.
+1. Takes the card's title, body, and type
+2. Uses AI (Gemini 2.5 Flash) to reason about what the logical next step is
+3. Optionally does web research via Perplexity (if connected) to ground the suggestion in real information -- e.g. looking up business hours, finding relevant links, checking prices
+4. Returns a richer, more actionable suggestion that replaces the current thinking partner area
 
-3 things resting here whenever you're ready.
-```
+The user explicitly triggers this per card (not automatic), keeping costs controlled and making it feel intentional.
 
-**2. Remove "In Motion" and Overdue/Due Today sections** (`src/components/HomeView.tsx`)
-- Delete the unnamed overdue/dueToday block (lines 194–203)
-- Delete the "In motion" section (lines 234–241)
-- Remove the `scheduled`, `todayEvents`, `dueToday`, `overdue`, `upcoming` memos — no longer needed
-- Merge scheduled items into the main list: combine `active` + `scheduled` (excluding parsing/failed) into one flat list, sorted by position
-- Remove the `Section` component (no longer used)
+## Architecture
 
-**3. Soften "Resting here"** (`src/components/HomeView.tsx`)
-- Remove the `CalendarClock` schedule button from item rows — scheduling still works from card detail
-- Remove the `onSchedule` prop from `ItemRow`
-- Increase spacing between sections (`space-y-5` → `space-y-6`)
-- The collapsible keeps its current gentle copy ("I'll hold these for you")
+### New Edge Function: `research-next-step`
 
-**4. Move "Help me get organized" below the list** (`src/components/HomeView.tsx`)
-- Reorder so it appears after Resting Here, not before — feels less pushy
+- Accepts `{ title, body, type, cardId }`
+- Two-phase approach:
+  - **Phase 1 (always)**: AI reasons about the card content and suggests a concrete next step with any research queries it would want answered
+  - **Phase 2 (if Perplexity connected)**: Runs those queries through Perplexity search, then synthesizes a grounded answer
+  - **Fallback**: If no Perplexity, just returns the AI's best reasoning without web grounding
+- Returns `{ suggestion: string, sources?: string[] }`
 
-### Files changed
-- `src/lib/dailyOrientation.ts` — rewrite to prose-style output, remove Holding/Coming up/overdue
-- `src/components/HomeView.tsx` — remove In Motion, overdue block, merge all items into one list, reorder organize button, soften spacing
+### Frontend Changes
+
+**`CardDetailSheet.tsx`**:
+- Add a "What's my next step?" button (using the ✦ icon) above the "Add to Calendar" button
+- On tap, shows a loading state, calls the edge function
+- Displays the result in the existing thinking partner card area, replacing any prior suggestion
+- If sources are returned, show them as small linked references
+
+**`Index.tsx`**:
+- Add state + handler for per-card research suggestions
+- These persist in local state (same pattern as current `suggestions` record)
+
+### Without Perplexity
+
+The feature works without the Perplexity connector -- the AI will still reason about the card and suggest a next step based on its knowledge. If the user later connects Perplexity, research becomes grounded in real-time web data.
+
+## Files to Create/Edit
+
+1. **Create** `supabase/functions/research-next-step/index.ts` -- new edge function
+2. **Edit** `supabase/config.toml` -- register function with `verify_jwt = false`
+3. **Edit** `src/components/CardDetailSheet.tsx` -- add "What's my next step?" button and display
+4. **Edit** `src/pages/Index.tsx` -- add state management for research suggestions
 
