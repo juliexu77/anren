@@ -3,7 +3,7 @@
  */
 
 export type ItemType = "task" | "ongoing" | "event";
-export type ItemStatus = "active" | "scheduled" | "complete";
+export type ItemStatus = "active" | "complete";
 export type CardSource = "text" | "screenshot" | "voice" | "brain_dump" | "extension";
 
 export interface BrainCard {
