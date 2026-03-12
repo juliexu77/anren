@@ -42,7 +42,7 @@ export function ScheduleSheet({ card, open, onClose, onCreateEvent, onUpdateCard
       });
       if (event?.id) {
         await onUpdateCard(card.id, {
-          status: "scheduled",
+          status: "active",
           type: "event",
           googleEventId: event.id,
           dueAt: startDt.toISOString(),
