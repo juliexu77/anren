@@ -144,9 +144,7 @@ export function useCards(overrideUserId?: string | null) {
     }>) => {
       if (!user) return;
 
-      const now = new Date();
       const rows = items.map((item) => {
-        // Don't schedule items with past due dates
         return {
           user_id: user.id,
           title: item.title,
