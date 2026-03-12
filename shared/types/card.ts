@@ -24,10 +24,6 @@ export interface BrainCard {
 
 export function mapStatus(raw: string): ItemStatus {
   switch (raw) {
-    case "active": return "active";
-    case "inbox": return "active";
-    case "scheduled": return "scheduled";
-    case "routed": return "scheduled";
     case "complete": return "complete";
     case "done": return "complete";
     default: return "active";

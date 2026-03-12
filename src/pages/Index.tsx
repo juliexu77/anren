@@ -189,7 +189,7 @@ const Index = () => {
             onCalendarEventClick={(event) => setSelectedCalEvent(event)}
             onViewCalendar={() => setShowAgenda(true)}
             onComplete={handleComplete}
-            onSchedule={handleSchedule}
+            
             onOpenCamera={() => setShowCamera(true)}
             onOpenBrainDump={() => setShowBrainDump(true)}
             onReorder={() => { setReorderMessage(null); handleReorder(); }}
