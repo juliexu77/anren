@@ -1,53 +1,50 @@
 
 
-# Smarter "Thinking Partner" with Research
+## Remove "scheduled" status — simplify to two states
 
-## Current State
+### Current state audit
 
-The "thinking partner" suggestion shown in `CardDetailSheet` comes from the `smart-reorder` edge function -- it's a brief nudge generated during the "Help me get organized" flow. It has no web research capability and only sees the card's title/body.
+The database `cards.status` column currently holds three values:
+- **active** — items with no due date
+- **scheduled** — items with a due date (set by ScheduleSheet, brain dump, birthday sync)
+- **complete** — done items
 
-## Proposed Design
+Now that there's no separate "In Motion" or "Overdue" section, **"scheduled" has no UI purpose**. Items with due dates already show the date as metadata in the row. The `dueAt` field is the source of truth for timing — the status is redundant.
 
-Add a **"What's my next step?"** button inside each card's detail view. When tapped, it calls a new edge function that:
+### Changes
 
-1. Takes the card's title, body, and type
-2. Uses AI (Gemini 2.5 Flash) to reason about what the logical next step is
-3. Optionally does web research via Perplexity (if connected) to ground the suggestion in real information -- e.g. looking up business hours, finding relevant links, checking prices
-4. Returns a richer, more actionable suggestion that replaces the current thinking partner area
+**1. Collapse `ItemStatus` to two values** (`shared/types/card.ts`)
+- Remove `"scheduled"` from `ItemStatus` type → `"active" | "complete"`
+- Update `mapStatus`: map `"scheduled"`, `"routed"`, `"inbox"` all to `"active"`
 
-The user explicitly triggers this per card (not automatic), keeping costs controlled and making it feel intentional.
+**2. Stop writing "scheduled" status** (3 files)
+- `src/hooks/useCards.ts` (`addItems`): Remove the `hasFutureDue ? "scheduled" : "active"` logic — always use `"active"`. Keep setting `due_at` normally.
+- `src/components/ScheduleSheet.tsx`: Change `status: "scheduled"` → `status: "active"` when linking to Google Calendar
+- `src/hooks/useBirthdaySync.ts`: Change `status: "scheduled"` → `status: "active"` for birthday cards
 
-## Architecture
+**3. Simplify HomeView filter** (`src/components/HomeView.tsx`)
+- `allItems` filter: remove `c.status === "scheduled"` check — just `c.status === "active"`
+- Remove `onSchedule` from Props interface (leftover from before, still listed but unused in the merged view)
 
-### New Edge Function: `research-next-step`
+**4. Simplify orientation count** (`src/lib/dailyOrientation.ts`)
+- Remove the separate `scheduled` filter — just count `active` items
 
-- Accepts `{ title, body, type, cardId }`
-- Two-phase approach:
-  - **Phase 1 (always)**: AI reasons about the card content and suggests a concrete next step with any research queries it would want answered
-  - **Phase 2 (if Perplexity connected)**: Runs those queries through Perplexity search, then synthesizes a grounded answer
-  - **Fallback**: If no Perplexity, just returns the AI's best reasoning without web grounding
-- Returns `{ suggestion: string, sources?: string[] }`
+**5. Remove `onSchedule` prop plumbing** (`src/pages/Index.tsx`)
+- Stop passing `onSchedule` to `HomeView` if it's no longer in Props
 
-### Frontend Changes
+### What stays
+- `dueAt` field on cards — still tracks when something is due
+- Date display in item rows — still shows "Mar 5" etc.
+- ScheduleSheet — still works, just sets `dueAt` + `googleEventId` without changing status
+- `complete` status — still used to hide finished items
+- The `routed_type` / `ItemType` (`task`, `ongoing`, `event`) — unrelated to this, still used for labeling
 
-**`CardDetailSheet.tsx`**:
-- Add a "What's my next step?" button (using the ✦ icon) above the "Add to Calendar" button
-- On tap, shows a loading state, calls the edge function
-- Displays the result in the existing thinking partner card area, replacing any prior suggestion
-- If sources are returned, show them as small linked references
-
-**`Index.tsx`**:
-- Add state + handler for per-card research suggestions
-- These persist in local state (same pattern as current `suggestions` record)
-
-### Without Perplexity
-
-The feature works without the Perplexity connector -- the AI will still reason about the card and suggest a next step based on its knowledge. If the user later connects Perplexity, research becomes grounded in real-time web data.
-
-## Files to Create/Edit
-
-1. **Create** `supabase/functions/research-next-step/index.ts` -- new edge function
-2. **Edit** `supabase/config.toml` -- register function with `verify_jwt = false`
-3. **Edit** `src/components/CardDetailSheet.tsx` -- add "What's my next step?" button and display
-4. **Edit** `src/pages/Index.tsx` -- add state management for research suggestions
+### Files changed
+- `shared/types/card.ts`
+- `src/components/HomeView.tsx`
+- `src/components/ScheduleSheet.tsx`
+- `src/hooks/useCards.ts`
+- `src/hooks/useBirthdaySync.ts`
+- `src/lib/dailyOrientation.ts`
+- `src/pages/Index.tsx` (remove leftover `onSchedule` prop if present)
 
