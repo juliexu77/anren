@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
-import { isToday, isPast, parseISO, format } from "date-fns";
-import { CalendarClock, Loader2, Camera, ChevronDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { Loader2, Camera, ChevronDown } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
@@ -43,45 +43,31 @@ interface Props {
 }
 
 export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onSchedule, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner }: Props) {
-  const [meditativeIndex, setMeditativeIndex] = useState(() =>
+  const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
-
   const [meditativeDismissed, setMeditativeDismissed] = useState(false);
-  const active = useMemo(() => cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@"), [cards]);
+
+  // All non-completed, non-parsing items in one list
+  const allItems = useMemo(
+    () => cards.filter((c) =>
+      (c.status === "active" || c.status === "scheduled") &&
+      c.body !== "@@PARSING@@" &&
+      c.body !== "@@PARSE_FAILED@@"
+    ),
+    [cards]
+  );
   const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
-  const scheduled = useMemo(() => cards.filter((c) => c.status === "scheduled"), [cards]);
-
-  const todayEvents = useMemo(() => {
-    const seen = new Set<string>();
-    return calendarEvents.filter((e) => {
-      const start = e.start.dateTime || e.start.date;
-      if (!start || !isToday(parseISO(start))) return false;
-      const key = `${(e.summary || "").trim().toLowerCase()}|${start}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [calendarEvents]);
-
-  const dueToday = useMemo(() => scheduled.filter((c) => c.dueAt && isToday(parseISO(c.dueAt))), [scheduled]);
-  const overdue = useMemo(() => scheduled.filter((c) => c.dueAt && isPast(parseISO(c.dueAt)) && !isToday(parseISO(c.dueAt))), [scheduled]);
-  const upcoming = useMemo(() => scheduled.filter((c) => !c.dueAt || (!isToday(parseISO(c.dueAt!)) && !isPast(parseISO(c.dueAt!)))), [scheduled]);
 
   const orientationLines = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
   const restingSectionRef = useRef<HTMLDivElement>(null);
 
   const handleOrientationTap = useCallback((line: OrientationLine) => {
-    if (line.type === "holding-more") {
-      restingSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else if (line.calendarEventId) {
+    if (line.calendarEventId) {
       const event = calendarEvents.find((e) => e.id === line.calendarEventId);
       if (event) onCalendarEventClick(event);
-    } else if (line.cardId) {
-      const card = cards.find((c) => c.id === line.cardId);
-      if (card) onCardClick(card);
     }
-  }, [cards, calendarEvents, onCardClick, onCalendarEventClick]);
+  }, [calendarEvents, onCalendarEventClick]);
 
   if (cardsLoading || !meditativeDismissed) {
     return (
@@ -111,7 +97,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
   }
 
   return (
-    <main className="px-4 space-y-5 pb-4">
+    <main className="px-4 space-y-6 pb-4">
       {/* ── Viewer banner ── */}
       {readOnly && viewerBanner && (
         <div className="rounded-xl px-4 py-3 bg-surface-color/60 text-center">
@@ -119,7 +105,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </div>
       )}
 
-      {/* ── Action buttons (top) ── */}
+      {/* ── Action buttons ── */}
       {!readOnly && (
         <div className="flex gap-3">
           <button
@@ -138,21 +124,19 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </div>
       )}
 
-      {/* ── Daily Orientation ── */}
+      {/* ── Daily Orientation — gentle note ── */}
       <div className="orientation-card">
         <div className="space-y-0 leading-relaxed">
           {orientationLines.map((line, i) => {
             if (line.type === "spacer") return <div key={i} className="h-2" />;
-            const isClickable = line.type === "holding-more" || !!line.cardId || !!line.calendarEventId;
+            const isClickable = !!line.calendarEventId;
             return (
               <div
                 key={i}
                 role={isClickable ? "button" : undefined}
                 tabIndex={isClickable ? 0 : undefined}
                 onClick={isClickable ? () => handleOrientationTap(line) : undefined}
-                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""} ${
-                  line.type === "holding-more" ? "text-text-muted-color" : "text-text-secondary-color"
-                }`}
+                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""} text-text-secondary-color`}
               >
                 {line.text}
               </div>
@@ -168,8 +152,40 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </div>
       </div>
 
-      {/* ── Help me get organized ── */}
-      {!readOnly && active.length >= 2 && (
+      {/* ── PARSING ── */}
+      {parsing.length > 0 && (
+        <div className="sanctuary-card">
+          {parsing.map((card) => (
+            <div key={card.id} className="item-row">
+              <Loader2 className="w-4 h-4 animate-spin shrink-0 text-text-muted-color" />
+              <span className="text-caption text-text-muted-color">
+                Parsing image…
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Resting here — single merged list ── */}
+      {allItems.length > 0 && (
+        <CollapsibleSection
+          title={readOnly ? "They're holding" : "Resting here"}
+          count={allItems.length}
+          sectionRef={restingSectionRef}
+        >
+          {allItems.map((card) => (
+            <ItemRow
+              key={card.id}
+              card={card}
+              onClick={() => onCardClick(card)}
+              onComplete={readOnly ? undefined : () => onComplete(card.id)}
+            />
+          ))}
+        </CollapsibleSection>
+      )}
+
+      {/* ── Help me get organized (after the list) ── */}
+      {!readOnly && allItems.length >= 2 && (
         <>
           <button
             onClick={onReorder}
@@ -191,75 +207,12 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </>
       )}
 
-      {(overdue.length > 0 || dueToday.length > 0) && (
-        <div className="sanctuary-card">
-          {overdue.map((card) => (
-            <ItemRow key={card.id} card={card} overdue onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
-          ))}
-          {dueToday.map((card) => (
-            <ItemRow key={card.id} card={card} onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
-          ))}
-        </div>
-      )}
-
-      {/* ── PARSING ── */}
-      {parsing.length > 0 && (
-        <div className="sanctuary-card">
-          {parsing.map((card) => (
-            <div key={card.id} className="item-row">
-              <Loader2 className="w-4 h-4 animate-spin shrink-0 text-text-muted-color" />
-              <span className="text-caption text-text-muted-color">
-                Parsing image…
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── RESTING HERE ── */}
-      {active.length > 0 && (
-        <CollapsibleSection title={readOnly ? "They're holding" : "Resting here"} count={active.length} sectionRef={restingSectionRef}>
-          {active.map((card) => (
-            <ItemRow
-              key={card.id}
-              card={card}
-              onClick={() => onCardClick(card)}
-              onSchedule={readOnly ? undefined : () => onSchedule(card)}
-              onComplete={readOnly ? undefined : () => onComplete(card.id)}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
-
-      {/* ── IN MOTION ── */}
-      {upcoming.length > 0 && (
-        <Section title="In motion">
-          {upcoming.map((card) => (
-            <ItemRow key={card.id} card={card} showDate onClick={() => onCardClick(card)} onComplete={() => onComplete(card.id)} />
-          ))}
-        </Section>
-      )}
-
       {cards.length === 0 && !calendarLoading && (
         <p className="text-caption text-center py-12 text-text-muted-color">
           Nothing resting here yet.
         </p>
       )}
     </main>
-  );
-}
-
-/* ── Section ── */
-function Section({ title, children, sectionRef }: { title: string; children: React.ReactNode; sectionRef?: React.RefObject<HTMLDivElement> }) {
-  return (
-    <div ref={sectionRef}>
-      <h2 className="text-label uppercase tracking-wider mb-1 text-text-muted-color">
-        {title}
-      </h2>
-      <div className="sanctuary-card">
-        {children}
-      </div>
-    </div>
   );
 }
 
@@ -296,33 +249,18 @@ function CollapsibleSection({ title, count, children, sectionRef }: { title: str
   );
 }
 
-/* ── Empty Row ── */
-function EmptyRow({ text }: { text: string }) {
-  return (
-    <div className="px-3 py-2.5">
-      <span className="text-caption text-text-muted-color">{text}</span>
-    </div>
-  );
-}
-
 /* ── Item Row ── */
 function ItemRow({
   card,
-  overdue,
-  showDate,
   onClick,
   onComplete,
-  onSchedule,
 }: {
   card: BrainCard;
-  overdue?: boolean;
-  showDate?: boolean;
   onClick: () => void;
   onComplete?: () => void;
-  onSchedule?: () => void;
 }) {
   const typeLabel = card.type === "ongoing" ? "ongoing" : card.type === "event" ? "event" : "";
-  const dateStr = showDate && card.dueAt ? format(parseISO(card.dueAt), "MMM d") : "";
+  const dateStr = card.dueAt ? format(parseISO(card.dueAt), "MMM d") : "";
 
   return (
     <div className="item-row">
@@ -351,32 +289,6 @@ function ItemRow({
           {typeLabel}
         </span>
       )}
-
-      {onSchedule && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onSchedule(); }}
-          className="p-1 rounded shrink-0 transition-colors hover:bg-foreground/[0.05] text-text-muted-color"
-          title="Schedule"
-        >
-          <CalendarClock className="w-3.5 h-3.5" />
-        </button>
-      )}
-    </div>
-  );
-}
-
-/* ── Calendar Event Row ── */
-function EventRow({ event }: { event: CalendarEvent }) {
-  const time = event.start.dateTime ? format(parseISO(event.start.dateTime), "h:mm a") : "All day";
-
-  return (
-    <div className="item-row">
-      <span className="text-micro font-medium w-[60px] shrink-0 text-right tabular-nums text-text-muted-color">
-        {time}
-      </span>
-      <span className="text-caption flex-1 truncate text-text-primary">
-        {event.summary}
-      </span>
     </div>
   );
 }
