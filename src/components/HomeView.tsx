@@ -32,7 +32,7 @@ interface Props {
   onCalendarEventClick: (event: CalendarEvent) => void;
   onViewCalendar: () => void;
   onComplete: (id: string) => void;
-  onSchedule: (card: BrainCard) => void;
+  
   onOpenCamera: () => void;
   onOpenBrainDump: () => void;
   onReorder: () => void;
