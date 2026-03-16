@@ -83,9 +83,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
               <ChevronLeft className="w-5 h-5 text-text-primary/50" />
               <span className="text-[13px] font-medium text-text-primary/50">Home</span>
             </button>
-            <button onClick={handleClose} className="p-2 -mr-2">
-              <X className="w-5 h-5 text-text-muted-color" />
-            </button>
+            <div className="w-8" />
           </div>
           <div className="flex items-center justify-between mb-2">
             <button
