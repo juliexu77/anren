@@ -167,12 +167,20 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div className="w-12" />
           <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">ANREN</h1>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowAgenda(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"
+            >
+              <CalendarDays className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
