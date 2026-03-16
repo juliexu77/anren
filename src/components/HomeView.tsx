@@ -218,7 +218,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
 
 /* ── Collapsible Section ── */
 function CollapsibleSection({ title, count, children, sectionRef }: { title: string; count: number; children: React.ReactNode; sectionRef?: React.RefObject<HTMLDivElement> }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
     <div ref={sectionRef}>
