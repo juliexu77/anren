@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { format, addDays, startOfDay, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths } from "date-fns";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -71,7 +71,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[100dvh] p-0 max-w-xl mx-auto flex flex-col overflow-hidden">
+      <SheetContent side="bottom" className="rounded-t-3xl h-[100dvh] p-0 max-w-xl mx-auto flex flex-col [&>button:last-child]:hidden" style={{ overflow: 'hidden' }}>
         {/* Header */}
         <div className="shrink-0 px-5 pb-2 bg-background" style={{ paddingTop: "max(20px, env(safe-area-inset-top, 20px))" }}>
           <div className="flex items-center justify-between mb-3">
@@ -83,9 +83,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
               <ChevronLeft className="w-5 h-5 text-text-primary/50" />
               <span className="text-[13px] font-medium text-text-primary/50">Home</span>
             </button>
-            <button onClick={handleClose} className="p-2 -mr-2">
-              <X className="w-5 h-5 text-text-muted-color" />
-            </button>
+            <div className="w-8" />
           </div>
           <div className="flex items-center justify-between mb-2">
             <button
