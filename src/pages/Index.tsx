@@ -5,7 +5,7 @@ import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useHousehold } from "@/hooks/useHousehold";
-import { useWeeklySynthesis } from "@/hooks/useWeeklySynthesis";
+
 import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
@@ -13,7 +13,7 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
-import { WeeklySynthesisOverlay } from "@/components/WeeklySynthesisOverlay";
+
 import { CalendarEventSheet } from "@/components/CalendarEventSheet";
 import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X, CalendarDays } from "lucide-react";
@@ -30,7 +30,7 @@ const Index = () => {
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
   usePushNotifications();
-  const { synthesis: weeklySynthesis, dismiss: dismissWeekly } = useWeeklySynthesis();
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showBrainDump, setShowBrainDump] = useState(false);
@@ -147,13 +147,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen max-w-5xl mx-auto">
-      {/* Weekly Synthesis Overlay (shown before daily brief) */}
-      {weeklySynthesis && !showBrief && (
-        <WeeklySynthesisOverlay
-          synthesis={weeklySynthesis}
-          onDismiss={dismissWeekly}
-        />
-      )}
       {/* Daily Brief Overlay */}
       {showBrief && (
         <DailyBriefOverlay
