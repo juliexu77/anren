@@ -67,7 +67,7 @@ export function CalendarTimeGrid({ dates, events, onEventClick }: CalendarTimeGr
   const hasAllDay = allDayByDate.some((arr) => arr.length > 0);
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Day header row */}
       <div className="flex border-b border-divider-color/25 px-0">
         {/* Gutter */}
