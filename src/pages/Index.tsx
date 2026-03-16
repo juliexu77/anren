@@ -13,7 +13,7 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
-import { WeeklySynthesisOverlay } from "@/components/WeeklySynthesisOverlay";
+
 import { CalendarEventSheet } from "@/components/CalendarEventSheet";
 import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X, CalendarDays } from "lucide-react";
