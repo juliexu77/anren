@@ -147,13 +147,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen max-w-5xl mx-auto">
-      {/* Weekly Synthesis Overlay (shown before daily brief) */}
-      {weeklySynthesis && !showBrief && (
-        <WeeklySynthesisOverlay
-          synthesis={weeklySynthesis}
-          onDismiss={dismissWeekly}
-        />
-      )}
       {/* Daily Brief Overlay */}
       {showBrief && (
         <DailyBriefOverlay
