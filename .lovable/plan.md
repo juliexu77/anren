@@ -1,27 +1,53 @@
 
 
-## Fix Calendar Sheet: black background, missing close button, scroll broken
+# Smarter "Thinking Partner" with Research
 
-### Root cause analysis
+## Current State
 
-**Black background**: In `sheet.tsx` line 58, the background is set via `style={{ background: 'hsl(var(--bg))' }}` but then `{...props}` spreads after it. Since `CalendarAgendaSheet` passes `style={{ overflow: 'hidden' }}`, React replaces the entire style object — the background is lost, resulting in no background (appears black).
+The "thinking partner" suggestion shown in `CardDetailSheet` comes from the `smart-reorder` edge function -- it's a brief nudge generated during the "Help me get organized" flow. It has no web research capability and only sees the card's title/body.
 
-**Missing close button**: The class `[&>button:last-child]:hidden` hides the Radix close button, but there's no other X button since it was removed in a previous edit.
+## Proposed Design
 
-**Can't scroll**: The `overflow: hidden` applied via the style prop override is clobbering the inner layout. The `CalendarTimeGrid` has `overflow-y-auto` on its scroll container, but the parent's `overflow: hidden` style combined with the flex layout isn't allowing proper height calculation.
+Add a **"What's my next step?"** button inside each card's detail view. When tapped, it calls a new edge function that:
 
-### Plan
+1. Takes the card's title, body, and type
+2. Uses AI (Gemini 2.5 Flash) to reason about what the logical next step is
+3. Optionally does web research via Perplexity (if connected) to ground the suggestion in real information -- e.g. looking up business hours, finding relevant links, checking prices
+4. Returns a richer, more actionable suggestion that replaces the current thinking partner area
 
-#### 1. `src/components/CalendarAgendaSheet.tsx`
-- Remove `[&>button:last-child]:hidden` from SheetContent className — restore the default X close button
-- Remove the `style={{ overflow: 'hidden' }}` prop entirely — let the flex layout and inner `overflow-y-auto` handle scrolling naturally
-- Keep `h-[100dvh]`, `p-0`, `flex flex-col` which are correct
+The user explicitly triggers this per card (not automatic), keeping costs controlled and making it feel intentional.
 
-#### 2. No changes to `CalendarTimeGrid.tsx` or `sheet.tsx`
-The time grid's scroll container (`overflow-y-auto` on line 137) is correct. Once the parent stops overriding the background/overflow, scrolling should work.
+## Architecture
 
-### Result
-- Sheet gets proper themed background from `sheet.tsx`
-- X button appears in top-right corner
-- Time grid scrolls vertically as expected
+### New Edge Function: `research-next-step`
+
+- Accepts `{ title, body, type, cardId }`
+- Two-phase approach:
+  - **Phase 1 (always)**: AI reasons about the card content and suggests a concrete next step with any research queries it would want answered
+  - **Phase 2 (if Perplexity connected)**: Runs those queries through Perplexity search, then synthesizes a grounded answer
+  - **Fallback**: If no Perplexity, just returns the AI's best reasoning without web grounding
+- Returns `{ suggestion: string, sources?: string[] }`
+
+### Frontend Changes
+
+**`CardDetailSheet.tsx`**:
+- Add a "What's my next step?" button (using the ✦ icon) above the "Add to Calendar" button
+- On tap, shows a loading state, calls the edge function
+- Displays the result in the existing thinking partner card area, replacing any prior suggestion
+- If sources are returned, show them as small linked references
+
+**`Index.tsx`**:
+- Add state + handler for per-card research suggestions
+- These persist in local state (same pattern as current `suggestions` record)
+
+### Without Perplexity
+
+The feature works without the Perplexity connector -- the AI will still reason about the card and suggest a next step based on its knowledge. If the user later connects Perplexity, research becomes grounded in real-time web data.
+
+## Files to Create/Edit
+
+1. **Create** `supabase/functions/research-next-step/index.ts` -- new edge function
+2. **Edit** `supabase/config.toml` -- register function with `verify_jwt = false`
+3. **Edit** `src/components/CardDetailSheet.tsx` -- add "What's my next step?" button and display
+4. **Edit** `src/pages/Index.tsx` -- add state management for research suggestions
 
