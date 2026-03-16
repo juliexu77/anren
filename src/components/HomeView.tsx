@@ -267,9 +267,11 @@ function ItemRow({
       {onComplete && (
         <button
           onClick={(e) => { e.stopPropagation(); onComplete(); }}
-          className="w-4 h-4 rounded-full border shrink-0 transition-colors hover:border-foreground/40 border-divider-color/40"
+          className="w-5 h-5 rounded-full border shrink-0 transition-colors hover:border-foreground/40 border-divider-color/40 flex items-center justify-center group"
           title="Mark complete"
-        />
+        >
+          <Check className="w-3 h-3 text-transparent group-hover:text-foreground/40 transition-colors" />
+        </button>
       )}
 
       {dateStr && (
