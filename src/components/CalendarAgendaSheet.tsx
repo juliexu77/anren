@@ -204,7 +204,7 @@ export function CalendarAgendaSheet({ events, open, onClose, onEventClick }: Pro
         </div>
 
         {/* Time grid */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <CalendarTimeGrid
             dates={[selectedDate]}
             events={events}
