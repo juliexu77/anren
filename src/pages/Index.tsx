@@ -30,7 +30,7 @@ const Index = () => {
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
   usePushNotifications();
-  const { synthesis: weeklySynthesis, dismiss: dismissWeekly } = useWeeklySynthesis();
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showBrainDump, setShowBrainDump] = useState(false);
