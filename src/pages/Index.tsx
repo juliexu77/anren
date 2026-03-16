@@ -5,7 +5,7 @@ import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useHousehold } from "@/hooks/useHousehold";
-import { useWeeklySynthesis } from "@/hooks/useWeeklySynthesis";
+
 import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
