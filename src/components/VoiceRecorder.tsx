@@ -17,6 +17,13 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
   const streamRef = useRef<MediaStream | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try { await wakeLockRef.current.release(); } catch {}
+      wakeLockRef.current = null;
+    }
+  }, []);
+
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (streamRef.current) {
@@ -25,10 +32,11 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
     }
     mediaRecorderRef.current = null;
     chunksRef.current = [];
+    releaseWakeLock();
     setIsRecording(false);
     setElapsed(0);
     setError(null);
-  }, []);
+  }, [releaseWakeLock]);
 
   useEffect(() => {
     if (!open) cleanup();
