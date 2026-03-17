@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Registers for push notifications on native iOS (APNs).
@@ -26,17 +27,18 @@ export function usePushNotifications() {
         // Check current permission status first
         const permStatus = await PushNotifications.checkPermissions();
         console.log("Push permission status:", permStatus.receive);
+        toast({ title: "Push: check", description: `Permission: ${permStatus.receive}` });
 
         if (permStatus.receive === "denied") {
-          console.log("Push permission previously denied");
+          toast({ title: "Push: denied", description: "Permission previously denied" });
           return;
         }
 
         // Request permissions (will show system prompt if not yet determined)
         const perm = await PushNotifications.requestPermissions();
         console.log("Push permission after request:", perm.receive);
+        toast({ title: "Push: requested", description: `Result: ${perm.receive}` });
         if (perm.receive !== "granted") {
-          console.log("Push permission not granted");
           return;
         }
 
@@ -44,6 +46,7 @@ export function usePushNotifications() {
         const regHandle = await PushNotifications.addListener("registration", async (token) => {
           console.log("Push token received:", token.value);
           registered.current = true;
+          toast({ title: "Push: token received", description: token.value.slice(0, 20) + "…" });
 
           const { error } = await supabase.from("device_tokens").upsert(
             {
@@ -53,21 +56,29 @@ export function usePushNotifications() {
             },
             { onConflict: "user_id,token" }
           );
-          if (error) console.error("Failed to save push token:", error);
-          else console.log("Push token saved successfully");
+          if (error) {
+            console.error("Failed to save push token:", error);
+            toast({ title: "Push: save failed", description: error.message, variant: "destructive" });
+          } else {
+            console.log("Push token saved successfully");
+            toast({ title: "Push: saved ✓", description: "Token stored" });
+          }
         });
         handles.push(regHandle);
 
         const errHandle = await PushNotifications.addListener("registrationError", (err) => {
           console.error("Push registration error:", JSON.stringify(err));
+          toast({ title: "Push: reg error", description: JSON.stringify(err).slice(0, 80), variant: "destructive" });
         });
         handles.push(errHandle);
 
         // Now register with APNs
         await PushNotifications.register();
         console.log("PushNotifications.register() called");
+        toast({ title: "Push: register() called", description: "Waiting for APNs…" });
       } catch (e) {
         console.error("Push setup error:", e);
+        toast({ title: "Push: setup error", description: String(e).slice(0, 80), variant: "destructive" });
       }
     };
 

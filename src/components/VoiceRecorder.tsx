@@ -15,6 +15,7 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
