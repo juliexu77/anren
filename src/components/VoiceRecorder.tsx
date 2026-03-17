@@ -114,6 +114,7 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    releaseWakeLock();
     setIsRecording(false);
   };
 
