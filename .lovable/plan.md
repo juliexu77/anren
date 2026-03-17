@@ -1,45 +1,53 @@
 
 
-## Two Issues: Push Notifications Not Working + Screen Locks During Voice Recording
+# Smarter "Thinking Partner" with Research
 
-### Issue 1: Push Notifications
+## Current State
 
-The `device_tokens` table is **empty** — no device has ever successfully registered a push token. The `usePushNotifications` hook is wired up in `Index.tsx` and the code looks correct. Possible causes:
+The "thinking partner" suggestion shown in `CardDetailSheet` comes from the `smart-reorder` edge function -- it's a brief nudge generated during the "Help me get organized" flow. It has no web research capability and only sees the card's title/body.
 
-- **TestFlight/debug build issue**: The entitlements or provisioning profile may not be correctly configured for the build you're running. This is outside Lovable's control (Xcode signing config).
-- **The hook runs on web preview, not native**: `Capacitor.isNativePlatform()` returns false on web, so the hook no-ops. This is expected — push only works on an actual device build.
-- **Silent failure**: If `registrationError` fires but you can't see console logs from the native device, you'd never know.
+## Proposed Design
 
-**What I can do in code**: Add a visible diagnostic toast when running on native so you can see exactly what's happening with push registration without needing Xcode console attached.
+Add a **"What's my next step?"** button inside each card's detail view. When tapped, it calls a new edge function that:
 
-#### Plan for push diagnostics:
-**File: `src/hooks/usePushNotifications.ts`**
-- After each step (permission check, permission request, register call, token received, errors), show a `toast()` message so you can visually confirm what's happening on the device
-- This is temporary — once we confirm push works, we remove the toasts
+1. Takes the card's title, body, and type
+2. Uses AI (Gemini 2.5 Flash) to reason about what the logical next step is
+3. Optionally does web research via Perplexity (if connected) to ground the suggestion in real information -- e.g. looking up business hours, finding relevant links, checking prices
+4. Returns a richer, more actionable suggestion that replaces the current thinking partner area
 
----
+The user explicitly triggers this per card (not automatic), keeping costs controlled and making it feel intentional.
 
-### Issue 2: Screen Locks During Voice Recording
+## Architecture
 
-When recording a voice note, iOS auto-locks the screen after the idle timeout. The WebView/Capacitor app doesn't hold a wake lock, so:
-1. Screen locks mid-recording
-2. The app may be suspended, killing the MediaRecorder
-3. Transcription fails because the recording is incomplete or the network request is interrupted
+### New Edge Function: `research-next-step`
 
-**Fix**: Use the **Screen Wake Lock API** (`navigator.wakeLock`) to keep the screen awake while recording. This is supported in WKWebView on iOS 16.4+. Acquire the lock when recording starts, release it when recording stops.
+- Accepts `{ title, body, type, cardId }`
+- Two-phase approach:
+  - **Phase 1 (always)**: AI reasons about the card content and suggests a concrete next step with any research queries it would want answered
+  - **Phase 2 (if Perplexity connected)**: Runs those queries through Perplexity search, then synthesizes a grounded answer
+  - **Fallback**: If no Perplexity, just returns the AI's best reasoning without web grounding
+- Returns `{ suggestion: string, sources?: string[] }`
 
-#### Plan:
-**File: `src/components/VoiceRecorder.tsx`**
-- In `startRecording()`: acquire a wake lock via `navigator.wakeLock.request('screen')` and store it in a ref
-- In `stopRecording()` and `cleanup()`: release the wake lock
-- Wrap in try/catch since the API may not be available on all platforms
+### Frontend Changes
 
----
+**`CardDetailSheet.tsx`**:
+- Add a "What's my next step?" button (using the ✦ icon) above the "Add to Calendar" button
+- On tap, shows a loading state, calls the edge function
+- Displays the result in the existing thinking partner card area, replacing any prior suggestion
+- If sources are returned, show them as small linked references
 
-### Summary of changes
+**`Index.tsx`**:
+- Add state + handler for per-card research suggestions
+- These persist in local state (same pattern as current `suggestions` record)
 
-| File | Change |
-|------|--------|
-| `src/hooks/usePushNotifications.ts` | Add temporary diagnostic toasts at each registration step |
-| `src/components/VoiceRecorder.tsx` | Acquire/release Screen Wake Lock during recording to prevent auto-lock |
+### Without Perplexity
+
+The feature works without the Perplexity connector -- the AI will still reason about the card and suggest a next step based on its knowledge. If the user later connects Perplexity, research becomes grounded in real-time web data.
+
+## Files to Create/Edit
+
+1. **Create** `supabase/functions/research-next-step/index.ts` -- new edge function
+2. **Edit** `supabase/config.toml` -- register function with `verify_jwt = false`
+3. **Edit** `src/components/CardDetailSheet.tsx` -- add "What's my next step?" button and display
+4. **Edit** `src/pages/Index.tsx` -- add state management for research suggestions
 

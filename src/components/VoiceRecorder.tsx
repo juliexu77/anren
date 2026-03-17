@@ -15,6 +15,14 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try { await wakeLockRef.current.release(); } catch {}
+      wakeLockRef.current = null;
+    }
+  }, []);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -24,10 +32,11 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
     }
     mediaRecorderRef.current = null;
     chunksRef.current = [];
+    releaseWakeLock();
     setIsRecording(false);
     setElapsed(0);
     setError(null);
-  }, []);
+  }, [releaseWakeLock]);
 
   useEffect(() => {
     if (!open) cleanup();
@@ -41,6 +50,14 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
       });
       streamRef.current = stream;
 
+      // Keep screen awake during recording
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        }
+      } catch (e) {
+        console.warn("Wake lock not available:", e);
+      }
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
@@ -97,6 +114,7 @@ export function VoiceRecorder({ open, onClose, onRecordingComplete }: Props) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    releaseWakeLock();
     setIsRecording(false);
   };
 
