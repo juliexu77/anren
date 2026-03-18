@@ -5,6 +5,7 @@ import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
 import { useRef, useCallback } from "react";
+import { RunMyDay } from "@/components/RunMyDay";
 
 const LOADING_LINES = [
   "Tell me, what is it you plan to do with your one wild and precious life?",
