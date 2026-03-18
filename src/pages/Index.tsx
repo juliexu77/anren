@@ -200,6 +200,8 @@ const Index = () => {
             reorderMessage={reorderMessage}
             readOnly={household.isViewer}
             viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
+            dailyPlan={dailyPlan}
+            dailyPlanLoading={dailyPlanLoading}
           />
         </div>
 
