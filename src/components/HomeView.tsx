@@ -45,7 +45,7 @@ interface Props {
   dailyPlanLoading?: boolean;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
