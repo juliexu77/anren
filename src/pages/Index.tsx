@@ -30,6 +30,7 @@ const Index = () => {
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
+  const { plan: dailyPlan, loading: dailyPlanLoading } = useDailyPlan(!cardsLoading);
   usePushNotifications();
   
   const [searchParams, setSearchParams] = useSearchParams();
