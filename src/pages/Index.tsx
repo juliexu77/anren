@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
+import { useDailyPlan } from "@/hooks/useDailyPlan";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useHousehold } from "@/hooks/useHousehold";
 
