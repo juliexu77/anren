@@ -87,8 +87,8 @@ serve(async (req) => {
         // Don't send if already dismissed (they already saw it in-app)
         if (dismissal) continue;
 
-        // Build brief text from calendar
-        const briefText = await buildBriefForUser(supabase, userSettings.user_id);
+        // Generate AI-powered daily plan
+        const briefText = await buildAIPlanForUser(supabase, userSettings.user_id);
 
         // Get device tokens
         const { data: tokens } = await supabase
