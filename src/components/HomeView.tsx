@@ -5,6 +5,7 @@ import type { BrainCard } from "@/types/card";
 import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
 import { useRef, useCallback } from "react";
+import { RunMyDay } from "@/components/RunMyDay";
 
 const LOADING_LINES = [
   "Tell me, what is it you plan to do with your one wild and precious life?",
@@ -40,9 +41,11 @@ interface Props {
   reorderMessage?: string | null;
   readOnly?: boolean;
   viewerBanner?: string | null;
+  dailyPlan?: string[] | null;
+  dailyPlanLoading?: boolean;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner }: Props) {
+export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -123,6 +126,9 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
           </button>
         </div>
       )}
+
+      {/* ── Run My Day — AI-generated daily plan ── */}
+      <RunMyDay plan={dailyPlan ?? null} loading={dailyPlanLoading ?? false} />
 
       {/* ── Daily Orientation — gentle note ── */}
       <div className="orientation-card">

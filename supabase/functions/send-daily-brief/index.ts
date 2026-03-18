@@ -87,8 +87,8 @@ serve(async (req) => {
         // Don't send if already dismissed (they already saw it in-app)
         if (dismissal) continue;
 
-        // Build brief text from calendar
-        const briefText = await buildBriefForUser(supabase, userSettings.user_id);
+        // Generate AI-powered daily plan
+        const briefText = await buildAIPlanForUser(supabase, userSettings.user_id);
 
         // Get device tokens
         const { data: tokens } = await supabase
@@ -135,116 +135,159 @@ serve(async (req) => {
 });
 
 /**
- * Build a short brief string for a user from their Google Calendar
+ * Build an AI-powered daily plan for a user using their cards + calendar
  */
-async function buildBriefForUser(supabase: any, userId: string): Promise<string> {
-  // Get profile for Google token
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("google_access_token, google_refresh_token, google_token_expires_at")
+async function buildAIPlanForUser(supabase: any, userId: string): Promise<string> {
+  // Fetch active cards
+  const { data: cards } = await supabase
+    .from("cards")
+    .select("title, body, routed_type, due_at")
     .eq("user_id", userId)
-    .single();
+    .eq("status", "active")
+    .neq("body", "@@PARSING@@")
+    .neq("body", "@@PARSE_FAILED@@")
+    .order("created_at", { ascending: false })
+    .limit(30);
 
-  if (!profile?.google_access_token) {
-    return "Connect your calendar to see today's brief.";
-  }
+  // Fetch calendar events for context
+  let calendarSummary = "";
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("google_access_token, google_refresh_token, google_token_expires_at")
+      .eq("user_id", userId)
+      .single();
 
-  let accessToken = profile.google_access_token;
+    if (profile?.google_access_token) {
+      let accessToken = profile.google_access_token;
+      const expiresAt = profile.google_token_expires_at
+        ? new Date(profile.google_token_expires_at).getTime()
+        : 0;
 
-  // Check if token expired and refresh if needed
-  const expiresAt = profile.google_token_expires_at
-    ? new Date(profile.google_token_expires_at).getTime()
-    : 0;
-
-  if (Date.now() > expiresAt - 5 * 60 * 1000 && profile.google_refresh_token) {
-    const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-    const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
-
-    if (clientId && clientSecret) {
-      try {
-        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            refresh_token: profile.google_refresh_token,
-            grant_type: "refresh_token",
-          }),
-        });
-
-        if (tokenRes.ok) {
-          const tokenData = await tokenRes.json();
-          accessToken = tokenData.access_token;
-          const expiresIn = tokenData.expires_in || 3600;
-
-          await supabase
-            .from("profiles")
-            .update({
-              google_access_token: accessToken,
-              google_token_expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
-            })
-            .eq("user_id", userId);
+      if (Date.now() > expiresAt - 5 * 60 * 1000 && profile.google_refresh_token) {
+        const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
+        const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
+        if (clientId && clientSecret) {
+          try {
+            const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: profile.google_refresh_token,
+                grant_type: "refresh_token",
+              }),
+            });
+            if (tokenRes.ok) {
+              const tokenData = await tokenRes.json();
+              accessToken = tokenData.access_token;
+              await supabase
+                .from("profiles")
+                .update({
+                  google_access_token: accessToken,
+                  google_token_expires_at: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString(),
+                })
+                .eq("user_id", userId);
+            }
+          } catch (e) {
+            console.error("Token refresh failed:", e);
+          }
         }
-      } catch (e) {
-        console.error("Token refresh failed in brief:", e);
+      }
+
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const calRes = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(todayStart.toISOString())}&timeMax=${encodeURIComponent(todayEnd.toISOString())}&singleEvents=true&orderBy=startTime&maxResults=10`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if (calRes.ok) {
+        const calData = await calRes.json();
+        const events = calData.items || [];
+        if (events.length > 0) {
+          calendarSummary = events.map((e: any) => {
+            const time = e.start?.dateTime
+              ? new Date(e.start.dateTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+              : "all day";
+            return `${time} — ${e.summary || "Event"}`;
+          }).join("\n");
+        }
       }
     }
+  } catch (e) {
+    console.error("Calendar fetch in plan:", e);
   }
 
-  // Fetch today's events
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  if (!cards || cards.length === 0) {
+    if (calendarSummary) {
+      return calendarSummary;
+    }
+    return "Nothing on your plate today. The day is yours.";
+  }
+
+  // Use AI to generate the plan
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    // Fallback to simple list
+    return cards.slice(0, 4).map((c: any) => c.title || c.body?.substring(0, 60)).join("\n");
+  }
+
+  const today = new Date();
+  const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
+  const dateStr = today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+
+  const cardList = cards.map((c: any, i: number) => {
+    const due = c.due_at ? `(due: ${new Date(c.due_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })})` : "";
+    const type = c.routed_type ? `[${c.routed_type}]` : "";
+    return `${i + 1}. ${c.title || c.body?.substring(0, 80)} ${type} ${due}`.trim();
+  }).join("\n");
+
+  const calSection = calendarSummary ? `\nCalendar for today:\n${calendarSummary}\n` : "";
+
+  const prompt = `You are Anren, a calm and trusted personal assistant. Today is ${dayName}, ${dateStr}.
+
+Here is everything the user is currently holding:
+${cardList}
+${calSection}
+Create a short daily rundown for a push notification — 3 to 4 lines max. Each line is one action or awareness item.
+
+Rules:
+- Prioritize by urgency: approaching deadlines first
+- Tone: warm, confident, concise
+- No bullet points or numbering. Natural phrasing.
+- End with something like "Tap to see what else I'm holding" or similar gentle invitation
+- NEVER use exclamation marks
+- Output ONLY the plan lines, one per line.`;
 
   try {
-    const calRes = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(todayStart.toISOString())}&timeMax=${encodeURIComponent(todayEnd.toISOString())}&singleEvents=true&orderBy=startTime&maxResults=10`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    if (!calRes.ok) {
-      return "Couldn't load your calendar. The day is yours.";
-    }
-
-    const calData = await calRes.json();
-    const events = calData.items || [];
-
-    if (events.length === 0) {
-      return "Nothing scheduled. The day is yours.";
-    }
-
-    // Build concise brief
-    const lines: string[] = [];
-    const timed = events.filter((e: any) => e.start?.dateTime);
-    const allDay = events.filter((e: any) => e.start?.date && !e.start?.dateTime);
-
-    if (allDay.length > 0) {
-      allDay.slice(0, 2).forEach((e: any) => {
-        lines.push(`All day — ${e.summary || "Event"}`);
-      });
-    }
-
-    timed.slice(0, 4).forEach((e: any) => {
-      const time = new Date(e.start.dateTime).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-      lines.push(`${time} — ${e.summary || "Event"}`);
+    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [{ role: "user", content: prompt }],
+      }),
     });
 
-    const remaining = events.length - lines.length;
-    if (remaining > 0) {
-      lines.push(`and ${remaining} more`);
+    if (aiRes.ok) {
+      const aiData = await aiRes.json();
+      const planText = aiData.choices?.[0]?.message?.content?.trim();
+      if (planText) return planText;
     }
-
-    return lines.join("\n");
   } catch (e) {
-    console.error("Calendar fetch in brief:", e);
-    return "Couldn't load your calendar. The day is yours.";
+    console.error("AI plan generation failed:", e);
   }
+
+  // Fallback
+  return cards.slice(0, 4).map((c: any) => c.title || c.body?.substring(0, 60)).join("\n");
 }
 
 /**

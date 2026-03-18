@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.send-weekly-synthesis]
 verify_jwt = false
+
+[functions.generate-daily-plan]
+verify_jwt = false
+
+[functions.send-daily-brief]
+verify_jwt = false

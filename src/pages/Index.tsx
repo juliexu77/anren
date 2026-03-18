@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
+import { useDailyPlan } from "@/hooks/useDailyPlan";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useHousehold } from "@/hooks/useHousehold";
 
@@ -29,6 +30,7 @@ const Index = () => {
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
+  const { plan: dailyPlan, loading: dailyPlanLoading } = useDailyPlan(!cardsLoading);
   usePushNotifications();
   
   const [searchParams, setSearchParams] = useSearchParams();
@@ -198,6 +200,8 @@ const Index = () => {
             reorderMessage={reorderMessage}
             readOnly={household.isViewer}
             viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
+            dailyPlan={dailyPlan}
+            dailyPlanLoading={dailyPlanLoading}
           />
         </div>
 
