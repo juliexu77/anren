@@ -127,6 +127,9 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
         </div>
       )}
 
+      {/* ── Run My Day — AI-generated daily plan ── */}
+      <RunMyDay plan={dailyPlan ?? null} loading={dailyPlanLoading ?? false} />
+
       {/* ── Daily Orientation — gentle note ── */}
       <div className="orientation-card">
         <div className="space-y-0 leading-relaxed">
