@@ -115,33 +115,6 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
       {/* ── Run My Day — AI-generated daily plan ── */}
       <RunMyDay plan={dailyPlan ?? null} loading={dailyPlanLoading ?? false} />
 
-      {/* ── Daily Orientation — gentle note ── */}
-      <div className="orientation-card">
-        <div className="space-y-0 leading-relaxed">
-          {orientationLines.map((line, i) => {
-            if (line.type === "spacer") return <div key={i} className="h-2" />;
-            const isClickable = !!line.calendarEventId;
-            return (
-              <div
-                key={i}
-                role={isClickable ? "button" : undefined}
-                tabIndex={isClickable ? 0 : undefined}
-                onClick={isClickable ? () => handleOrientationTap(line) : undefined}
-                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""} text-text-secondary-color`}
-              >
-                {line.text}
-              </div>
-            );
-          })}
-          <div className="h-1" />
-          <button
-            onClick={onViewCalendar}
-            className="text-micro active:opacity-60 transition-opacity text-text-muted-color"
-          >
-            View calendar →
-          </button>
-        </div>
-      </div>
 
       {/* ── PARSING ── */}
       {parsing.length > 0 && (
