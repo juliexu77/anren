@@ -55,15 +55,7 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
   );
   const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
 
-  const orientationLines = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
   const restingSectionRef = useRef<HTMLDivElement>(null);
-
-  const handleOrientationTap = useCallback((line: OrientationLine) => {
-    if (line.calendarEventId) {
-      const event = calendarEvents.find((e) => e.id === line.calendarEventId);
-      if (event) onCalendarEventClick(event);
-    }
-  }, [calendarEvents, onCalendarEventClick]);
 
   if (cardsLoading || !meditativeDismissed) {
     return (
