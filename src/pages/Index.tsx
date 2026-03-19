@@ -152,8 +152,6 @@ const Index = () => {
       {/* Daily Brief Overlay */}
       {showBrief && (
         <DailyBriefOverlay
-          cards={cards}
-          calendarEvents={calendarEvents}
           onDismiss={dismissBrief}
         />
       )}
@@ -186,13 +184,9 @@ const Index = () => {
           <HomeView
             cards={cards}
             cardsLoading={cardsLoading}
-            calendarEvents={calendarEvents}
             calendarLoading={calendarLoading}
             onCardClick={(card) => setSelectedCard(card)}
-            onCalendarEventClick={(event) => setSelectedCalEvent(event)}
-            onViewCalendar={() => setShowAgenda(true)}
             onComplete={handleComplete}
-            
             onOpenCamera={() => setShowCamera(true)}
             onOpenBrainDump={() => setShowBrainDump(true)}
             onReorder={() => { setReorderMessage(null); handleReorder(); }}

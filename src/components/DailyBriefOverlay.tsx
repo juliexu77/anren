@@ -1,21 +1,11 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { X } from "lucide-react";
-import type { BrainCard } from "@/types/card";
-import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
-import { generateDailyOrientation } from "@/lib/dailyOrientation";
 
 interface Props {
-  cards: BrainCard[];
-  calendarEvents: CalendarEvent[];
   onDismiss: () => void;
 }
 
-export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
-  const orientation = useMemo(
-    () => generateDailyOrientation(cards, calendarEvents),
-    [cards, calendarEvents]
-  );
-
+export function DailyBriefOverlay({ onDismiss }: Props) {
   useEffect(() => {
     const t = setTimeout(onDismiss, 60_000);
     return () => clearTimeout(t);
@@ -23,7 +13,6 @@ export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-8 animate-in fade-in duration-700 bg-bg-color">
-      {/* Dismiss */}
       <button
         onClick={onDismiss}
         className="absolute top-14 right-5 p-2 rounded-lg transition-colors text-text-muted-color"
@@ -31,28 +20,18 @@ export function DailyBriefOverlay({ cards, calendarEvents, onDismiss }: Props) {
         <X className="w-5 h-5" />
       </button>
 
-      {/* Content */}
       <div className="max-w-sm w-full space-y-6">
         <h1
           className="text-h2 text-center text-text-primary"
-          style={{
-            fontFamily: "var(--font-serif)",
-            fontWeight: 400,
-          }}
+          style={{ fontFamily: "var(--font-serif)", fontWeight: 400 }}
         >
           Your day
         </h1>
 
         <div className="sanctuary-card px-5 py-4 bg-card-bg-color/60">
-          <div className="text-body-sm font-sans space-y-0 text-text-secondary-color leading-relaxed">
-            {orientation.map((line, i) =>
-              line.type === "spacer" ? (
-                <div key={i} className="h-2" />
-              ) : (
-                <div key={i} className="text-body-sm">{line.text}</div>
-              )
-            )}
-          </div>
+          <p className="text-body-sm font-sans text-text-secondary-color leading-relaxed">
+            Take a breath. You're here.
+          </p>
         </div>
 
         <button

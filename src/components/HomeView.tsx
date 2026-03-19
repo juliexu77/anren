@@ -1,10 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { Loader2, Camera, ChevronDown, Check } from "lucide-react";
 import type { BrainCard } from "@/types/card";
-import type { CalendarEvent } from "@/hooks/useGoogleCalendar";
-import { generateDailyOrientation, type OrientationLine } from "@/lib/dailyOrientation";
-import { useRef, useCallback } from "react";
 import { RunMyDay } from "@/components/RunMyDay";
 
 const LOADING_LINES = [
@@ -27,13 +24,9 @@ const LOADING_LINES = [
 interface Props {
   cards: BrainCard[];
   cardsLoading: boolean;
-  calendarEvents: CalendarEvent[];
   calendarLoading: boolean;
   onCardClick: (card: BrainCard) => void;
-  onCalendarEventClick: (event: CalendarEvent) => void;
-  onViewCalendar: () => void;
   onComplete: (id: string) => void;
-  
   onOpenCamera: () => void;
   onOpenBrainDump: () => void;
   onReorder: () => void;
@@ -45,7 +38,7 @@ interface Props {
   dailyPlanLoading?: boolean;
 }
 
-export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading, onCardClick, onCalendarEventClick, onViewCalendar, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
+export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -62,15 +55,7 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
   );
   const parsing = useMemo(() => cards.filter((c) => c.body === "@@PARSING@@"), [cards]);
 
-  const orientationLines = useMemo(() => generateDailyOrientation(cards, calendarEvents), [cards, calendarEvents]);
   const restingSectionRef = useRef<HTMLDivElement>(null);
-
-  const handleOrientationTap = useCallback((line: OrientationLine) => {
-    if (line.calendarEventId) {
-      const event = calendarEvents.find((e) => e.id === line.calendarEventId);
-      if (event) onCalendarEventClick(event);
-    }
-  }, [calendarEvents, onCalendarEventClick]);
 
   if (cardsLoading || !meditativeDismissed) {
     return (
@@ -130,33 +115,6 @@ export function HomeView({ cards, cardsLoading, calendarEvents, calendarLoading,
       {/* ── Run My Day — AI-generated daily plan ── */}
       <RunMyDay plan={dailyPlan ?? null} loading={dailyPlanLoading ?? false} />
 
-      {/* ── Daily Orientation — gentle note ── */}
-      <div className="orientation-card">
-        <div className="space-y-0 leading-relaxed">
-          {orientationLines.map((line, i) => {
-            if (line.type === "spacer") return <div key={i} className="h-2" />;
-            const isClickable = !!line.calendarEventId;
-            return (
-              <div
-                key={i}
-                role={isClickable ? "button" : undefined}
-                tabIndex={isClickable ? 0 : undefined}
-                onClick={isClickable ? () => handleOrientationTap(line) : undefined}
-                className={`text-caption font-sans ${isClickable ? "cursor-pointer active:opacity-60" : ""} text-text-secondary-color`}
-              >
-                {line.text}
-              </div>
-            );
-          })}
-          <div className="h-1" />
-          <button
-            onClick={onViewCalendar}
-            className="text-micro active:opacity-60 transition-opacity text-text-muted-color"
-          >
-            View calendar →
-          </button>
-        </div>
-      </div>
 
       {/* ── PARSING ── */}
       {parsing.length > 0 && (
