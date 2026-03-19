@@ -24,13 +24,9 @@ const LOADING_LINES = [
 interface Props {
   cards: BrainCard[];
   cardsLoading: boolean;
-  calendarEvents: CalendarEvent[];
   calendarLoading: boolean;
   onCardClick: (card: BrainCard) => void;
-  onCalendarEventClick: (event: CalendarEvent) => void;
-  onViewCalendar: () => void;
   onComplete: (id: string) => void;
-  
   onOpenCamera: () => void;
   onOpenBrainDump: () => void;
   onReorder: () => void;
