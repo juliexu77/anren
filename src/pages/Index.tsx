@@ -152,8 +152,6 @@ const Index = () => {
       {/* Daily Brief Overlay */}
       {showBrief && (
         <DailyBriefOverlay
-          cards={cards}
-          calendarEvents={calendarEvents}
           onDismiss={dismissBrief}
         />
       )}
