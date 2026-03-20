@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -14,7 +14,6 @@ function getCachedPlan(): DailyPlan | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as DailyPlan;
-    // Only valid if generated today
     const today = new Date().toISOString().split("T")[0];
     if (parsed.generatedAt?.startsWith(today)) return parsed;
     return null;
@@ -27,14 +26,24 @@ function cachePlan(plan: DailyPlan) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(plan));
 }
 
+export function clearDailyPlanCache() {
+  localStorage.removeItem(CACHE_KEY);
+}
+
 export function useDailyPlan(cardsReady: boolean, calendarSummary?: string) {
   const { user } = useAuth();
   const [plan, setPlan] = useState<string[] | null>(() => getCachedPlan()?.lines ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const generatingRef = useRef(false);
 
-  const generate = useCallback(async () => {
-    if (!user) return;
+  const generate = useCallback(async (force = false) => {
+    if (!user || generatingRef.current) return;
+    if (!force) {
+      const cached = getCachedPlan();
+      if (cached) { setPlan(cached.lines); return; }
+    }
+    generatingRef.current = true;
     setLoading(true);
     setError(false);
 
@@ -58,19 +67,20 @@ export function useDailyPlan(cardsReady: boolean, calendarSummary?: string) {
       setError(true);
     } finally {
       setLoading(false);
+      generatingRef.current = false;
     }
   }, [user, calendarSummary]);
 
-  // Auto-generate when cards are ready and no cached plan exists
+  // Auto-generate when cards are ready
   useEffect(() => {
     if (!user || !cardsReady) return;
-    const cached = getCachedPlan();
-    if (cached) {
-      setPlan(cached.lines);
-      return;
-    }
-    generate();
+    generate(false);
   }, [user, cardsReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { plan, loading, error, regenerate: generate };
+  const regenerate = useCallback(() => {
+    clearDailyPlanCache();
+    return generate(true);
+  }, [generate]);
+
+  return { plan, loading, error, regenerate };
 }
