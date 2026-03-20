@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
@@ -19,7 +19,7 @@ import { CalendarEventSheet } from "@/components/CalendarEventSheet";
 import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
 import { Settings, X, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { startOfDay, addDays } from "date-fns";
+import { startOfDay, addDays, isToday, parseISO, format } from "date-fns";
 import { DesktopCalendarPanel } from "@/components/DesktopCalendarPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,7 +30,22 @@ const Index = () => {
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
-  const { plan: dailyPlan, loading: dailyPlanLoading } = useDailyPlan(!cardsLoading);
+  // Build today's calendar summary for the daily plan
+  const calendarSummary = useMemo(() => {
+    if (!calendarEvents.length) return "";
+    const todayEvents = calendarEvents.filter((e) => {
+      const dt = e.start.dateTime || e.start.date;
+      if (!dt) return false;
+      try { return isToday(parseISO(dt)); } catch { return false; }
+    });
+    if (!todayEvents.length) return "";
+    return todayEvents.map((e) => {
+      const time = e.start.dateTime ? format(parseISO(e.start.dateTime), "h:mm a") : "all day";
+      return `${time}: ${e.summary}`;
+    }).join("\n");
+  }, [calendarEvents]);
+
+  const { plan: dailyPlan, loading: dailyPlanLoading, regenerate: regeneratePlan } = useDailyPlan(!cardsLoading, calendarSummary);
   usePushNotifications();
   
   const [searchParams, setSearchParams] = useSearchParams();
@@ -74,7 +89,9 @@ const Index = () => {
 
   const handleBrainDumpConfirm = useCallback(async (items: Array<{ title: string; type: ItemType; due_at?: string | null }>) => {
     await addItems(items.map((i) => ({ title: i.title, type: i.type, dueAt: i.due_at })));
-  }, [addItems]);
+    // Regenerate daily plan with new items
+    regeneratePlan();
+  }, [addItems, regeneratePlan]);
 
   const handleReorder = useCallback(async () => {
     const active = cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@");
@@ -105,6 +122,8 @@ const Index = () => {
       });
       await Promise.all(updates);
       setReorderMessage("I've organized your list. Tap one to see how we can move it forward.");
+      // Regenerate the daily plan with the new order
+      regeneratePlan();
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
@@ -233,7 +252,7 @@ const Index = () => {
       <NewCardSheet
         open={showCamera}
         onClose={() => setShowCamera(false)}
-        onAdd={addCard}
+        onAdd={async (...args) => { const result = await addCard(...args); regeneratePlan(); return result; }}
         onUpdateCard={(id, updates) => updateCard(id, updates)}
       />
 
