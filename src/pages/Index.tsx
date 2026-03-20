@@ -89,7 +89,9 @@ const Index = () => {
 
   const handleBrainDumpConfirm = useCallback(async (items: Array<{ title: string; type: ItemType; due_at?: string | null }>) => {
     await addItems(items.map((i) => ({ title: i.title, type: i.type, dueAt: i.due_at })));
-  }, [addItems]);
+    // Regenerate daily plan with new items
+    regeneratePlan();
+  }, [addItems, regeneratePlan]);
 
   const handleReorder = useCallback(async () => {
     const active = cards.filter((c) => c.status === "active" && c.body !== "@@PARSING@@" && c.body !== "@@PARSE_FAILED@@");
