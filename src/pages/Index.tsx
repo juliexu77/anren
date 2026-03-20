@@ -252,7 +252,7 @@ const Index = () => {
       <NewCardSheet
         open={showCamera}
         onClose={() => setShowCamera(false)}
-        onAdd={async (...args) => { await addCard(...args); regeneratePlan(); }}
+        onAdd={async (...args) => { const result = await addCard(...args); regeneratePlan(); return result; }}
         onUpdateCard={(id, updates) => updateCard(id, updates)}
       />
 
