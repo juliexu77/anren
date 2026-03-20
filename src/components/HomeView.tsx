@@ -130,25 +130,7 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
         </div>
       )}
 
-      {/* ── Resting here — single merged list ── */}
-      {allItems.length > 0 && (
-        <CollapsibleSection
-          title={readOnly ? "They're holding" : "Resting here"}
-          count={allItems.length}
-          sectionRef={restingSectionRef}
-        >
-          {allItems.map((card) => (
-            <ItemRow
-              key={card.id}
-              card={card}
-              onClick={() => onCardClick(card)}
-              onComplete={readOnly ? undefined : () => onComplete(card.id)}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
-
-      {/* ── Help me get organized (after the list) ── */}
+      {/* ── Help me get organized (above the list) ── */}
       {!readOnly && allItems.length >= 2 && (
         <>
           <button
@@ -169,6 +151,24 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
             </p>
           )}
         </>
+      )}
+
+      {/* ── Resting here — single merged list ── */}
+      {allItems.length > 0 && (
+        <CollapsibleSection
+          title={readOnly ? "They're holding" : "Resting here"}
+          count={allItems.length}
+          sectionRef={restingSectionRef}
+        >
+          {allItems.map((card) => (
+            <ItemRow
+              key={card.id}
+              card={card}
+              onClick={() => onCardClick(card)}
+              onComplete={readOnly ? undefined : () => onComplete(card.id)}
+            />
+          ))}
+        </CollapsibleSection>
       )}
 
       {cards.length === 0 && !calendarLoading && (
