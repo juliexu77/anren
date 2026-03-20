@@ -120,6 +120,8 @@ const Index = () => {
       });
       await Promise.all(updates);
       setReorderMessage("I've organized your list. Tap one to see how we can move it forward.");
+      // Regenerate the daily plan with the new order
+      regeneratePlan();
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
