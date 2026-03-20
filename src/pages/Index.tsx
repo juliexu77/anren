@@ -30,7 +30,22 @@ const Index = () => {
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
-  const { plan: dailyPlan, loading: dailyPlanLoading } = useDailyPlan(!cardsLoading);
+  // Build today's calendar summary for the daily plan
+  const calendarSummary = useMemo(() => {
+    if (!calendarEvents.length) return "";
+    const todayEvents = calendarEvents.filter((e) => {
+      const dt = e.start.dateTime || e.start.date;
+      if (!dt) return false;
+      try { return isToday(parseISO(dt)); } catch { return false; }
+    });
+    if (!todayEvents.length) return "";
+    return todayEvents.map((e) => {
+      const time = e.start.dateTime ? format(parseISO(e.start.dateTime), "h:mm a") : "all day";
+      return `${time}: ${e.summary}`;
+    }).join("\n");
+  }, [calendarEvents]);
+
+  const { plan: dailyPlan, loading: dailyPlanLoading, regenerate: regeneratePlan } = useDailyPlan(!cardsLoading, calendarSummary);
   usePushNotifications();
   
   const [searchParams, setSearchParams] = useSearchParams();
