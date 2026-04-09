@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { X, Mic, Square, Send, Check, Pencil, Loader2, Keyboard } from "lucide-react";
+import { X, Mic, Square, Send, Check, Pencil, Loader2, Keyboard, Heart, ListChecks } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { ItemType } from "@/types/card";
 
@@ -11,18 +12,32 @@ interface ExtractedItem {
   due_at?: string | null;
 }
 
+interface ReflectionResult {
+  texture: string;
+  texture_why: string;
+  what_this_reveals: string;
+  energy_givers: string[];
+  energy_drainers: string[];
+  unresolved_threads: string[];
+  summary: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onConfirm: (items: ExtractedItem[]) => Promise<void>;
 }
 
-type Phase = "voice" | "transcribing" | "typing" | "processing" | "review";
+type Mode = "organize" | "reflect" | null;
+type Phase = "mode-select" | "voice" | "transcribing" | "typing" | "processing" | "review" | "reflection-review";
 
 export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
-  const [phase, setPhase] = useState<Phase>("voice");
+  const { user } = useAuth();
+  const [mode, setMode] = useState<Mode>(null);
+  const [phase, setPhase] = useState<Phase>("mode-select");
   const [text, setText] = useState("");
   const [items, setItems] = useState<ExtractedItem[]>([]);
+  const [reflectionResult, setReflectionResult] = useState<ReflectionResult | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -48,13 +63,21 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
   const handleClose = () => {
     cleanup();
-    setPhase("voice");
+    setMode(null);
+    setPhase("mode-select");
     setText("");
     setItems([]);
+    setReflectionResult(null);
     setEditingIdx(null);
     setMicError(false);
     autoStartedRef.current = false;
     onClose();
+  };
+
+  const selectMode = (m: Mode) => {
+    setMode(m);
+    setPhase("voice");
+    autoStartedRef.current = false;
   };
 
   const startRecording = async () => {
@@ -92,7 +115,6 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         }
         const base64 = btoa(binary);
 
-        // Show transcribing status on screen
         setPhase("transcribing");
 
         const { data, error } = await supabase.functions.invoke("transcribe-voice", {
@@ -108,24 +130,10 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         const transcript = data.body || data.text || "";
         setText(transcript);
 
-        // Skip typing, go straight to processing → review
-        setPhase("processing");
-        try {
-          const { data: processData, error: processError } = await supabase.functions.invoke("process-brain-dump", {
-            body: { text: transcript.trim() },
-          });
-
-          if (processError || !processData || processData.error) {
-            toast.error(processData?.error || "Processing failed. Try again.");
-            setPhase("typing");
-            return;
-          }
-
-          setItems(processData.items || []);
-          setPhase("review");
-        } catch {
-          toast.error("Something went wrong");
-          setPhase("typing");
+        if (mode === "reflect") {
+          await processReflection(transcript);
+        } else {
+          await processOrganize(transcript);
         }
       };
 
@@ -136,7 +144,6 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
     } catch {
       setMicError(true);
-      // Auto-fall back to typing if mic denied
       setPhase("typing");
       toast.error("Microphone access denied");
     }
@@ -154,7 +161,6 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     setIsRecording(false);
   };
 
-  // Auto-start recording when sheet opens in voice phase
   useEffect(() => {
     if (open && phase === "voice" && !autoStartedRef.current) {
       autoStartedRef.current = true;
@@ -162,26 +168,50 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     }
   }, [open, phase]);
 
-  const handleSubmit = async () => {
-    if (!text.trim()) return;
+  const processOrganize = async (transcript: string) => {
     setPhase("processing");
-
     try {
       const { data, error } = await supabase.functions.invoke("process-brain-dump", {
-        body: { text: text.trim() },
+        body: { text: transcript.trim() },
       });
-
       if (error || !data || data.error) {
         toast.error(data?.error || "Processing failed. Try again.");
         setPhase("typing");
         return;
       }
-
       setItems(data.items || []);
       setPhase("review");
     } catch {
       toast.error("Something went wrong");
       setPhase("typing");
+    }
+  };
+
+  const processReflection = async (transcript: string) => {
+    setPhase("processing");
+    try {
+      const { data, error } = await supabase.functions.invoke("process-reflection", {
+        body: { transcript: transcript.trim() },
+      });
+      if (error || !data || data.error) {
+        toast.error(data?.error || "Couldn't process reflection. Try again.");
+        setPhase("typing");
+        return;
+      }
+      setReflectionResult(data as ReflectionResult);
+      setPhase("reflection-review");
+    } catch {
+      toast.error("Something went wrong");
+      setPhase("typing");
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!text.trim()) return;
+    if (mode === "reflect") {
+      await processReflection(text);
+    } else {
+      await processOrganize(text);
     }
   };
 
@@ -194,6 +224,30 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     } catch {
       toast.error("Failed to save");
       setPhase("review");
+    }
+  };
+
+  const handleSaveReflection = async () => {
+    if (!reflectionResult || !user) return;
+    setPhase("processing");
+    try {
+      const { error } = await supabase.from("reflections").insert({
+        user_id: user.id,
+        raw_transcript: text,
+        texture: reflectionResult.texture,
+        texture_why: reflectionResult.texture_why,
+        what_this_reveals: reflectionResult.what_this_reveals,
+        energy_givers: reflectionResult.energy_givers,
+        energy_drainers: reflectionResult.energy_drainers,
+        unresolved_threads: reflectionResult.unresolved_threads,
+        summary: reflectionResult.summary,
+      } as any);
+      if (error) throw error;
+      toast.success("Reflection saved");
+      handleClose();
+    } catch {
+      toast.error("Failed to save reflection");
+      setPhase("reflection-review");
     }
   };
 
@@ -218,6 +272,20 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const ongoing = items.filter((i) => i.type === "ongoing");
   const events = items.filter((i) => !i.due_at && i.type === "event");
 
+  const headerLabel = phase === "mode-select"
+    ? "Clear your mind"
+    : phase === "voice"
+    ? (mode === "reflect" ? "How am I doing" : "Speak freely")
+    : phase === "transcribing"
+    ? "Listening…"
+    : phase === "typing"
+    ? (mode === "reflect" ? "How am I doing" : "Set it down")
+    : phase === "processing"
+    ? (mode === "reflect" ? "Reflecting…" : "Processing")
+    : phase === "reflection-review"
+    ? "Your reflection"
+    : "What I'm holding";
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg-color">
       {/* Header */}
@@ -226,19 +294,51 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
         <span className="text-label uppercase tracking-widest text-text-muted-color">
-          {phase === "voice" ? "Speak freely" : phase === "transcribing" ? "Listening…" : phase === "typing" ? "Set it down" : phase === "processing" ? "Processing" : "What I'm holding"}
+          {headerLabel}
         </span>
         <div className="w-9" />
       </div>
+
+      {/* ── MODE SELECT PHASE ── */}
+      {phase === "mode-select" && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 px-5 pb-6">
+          <p className="text-caption text-text-muted-color text-center mb-2">
+            What brings you here?
+          </p>
+
+          <button
+            onClick={() => selectMode("organize")}
+            className="sanctuary-btn w-full max-w-[280px] flex items-center gap-3 px-5 py-4 text-left"
+          >
+            <ListChecks className="w-5 h-5 text-accent-1 shrink-0" />
+            <div>
+              <span className="text-button text-text-primary block">Get organized</span>
+              <span className="text-micro text-text-muted-color">Clear what's on your mind</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => selectMode("reflect")}
+            className="sanctuary-btn w-full max-w-[280px] flex items-center gap-3 px-5 py-4 text-left"
+          >
+            <Heart className="w-5 h-5 text-accent-1 shrink-0" />
+            <div>
+              <span className="text-button text-text-primary block">How am I doing</span>
+              <span className="text-micro text-text-muted-color">Reflect on how the day feels</span>
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* ── VOICE PHASE ── */}
       {phase === "voice" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-5 pb-6">
           <p className="text-body-sm text-text-muted-color text-center">
-            Say everything that's on your mind.
+            {mode === "reflect"
+              ? "Talk about how your day is going."
+              : "Say everything that's on your mind."}
           </p>
 
-          {/* Pulsing mic indicator */}
           <div className="relative">
             <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-colors ${
               isRecording ? "bg-accent-1/20" : "bg-surface-color/50"
@@ -250,12 +350,10 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
             </div>
           </div>
 
-          {/* Timer */}
           {isRecording && (
             <span className="text-2xl font-mono text-text-primary/80 tabular-nums">{timeStr}</span>
           )}
 
-          {/* Stop button */}
           {isRecording && (
             <button
               onClick={stopRecording}
@@ -266,7 +364,6 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
             </button>
           )}
 
-          {/* Type instead */}
           <button
             onClick={() => { cleanup(); setPhase("typing"); }}
             className="text-button-sm text-text-muted-color underline underline-offset-2"
@@ -276,6 +373,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           </button>
         </div>
       )}
+
       {/* ── TRANSCRIBING PHASE ── */}
       {phase === "transcribing" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-5">
@@ -290,13 +388,17 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       {phase === "typing" && (
         <div className="flex-1 flex flex-col px-5 pb-6">
           <p className="text-caption mb-3 text-text-muted-color">
-            {text ? "Review or add more, then let go." : "What's weighing on you…"}
+            {mode === "reflect"
+              ? "How is your day going? What's the texture of it?"
+              : text
+              ? "Review or add more, then let go."
+              : "What's weighing on you…"}
           </p>
 
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="What's weighing on you…"
+            placeholder={mode === "reflect" ? "How am I really doing…" : "What's weighing on you…"}
             className="flex-1 w-full resize-none rounded-lg px-4 py-3 text-body-sm focus:outline-none"
             style={{ minHeight: "200px" }}
             autoFocus
@@ -319,7 +421,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
               className="accent-btn flex items-center gap-2 px-5 py-2.5 text-button-sm disabled:opacity-30"
             >
               <Send className="w-4 h-4" />
-              Let go
+              {mode === "reflect" ? "Reflect" : "Let go"}
             </button>
           </div>
         </div>
@@ -330,12 +432,88 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-5">
           <Loader2 className="w-8 h-8 animate-spin text-accent-1" />
           <p className="text-caption text-text-muted-color">
-            Sorting through everything…
+            {mode === "reflect" ? "Reflecting on what you shared…" : "Sorting through everything…"}
           </p>
         </div>
       )}
 
-      {/* ── REVIEW PHASE ── */}
+      {/* ── REFLECTION REVIEW PHASE ── */}
+      {phase === "reflection-review" && reflectionResult && (
+        <div className="flex-1 flex flex-col px-5 pb-6 overflow-y-auto">
+          {/* Texture heading */}
+          <div className="text-center py-4">
+            <p className="text-micro uppercase tracking-wider text-text-muted-color mb-1">
+              Today's texture
+            </p>
+            <p className="font-display text-xl italic text-text-primary">
+              "{reflectionResult.texture}"
+            </p>
+          </div>
+
+          <div className="sanctuary-card px-4 py-4 space-y-4">
+            <div>
+              <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Why</h4>
+              <p className="text-caption text-text-secondary-color">{reflectionResult.texture_why}</p>
+            </div>
+
+            <div>
+              <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
+              <p className="text-caption text-text-secondary-color italic">{reflectionResult.what_this_reveals}</p>
+            </div>
+
+            {reflectionResult.energy_givers.length > 0 && (
+              <div>
+                <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Energy givers</h4>
+                <ul className="space-y-0.5">
+                  {reflectionResult.energy_givers.map((g, i) => (
+                    <li key={i} className="text-caption text-text-secondary-color">+ {g}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {reflectionResult.energy_drainers.length > 0 && (
+              <div>
+                <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Energy drainers</h4>
+                <ul className="space-y-0.5">
+                  {reflectionResult.energy_drainers.map((d, i) => (
+                    <li key={i} className="text-caption text-text-secondary-color">− {d}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {reflectionResult.unresolved_threads.length > 0 && (
+              <div>
+                <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Unresolved threads</h4>
+                <ul className="space-y-0.5">
+                  {reflectionResult.unresolved_threads.map((t, i) => (
+                    <li key={i} className="text-caption text-text-secondary-color">◦ {t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-auto pt-4">
+            <button
+              onClick={handleSaveReflection}
+              className="accent-btn w-full py-3 text-button"
+            >
+              <Check className="w-4 h-4 inline mr-2" />
+              Save reflection
+            </button>
+            <button
+              onClick={handleClose}
+              className="w-full py-2.5 mt-2 rounded-lg text-button-sm transition-colors text-text-muted-color"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── ORGANIZE REVIEW PHASE ── */}
       {phase === "review" && (
         <div className="flex-1 flex flex-col px-5 pb-6 overflow-y-auto">
           <p className="text-body-sm mb-4 text-text-secondary-color">
