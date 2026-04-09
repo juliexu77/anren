@@ -315,6 +315,93 @@ export type Database = {
         }
         Relationships: []
       }
+      reflection_summaries: {
+        Row: {
+          created_at: string
+          dismissed: boolean
+          id: string
+          period_start: string
+          period_type: string
+          recurring_patterns: string
+          texture: string
+          unresolved_threads: string
+          user_id: string
+          what_created_it: string
+          what_this_reveals: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          period_start: string
+          period_type?: string
+          recurring_patterns?: string
+          texture?: string
+          unresolved_threads?: string
+          user_id: string
+          what_created_it?: string
+          what_this_reveals?: string
+        }
+        Update: {
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          period_start?: string
+          period_type?: string
+          recurring_patterns?: string
+          texture?: string
+          unresolved_threads?: string
+          user_id?: string
+          what_created_it?: string
+          what_this_reveals?: string
+        }
+        Relationships: []
+      }
+      reflections: {
+        Row: {
+          created_at: string
+          energy_drainers: string[]
+          energy_givers: string[]
+          id: string
+          raw_transcript: string
+          reflection_date: string
+          summary: string
+          texture: string
+          texture_why: string
+          unresolved_threads: string[]
+          user_id: string
+          what_this_reveals: string
+        }
+        Insert: {
+          created_at?: string
+          energy_drainers?: string[]
+          energy_givers?: string[]
+          id?: string
+          raw_transcript?: string
+          reflection_date?: string
+          summary?: string
+          texture?: string
+          texture_why?: string
+          unresolved_threads?: string[]
+          user_id: string
+          what_this_reveals?: string
+        }
+        Update: {
+          created_at?: string
+          energy_drainers?: string[]
+          energy_givers?: string[]
+          id?: string
+          raw_transcript?: string
+          reflection_date?: string
+          summary?: string
+          texture?: string
+          texture_why?: string
+          unresolved_threads?: string[]
+          user_id?: string
+          what_this_reveals?: string
+        }
+        Relationships: []
+      }
       weekly_syntheses: {
         Row: {
           created_at: string
