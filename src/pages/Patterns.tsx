@@ -118,20 +118,6 @@ function ReflectionEntry({ reflection }: { reflection: Reflection }) {
             </div>
           )}
 
-          {reflection.unresolved_threads.length > 0 && (
-            <div>
-              <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">
-                Unresolved threads
-              </h4>
-              <ul className="space-y-0.5">
-                {reflection.unresolved_threads.map((t, i) => (
-                  <li key={i} className="text-caption text-text-secondary-color">
-                    ◦ {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
     </button>

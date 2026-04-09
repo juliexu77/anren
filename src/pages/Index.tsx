@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
@@ -17,7 +17,7 @@ import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
 
 import { CalendarEventSheet } from "@/components/CalendarEventSheet";
 import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
-import { Settings, X, CalendarDays } from "lucide-react";
+import { Settings, X, CalendarDays, Orbit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays, isToday, parseISO, format } from "date-fns";
 import { DesktopCalendarPanel } from "@/components/DesktopCalendarPanel";
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
 
 const Index = () => {
+  const navigate = useNavigate();
   const household = useHousehold();
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
@@ -180,6 +181,12 @@ const Index = () => {
           <div className="w-12" />
           <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">ANREN</h1>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate("/patterns")}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Orbit className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setShowAgenda(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"

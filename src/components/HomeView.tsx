@@ -1,5 +1,4 @@
 import { useMemo, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Loader2, Camera, ChevronDown, Check, X } from "lucide-react";
 import type { BrainCard } from "@/types/card";
@@ -42,7 +41,7 @@ interface Props {
 }
 
 export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
-  const navigate = useNavigate();
+  
   const { weeklyDigest, monthlyDigest, dismiss: dismissDigest } = useReflectionDigest();
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
@@ -184,13 +183,6 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
         </CollapsibleSection>
       )}
 
-      {/* ── My patterns link ── */}
-      <button
-        onClick={() => navigate("/patterns")}
-        className="w-full text-center py-3 text-micro uppercase tracking-wider text-text-muted-color transition-opacity active:opacity-60"
-      >
-        My patterns →
-      </button>
 
       {cards.length === 0 && !calendarLoading && (
         <p className="text-caption text-center py-12 text-text-muted-color">
@@ -312,10 +304,6 @@ function TextureDigestCard({ digest, onDismiss }: { digest: ReflectionSummary; o
           <div>
             <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Recurring patterns</h4>
             <p className="text-caption text-text-secondary-color">{digest.recurring_patterns}</p>
-          </div>
-          <div>
-            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Unresolved threads</h4>
-            <p className="text-caption text-text-secondary-color">{digest.unresolved_threads}</p>
           </div>
           <div>
             <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
