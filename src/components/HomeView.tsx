@@ -41,7 +41,7 @@ interface Props {
 }
 
 export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
-  const navigate = useNavigate();
+  
   const { weeklyDigest, monthlyDigest, dismiss: dismissDigest } = useReflectionDigest();
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
