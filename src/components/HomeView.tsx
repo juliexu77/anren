@@ -1,7 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { Loader2, Camera, ChevronDown, Check, X } from "lucide-react";
-import { Loader2, Camera, ChevronDown, Check, X } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import { RunMyDay } from "@/components/RunMyDay";
 import { useReflectionDigest } from "@/hooks/useReflectionDigest";
