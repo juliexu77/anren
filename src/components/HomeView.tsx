@@ -1,8 +1,10 @@
 import { useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Loader2, Camera, ChevronDown, Check } from "lucide-react";
+import { Loader2, Camera, ChevronDown, Check, X } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import { RunMyDay } from "@/components/RunMyDay";
+import { useReflectionDigest, type ReflectionSummary } from "@/hooks/useReflectionDigest";
 
 const LOADING_LINES = [
   "Tell me, what is it you plan to do with your one wild and precious life?",
