@@ -55,6 +55,7 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/card/:cardId" element={<ProtectedRoute><CardDeepLink /></ProtectedRoute>} />
+              <Route path="/patterns" element={<ProtectedRoute><Patterns /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
