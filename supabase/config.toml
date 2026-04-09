@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.send-daily-brief]
 verify_jwt = false
+
+[functions.process-reflection]
+verify_jwt = false
+
+[functions.generate-reflection-digest]
+verify_jwt = false

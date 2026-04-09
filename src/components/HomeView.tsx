@@ -1,8 +1,11 @@
 import { useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { Loader2, Camera, ChevronDown, Check } from "lucide-react";
+import { Loader2, Camera, ChevronDown, Check, X } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import { RunMyDay } from "@/components/RunMyDay";
+import { useReflectionDigest } from "@/hooks/useReflectionDigest";
+import type { ReflectionSummary } from "@/hooks/useReflectionDigest";
 
 const LOADING_LINES = [
   "Tell me, what is it you plan to do with your one wild and precious life?",
@@ -39,6 +42,8 @@ interface Props {
 }
 
 export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
+  const navigate = useNavigate();
+  const { weeklyDigest, monthlyDigest, dismiss: dismissDigest } = useReflectionDigest();
   const [meditativeIndex] = useState(() =>
     Math.floor(Math.random() * LOADING_LINES.length)
   );
@@ -130,6 +135,14 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
         </div>
       )}
 
+      {/* ── Weekly / Monthly texture digest ── */}
+      {(weeklyDigest || monthlyDigest) && (
+        <TextureDigestCard
+          digest={(monthlyDigest || weeklyDigest)!}
+          onDismiss={dismissDigest}
+        />
+      )}
+
       {/* ── Help me get organized (above the list) ── */}
       {!readOnly && allItems.length >= 2 && (
         <>
@@ -170,6 +183,14 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
           ))}
         </CollapsibleSection>
       )}
+
+      {/* ── My patterns link ── */}
+      <button
+        onClick={() => navigate("/patterns")}
+        className="w-full text-center py-3 text-micro uppercase tracking-wider text-text-muted-color transition-opacity active:opacity-60"
+      >
+        My patterns →
+      </button>
 
       {cards.length === 0 && !calendarLoading && (
         <p className="text-caption text-center py-12 text-text-muted-color">
@@ -254,6 +275,53 @@ function ItemRow({
         <span className="text-micro px-1.5 py-0.5 rounded shrink-0 bg-surface-color text-text-muted-color">
           {typeLabel}
         </span>
+      )}
+    </div>
+  );
+}
+
+/* ── Texture Digest Card ── */
+function TextureDigestCard({ digest, onDismiss }: { digest: ReflectionSummary; onDismiss: (id: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const label = digest.period_type === "monthly" ? "The texture of your month" : "The texture of your week";
+
+  return (
+    <div className="sanctuary-card px-4 py-4 relative">
+      <button
+        onClick={() => onDismiss(digest.id)}
+        className="absolute top-3 right-3 p-1"
+      >
+        <X className="w-3.5 h-3.5 text-text-muted-color" />
+      </button>
+
+      <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
+        <p className="text-micro uppercase tracking-wider text-text-muted-color mb-1">
+          {label}
+        </p>
+        <p className="font-display text-lg italic text-text-primary pr-6">
+          "{digest.texture}"
+        </p>
+      </button>
+
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-divider-color/20 space-y-3 animate-fade-in">
+          <div>
+            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What created it</h4>
+            <p className="text-caption text-text-secondary-color">{digest.what_created_it}</p>
+          </div>
+          <div>
+            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Recurring patterns</h4>
+            <p className="text-caption text-text-secondary-color">{digest.recurring_patterns}</p>
+          </div>
+          <div>
+            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Unresolved threads</h4>
+            <p className="text-caption text-text-secondary-color">{digest.unresolved_threads}</p>
+          </div>
+          <div>
+            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
+            <p className="text-caption text-text-secondary-color italic">{digest.what_this_reveals}</p>
+          </div>
+        </div>
       )}
     </div>
   );
