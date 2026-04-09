@@ -19,6 +19,7 @@ import CardDeepLink from "./pages/CardDeepLink";
 import ExtensionAuthStart from "./pages/ExtensionAuthStart";
 import ExtensionAuthComplete from "./pages/ExtensionAuthComplete";
 import InviteJoin from "./pages/InviteJoin";
+import Patterns from "./pages/Patterns";
 
 const queryClient = new QueryClient();
 
