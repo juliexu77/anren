@@ -184,13 +184,6 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
         </CollapsibleSection>
       )}
 
-      {/* ── My patterns link ── */}
-      <button
-        onClick={() => navigate("/patterns")}
-        className="w-full text-center py-3 text-micro uppercase tracking-wider text-text-muted-color transition-opacity active:opacity-60"
-      >
-        My patterns →
-      </button>
 
       {cards.length === 0 && !calendarLoading && (
         <p className="text-caption text-center py-12 text-text-muted-color">
