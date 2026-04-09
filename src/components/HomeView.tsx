@@ -307,10 +307,6 @@ function TextureDigestCard({ digest, onDismiss }: { digest: ReflectionSummary; o
             <p className="text-caption text-text-secondary-color">{digest.recurring_patterns}</p>
           </div>
           <div>
-            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Unresolved threads</h4>
-            <p className="text-caption text-text-secondary-color">{digest.unresolved_threads}</p>
-          </div>
-          <div>
             <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
             <p className="text-caption text-text-secondary-color italic">{digest.what_this_reveals}</p>
           </div>

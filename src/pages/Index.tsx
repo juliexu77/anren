@@ -181,6 +181,12 @@ const Index = () => {
           <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">ANREN</h1>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => navigate("/patterns")}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Orbit className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => setShowAgenda(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"
             >
