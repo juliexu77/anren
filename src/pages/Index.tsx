@@ -17,7 +17,7 @@ import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
 
 import { CalendarEventSheet } from "@/components/CalendarEventSheet";
 import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
-import { Settings, X, CalendarDays } from "lucide-react";
+import { Settings, X, CalendarDays, Orbit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startOfDay, addDays, isToday, parseISO, format } from "date-fns";
 import { DesktopCalendarPanel } from "@/components/DesktopCalendarPanel";
