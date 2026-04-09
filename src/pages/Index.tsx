@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
 
 const Index = () => {
+  const navigate = useNavigate();
   const household = useHousehold();
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
   const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
