@@ -374,6 +374,49 @@ serve(async (req) => {
         return json({ data: results, error: null });
       }
 
+      // ── REFLECTIONS ──
+
+      case "log_reflection": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const text = params.text as string;
+        if (!text) return json({ data: null, error: "text required" }, 400);
+
+        // Call process-reflection edge function to extract structured data
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+        const processResp = await fetch(`${supabaseUrl}/functions/v1/process-reflection`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${anonKey}`,
+            "apikey": anonKey!,
+          },
+          body: JSON.stringify({ transcript: text }),
+        });
+
+        if (!processResp.ok) {
+          const errText = await processResp.text();
+          return json({ data: null, error: `process-reflection failed: ${errText}` }, 500);
+        }
+
+        const processed = await processResp.json();
+
+        const { data, error } = await supabase.from("reflections").insert({
+          user_id,
+          raw_transcript: text,
+          texture: processed.texture,
+          texture_why: processed.texture_why,
+          what_this_reveals: processed.what_this_reveals,
+          energy_givers: processed.energy_givers,
+          energy_drainers: processed.energy_drainers,
+          unresolved_threads: processed.unresolved_threads,
+          summary: processed.summary,
+          reflection_date: params.date || new Date().toISOString().split("T")[0],
+        }).select().single();
+
+        if (error) return json({ data: null, error: error.message }, 500);
+        return json({ data, error: null });
+      }
+
       default:
         return json({ data: null, error: `Unknown action: ${action}` }, 400);
     }
