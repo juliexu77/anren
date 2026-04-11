@@ -2,10 +2,11 @@ import { useColorTheme } from "@/contexts/ColorThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { cn } from "@/lib/utils";
-import { Check, LogOut, Bell } from "lucide-react";
+import { Check, LogOut, Bell, BookUser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { SettingsPartnerSection } from "@/components/SettingsPartnerSection";
 
 /** Convert "HH:MM:SS" → display "h:mm AM/PM" */
@@ -28,6 +29,7 @@ function generateTimeSlots(): string[] {
 }
 
 export function SettingsPage() {
+  const navigate = useNavigate();
   const { currentTheme, setTheme, themes } = useColorTheme();
   const { user, signOut } = useAuth();
   const { settings, settingsLoaded, updateSettings } = useDailyBrief();
@@ -63,6 +65,21 @@ export function SettingsPage() {
             Sign out
           </Button>
         </div>
+      </section>
+
+      {/* Address Book */}
+      <section>
+        <h2 className="text-section-header text-text-muted-color mb-4">Address Book</h2>
+        <button
+          onClick={() => navigate("/address-book")}
+          className="w-full rounded-2xl border border-divider-color/25 p-4 flex items-center gap-3 hover:bg-foreground/5 transition-colors"
+        >
+          <BookUser className="w-5 h-5 text-muted-foreground" />
+          <div className="text-left">
+            <p className="text-sm font-medium text-foreground">Manage Address Book</p>
+            <p className="text-xs text-muted-foreground">Import, edit, and export for Minted</p>
+          </div>
+        </button>
       </section>
 
       {/* Partner */}
