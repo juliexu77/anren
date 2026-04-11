@@ -352,11 +352,58 @@ serve(async (req) => {
         return json({ data: newEntry, error: null });
       }
 
+      case "search_address_book": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const query = params.query as string;
+        if (!query) return json({ data: null, error: "query required" }, 400);
+
+        // Search contacts by name
+        const { data: matchedContacts, error: scErr } = await supabase
+          .from("address_book_contacts")
+          .select("*")
+          .eq("user_id", user_id)
+          .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`);
+        if (scErr) return json({ data: null, error: scErr.message }, 500);
+
+        // Search entries by household name
+        const { data: matchedEntries, error: seErr } = await supabase
+          .from("address_book_entries")
+          .select("*")
+          .eq("user_id", user_id)
+          .ilike("household_name", `%${query}%`);
+        if (seErr) return json({ data: null, error: seErr.message }, 500);
+
+        // Collect all relevant entry IDs
+        const entryIds = new Set<string>();
+        (matchedContacts || []).forEach((c: any) => entryIds.add(c.entry_id));
+        (matchedEntries || []).forEach((e: any) => entryIds.add(e.id));
+
+        if (entryIds.size === 0) {
+          return json({ data: [], error: null });
+        }
+
+        // Fetch full entries + all their contacts
+        const ids = Array.from(entryIds);
+        const { data: fullEntries } = await supabase
+          .from("address_book_entries")
+          .select("*")
+          .in("id", ids);
+        const { data: fullContacts } = await supabase
+          .from("address_book_contacts")
+          .select("*")
+          .in("entry_id", ids);
+
+        const results = (fullEntries || []).map((e: any) => ({
+          ...e,
+          contacts: (fullContacts || []).filter((c: any) => c.entry_id === e.id),
+        }));
+
+        return json({ data: results, error: null });
+      }
+
       default:
-        return json(
-          { data: null, error: `Unknown action: ${action}` },
-          400
-        );
+        return json({ data: null, error: `Unknown action: ${action}` }, 400);
+    }
   } catch (err) {
     return json({ data: null, error: String(err) }, 500);
   }
