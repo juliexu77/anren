@@ -3,20 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { useGoogleCalendarList } from "@/hooks/useGoogleCalendarList";
-import { useBirthdaySync } from "@/hooks/useBirthdaySync";
 import { useColorTheme } from "@/contexts/ColorThemeContext";
 import { lovable } from "@/integrations/lovable/index";
 import { Capacitor } from "@capacitor/core";
 import { signInWithGoogleNative } from "@/lib/authNative";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Mic, Square, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -29,17 +25,12 @@ export default function Onboarding() {
     addLocalCard,
     getLocalCards,
     migrateLocalCards,
-    saveCalendarPrefs,
     completeOnboarding,
   } = useOnboarding();
 
-  const { calendars, loading: calLoading, fetchCalendarList } = useGoogleCalendarList();
-  const { syncBirthdays } = useBirthdaySync();
   const { currentTheme, setTheme, themes } = useColorTheme();
 
   const [textInput, setTextInput] = useState("");
-  const [selectedCals, setSelectedCals] = useState<string[]>(["primary"]);
-  const [birthdaysOn, setBirthdaysOn] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -53,19 +44,33 @@ export default function Onboarding() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Step 5 = Auth, migrate cards then advance
+  // Step 5 = Auth, migrate cards then finish
   useEffect(() => {
     if (user && step === 5) {
-      migrateLocalCards().then(() => nextStep());
+      migrateLocalCards().then(async () => {
+        await completeOnboarding();
+        navigate("/", { replace: true });
+      });
     }
   }, [user, step]);
 
-  // Step 6 = Calendar prefs, fetch list
+  // Returning user check
   useEffect(() => {
-    if (user && step === 6) {
-      fetchCalendarList();
+    if (user && step === 1) {
+      (async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("user_id", user.id)
+          .single();
+        if (data?.onboarding_completed === true) {
+          navigate("/", { replace: true });
+        } else {
+          setStep(5);
+        }
+      })();
     }
-  }, [user, step]);
+  }, [user]);
 
   const progress = (step / TOTAL_STEPS) * 100;
 
@@ -84,7 +89,7 @@ export default function Onboarding() {
         extraParams: {
           access_type: "offline",
           prompt: "consent",
-          scope: "openid email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts.readonly",
+          scope: "openid email profile",
         },
       });
       if (error) toast.error("Sign in failed.");
@@ -98,24 +103,6 @@ export default function Onboarding() {
   const handleReturningUserSignIn = async () => {
     await handleGoogleSignIn();
   };
-
-  useEffect(() => {
-    if (user && step === 1) {
-      (async () => {
-        const { data } = await supabase
-          .from("profiles")
-          .select("onboarding_completed")
-          .eq("user_id", user.id)
-          .single();
-        if (data?.onboarding_completed === true) {
-          completeOnboarding();
-          navigate("/", { replace: true });
-        } else {
-          setStep(6);
-        }
-      })();
-    }
-  }, [user]);
 
   const cleanupRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -233,23 +220,6 @@ export default function Onboarding() {
     setIsTranscribing(false);
   };
 
-  const handleFinish = async () => {
-    await saveCalendarPrefs(selectedCals, birthdaysOn);
-    if (birthdaysOn) {
-      syncBirthdays().then((count) => {
-        if (count && count > 0) toast.success(`Found ${count} birthdays`);
-      });
-    }
-    completeOnboarding();
-    navigate("/", { replace: true });
-  };
-
-  const toggleCal = (id: string) => {
-    setSelectedCals((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
-  };
-
   const localCards = getLocalCards();
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
@@ -313,7 +283,7 @@ export default function Onboarding() {
                 {
                   num: "3",
                   title: "Your day, clear",
-                  desc: "Calendar, to-dos, and reminders — all in one quiet view.",
+                  desc: "To-dos and reminders — all in one quiet view.",
                 },
               ].map((item) => (
                 <div key={item.num} className="flex gap-4 items-start">
@@ -560,11 +530,10 @@ export default function Onboarding() {
               </p>
             )}
             <p className="text-xl font-display mb-2 text-text-primary">
-              Now let's anchor these to your day.
+              Let's save what you're holding.
             </p>
             <p className="text-sm mb-8 leading-relaxed text-text-muted-color">
-              Your calendar gives Anren the rhythm of your life — so what you're
-              holding finds its right place in time.
+              Sign in so Anren can keep everything safe and ready for you.
             </p>
             <button
               onClick={handleGoogleSignIn}
@@ -605,73 +574,6 @@ export default function Onboarding() {
             <p className="text-sm text-text-muted-color">
               Setting things in place…
             </p>
-          </div>
-        )}
-
-        {/* Step 6: Calendar prefs */}
-        {step === 6 && (
-          <div className="w-full max-w-sm animate-fade-in">
-            <p className="text-xl font-display mb-1 text-text-primary">
-              Which calendars feel like yours?
-            </p>
-            <p className="text-sm mb-6 text-text-muted-color">
-              Pick the ones that hold the rhythm of your life.
-            </p>
-
-            {calLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-text-muted-color" />
-              </div>
-            ) : (
-              <div className="space-y-3 mb-8">
-                {calendars.map((cal) => (
-                  <label
-                    key={cal.id}
-                    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer bg-surface-color border border-divider-color/25"
-                  >
-                    <Checkbox
-                      checked={selectedCals.includes(cal.id)}
-                      onCheckedChange={() => toggleCal(cal.id)}
-                    />
-                    {cal.backgroundColor && (
-                      <div
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ background: cal.backgroundColor }}
-                      />
-                    )}
-                    <span className="text-sm truncate text-text-primary">
-                      {cal.summary}
-                    </span>
-                    {cal.primary && (
-                      <span className="text-[10px] uppercase tracking-wider ml-auto shrink-0 text-text-muted-color">
-                        Primary
-                      </span>
-                    )}
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {/* Birthday toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl mb-8 bg-surface-color border border-divider-color/25">
-              <div>
-                <p className="text-sm font-medium text-text-primary">
-                  Hold birthdays & milestones
-                </p>
-                <p className="text-xs mt-0.5 text-text-muted-color">
-                  From your contacts' calendars
-                </p>
-              </div>
-              <Switch checked={birthdaysOn} onCheckedChange={setBirthdaysOn} />
-            </div>
-
-            <button
-              onClick={handleFinish}
-              disabled={selectedCals.length === 0}
-              className="accent-btn w-full py-3.5 rounded-full text-button disabled:opacity-40"
-            >
-              I'm ready
-            </button>
           </div>
         )}
       </div>
