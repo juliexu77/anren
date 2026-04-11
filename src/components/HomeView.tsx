@@ -26,7 +26,6 @@ const LOADING_LINES = [
 interface Props {
   cards: BrainCard[];
   cardsLoading: boolean;
-  calendarLoading: boolean;
   onCardClick: (card: BrainCard) => void;
   onComplete: (id: string) => void;
   onOpenCamera: () => void;
@@ -40,7 +39,7 @@ interface Props {
   dailyPlanLoading?: boolean;
 }
 
-export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
+export function HomeView({ cards, cardsLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
   
   const { weeklyDigest, monthlyDigest, dismiss: dismissDigest } = useReflectionDigest();
   const [meditativeIndex] = useState(() =>
@@ -184,7 +183,7 @@ export function HomeView({ cards, cardsLoading, calendarLoading, onCardClick, on
       )}
 
 
-      {cards.length === 0 && !calendarLoading && (
+      {cards.length === 0 && (
         <p className="text-caption text-center py-12 text-text-muted-color">
           Nothing resting here yet.
         </p>

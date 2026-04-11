@@ -30,7 +30,7 @@ export function clearDailyPlanCache() {
   localStorage.removeItem(CACHE_KEY);
 }
 
-export function useDailyPlan(cardsReady: boolean, calendarSummary?: string) {
+export function useDailyPlan(cardsReady: boolean) {
   const { user } = useAuth();
   const [plan, setPlan] = useState<string[] | null>(() => getCachedPlan()?.lines ?? null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ export function useDailyPlan(cardsReady: boolean, calendarSummary?: string) {
 
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("generate-daily-plan", {
-        body: { calendarSummary: calendarSummary || "" },
+        body: {},
       });
 
       if (fnErr || !data?.plan) {
@@ -69,7 +69,7 @@ export function useDailyPlan(cardsReady: boolean, calendarSummary?: string) {
       setLoading(false);
       generatingRef.current = false;
     }
-  }, [user, calendarSummary]);
+  }, [user]);
 
   // Auto-generate when cards are ready
   useEffect(() => {

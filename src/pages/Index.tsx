@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
-import { useGoogleCalendar, type CalendarEvent } from "@/hooks/useGoogleCalendar";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { useDailyPlan } from "@/hooks/useDailyPlan";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -11,16 +10,10 @@ import { HomeView } from "@/components/HomeView";
 import { CardDetailSheet } from "@/components/CardDetailSheet";
 import { BrainDumpSheet } from "@/components/BrainDumpSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
-import { ScheduleSheet } from "@/components/ScheduleSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
 
-import { CalendarEventSheet } from "@/components/CalendarEventSheet";
-import { CalendarAgendaSheet } from "@/components/CalendarAgendaSheet";
-import { Settings, X, CalendarDays, Orbit } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { startOfDay, addDays, isToday, parseISO, format } from "date-fns";
-import { DesktopCalendarPanel } from "@/components/DesktopCalendarPanel";
+import { Settings, X, Orbit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
@@ -29,24 +22,9 @@ const Index = () => {
   const navigate = useNavigate();
   const household = useHousehold();
   const { cards, loading: cardsLoading, addCard, addItems, updateCard, deleteCard } = useCards(household.isViewer ? household.ownerId : null);
-  const { events: calendarEvents, loading: calendarLoading, fetchEvents, createEvent, deleteEvent } = useGoogleCalendar();
   const { shouldShow: showBrief, dismiss: dismissBrief } = useDailyBrief();
-  // Build today's calendar summary for the daily plan
-  const calendarSummary = useMemo(() => {
-    if (!calendarEvents.length) return "";
-    const todayEvents = calendarEvents.filter((e) => {
-      const dt = e.start.dateTime || e.start.date;
-      if (!dt) return false;
-      try { return isToday(parseISO(dt)); } catch { return false; }
-    });
-    if (!todayEvents.length) return "";
-    return todayEvents.map((e) => {
-      const time = e.start.dateTime ? format(parseISO(e.start.dateTime), "h:mm a") : "all day";
-      return `${time}: ${e.summary}`;
-    }).join("\n");
-  }, [calendarEvents]);
 
-  const { plan: dailyPlan, loading: dailyPlanLoading, regenerate: regeneratePlan } = useDailyPlan(!cardsLoading, calendarSummary);
+  const { plan: dailyPlan, loading: dailyPlanLoading, regenerate: regeneratePlan } = useDailyPlan(!cardsLoading);
   usePushNotifications();
   
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,21 +32,11 @@ const Index = () => {
   const [showBrainDump, setShowBrainDump] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [scheduleCard, setScheduleCard] = useState<BrainCard | null>(null);
-  const [selectedCalEvent, setSelectedCalEvent] = useState<CalendarEvent | null>(null);
-  const [showAgenda, setShowAgenda] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
   
   const [reorderMessage, setReorderMessage] = useState<string | null>(null);
   const [researching, setResearching] = useState(false);
-
-  // Fetch calendar events for today + 7 days
-  useEffect(() => {
-    const now = startOfDay(new Date());
-    const end = addDays(now, 8);
-    fetchEvents(now.toISOString(), end.toISOString());
-  }, [fetchEvents]);
 
   // Handle deep link
   useEffect(() => {
@@ -84,13 +52,8 @@ const Index = () => {
     await updateCard(id, { status: "complete" });
   }, [updateCard]);
 
-  const handleSchedule = useCallback((card: BrainCard) => {
-    setScheduleCard(card);
-  }, []);
-
   const handleBrainDumpConfirm = useCallback(async (items: Array<{ title: string; type: ItemType; due_at?: string | null }>) => {
     await addItems(items.map((i) => ({ title: i.title, type: i.type, dueAt: i.due_at })));
-    // Regenerate daily plan with new items
     regeneratePlan();
   }, [addItems, regeneratePlan]);
 
@@ -106,7 +69,6 @@ const Index = () => {
         toast.error("Couldn't organize right now. Try again in a moment.");
         return;
       }
-      // Build new order based on AI response
       const reordered = data.items.map((item: { index: number; suggestion: string }) => active[item.index]).filter(Boolean);
       const newSuggestions: Record<string, string> = {};
       data.items.forEach((item: { index: number; suggestion: string }) => {
@@ -115,7 +77,6 @@ const Index = () => {
       });
       setSuggestions((prev) => ({ ...prev, ...newSuggestions }));
 
-      // Update created_at in DB to reflect new order (newest first = first item gets latest timestamp)
       const now = Date.now();
       const updates = reordered.map((card: BrainCard, i: number) => {
         const ts = new Date(now - i * 1000).toISOString();
@@ -123,7 +84,6 @@ const Index = () => {
       });
       await Promise.all(updates);
       setReorderMessage("I've organized your list. Tap one to see how we can move it forward.");
-      // Regenerate the daily plan with the new order
       regeneratePlan();
     } catch {
       toast.error("Something went wrong. Try again.");
@@ -188,12 +148,6 @@ const Index = () => {
               <Orbit className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setShowAgenda(true)}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"
-            >
-              <CalendarDays className="w-5 h-5" />
-            </button>
-            <button
               onClick={() => setShowSettings(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -203,35 +157,23 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Two-panel layout: main + calendar sidebar on lg+ */}
-      <div className="flex gap-0 lg:gap-6 lg:px-4">
-        {/* Main column */}
-        <div className="flex-1 min-w-0 max-w-xl mx-auto lg:mx-0 lg:max-w-none lg:flex-[3]">
-          <HomeView
-            cards={cards}
-            cardsLoading={cardsLoading}
-            calendarLoading={calendarLoading}
-            onCardClick={(card) => setSelectedCard(card)}
-            onComplete={handleComplete}
-            onOpenCamera={() => setShowCamera(true)}
-            onOpenBrainDump={() => setShowBrainDump(true)}
-            onReorder={() => { setReorderMessage(null); handleReorder(); }}
-            reordering={reordering}
-            reorderMessage={reorderMessage}
-            readOnly={household.isViewer}
-            viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
-            dailyPlan={dailyPlan}
-            dailyPlanLoading={dailyPlanLoading}
-          />
-        </div>
-
-        {/* Calendar sidebar — visible on lg+ */}
-        <aside className="hidden lg:block lg:flex-[2] sticky top-[88px] h-[calc(100vh-88px)] sanctuary-card overflow-hidden">
-          <DesktopCalendarPanel
-            events={calendarEvents}
-            onEventClick={(event) => setSelectedCalEvent(event)}
-          />
-        </aside>
+      {/* Main content */}
+      <div className="max-w-xl mx-auto">
+        <HomeView
+          cards={cards}
+          cardsLoading={cardsLoading}
+          onCardClick={(card) => setSelectedCard(card)}
+          onComplete={handleComplete}
+          onOpenCamera={() => setShowCamera(true)}
+          onOpenBrainDump={() => setShowBrainDump(true)}
+          onReorder={() => { setReorderMessage(null); handleReorder(); }}
+          reordering={reordering}
+          reorderMessage={reorderMessage}
+          readOnly={household.isViewer}
+          viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
+          dailyPlan={dailyPlan}
+          dailyPlanLoading={dailyPlanLoading}
+        />
       </div>
 
       {/* Sheets */}
@@ -243,17 +185,8 @@ const Index = () => {
         onDelete={deleteCard}
         onComplete={handleComplete}
         suggestion={selectedCard ? suggestions[selectedCard.id] : undefined}
-        
         onResearch={handleResearch}
         researching={researching}
-      />
-
-      <ScheduleSheet
-        card={scheduleCard}
-        open={!!scheduleCard}
-        onClose={() => setScheduleCard(null)}
-        onCreateEvent={createEvent}
-        onUpdateCard={updateCard}
       />
 
       <NewCardSheet
@@ -267,23 +200,6 @@ const Index = () => {
         open={showBrainDump}
         onClose={() => setShowBrainDump(false)}
         onConfirm={handleBrainDumpConfirm}
-      />
-
-      <CalendarEventSheet
-        event={selectedCalEvent}
-        open={!!selectedCalEvent}
-        onClose={() => setSelectedCalEvent(null)}
-        onDelete={async (id) => {
-          await deleteEvent(id);
-          setSelectedCalEvent(null);
-        }}
-      />
-
-      <CalendarAgendaSheet
-        events={calendarEvents}
-        open={showAgenda}
-        onClose={() => setShowAgenda(false)}
-        onEventClick={(event) => { setShowAgenda(false); setSelectedCalEvent(event); }}
       />
     </div>
   );
