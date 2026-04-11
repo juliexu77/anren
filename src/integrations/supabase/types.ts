@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      address_book_contacts: {
+        Row: {
+          birthday: string | null
+          created_at: string
+          email: string | null
+          entry_id: string
+          first_name: string
+          id: string
+          is_primary: boolean
+          last_name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birthday?: string | null
+          created_at?: string
+          email?: string | null
+          entry_id: string
+          first_name?: string
+          id?: string
+          is_primary?: boolean
+          last_name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birthday?: string | null
+          created_at?: string
+          email?: string | null
+          entry_id?: string
+          first_name?: string
+          id?: string
+          is_primary?: boolean
+          last_name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "address_book_contacts_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "address_book_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      address_book_entries: {
+        Row: {
+          address_line_1: string
+          address_line_2: string
+          city: string
+          country: string
+          created_at: string
+          household_name: string
+          id: string
+          state: string
+          updated_at: string
+          user_id: string
+          zip: string
+        }
+        Insert: {
+          address_line_1?: string
+          address_line_2?: string
+          city?: string
+          country?: string
+          created_at?: string
+          household_name?: string
+          id?: string
+          state?: string
+          updated_at?: string
+          user_id: string
+          zip?: string
+        }
+        Update: {
+          address_line_1?: string
+          address_line_2?: string
+          city?: string
+          country?: string
+          created_at?: string
+          household_name?: string
+          id?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+          zip?: string
+        }
+        Relationships: []
+      }
       cards: {
         Row: {
           body: string
