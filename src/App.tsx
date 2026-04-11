@@ -10,7 +10,6 @@ import { Loader2 } from "lucide-react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
-import GoogleCallback from "./pages/GoogleCallback";
 import LovableOAuthCallback from "./pages/LovableOAuthCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -50,7 +49,6 @@ const App = () => (
               <Route path="/extension-auth" element={<ExtensionAuthStart />} />
               <Route path="/extension-auth-complete" element={<ExtensionAuthComplete />} />
               <Route path="/invite/:token" element={<InviteJoin />} />
-              <Route path="/google-callback" element={<ProtectedRoute><GoogleCallback /></ProtectedRoute>} />
               <Route path="/~oauth/callback" element={<LovableOAuthCallback />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />

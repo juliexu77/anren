@@ -50,15 +50,44 @@ serve(async (req) => {
   }
 
   // Service-role client (bypasses RLS)
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+  // Helper: require user_id
+  const user_id = params.user_id as string | undefined;
 
   try {
     switch (action) {
+      // ── READ ACTIONS ──
+
+      case "get_todo_list": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const limit =
+          typeof params.limit === "number" && params.limit > 0
+            ? Math.min(params.limit as number, 500)
+            : 100;
+        let q = supabase
+          .from("cards")
+          .select("*")
+          .eq("user_id", user_id)
+          .neq("status", "archived")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (params.category && typeof params.category === "string") {
+          q = q.eq("category", params.category);
+        }
+        if (params.status && typeof params.status === "string") {
+          q = q.eq("status", params.status);
+        }
+        const { data, error } = await q;
+        if (error) return json({ data: null, error: error.message }, 500);
+        return json({ data, error: null });
+      }
+
       case "get_people": {
-        let q = supabase.from("people").select("*").order("name").limit(50);
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        let q = supabase.from("people").select("*").eq("user_id", user_id).order("name").limit(50);
         if (params.search && typeof params.search === "string") {
           q = q.ilike("name", `%${params.search}%`);
         }
@@ -67,28 +96,12 @@ serve(async (req) => {
         return json({ data, error: null });
       }
 
-      case "get_cards": {
-        const limit =
-          typeof params.limit === "number" && params.limit > 0
-            ? Math.min(params.limit as number, 100)
-            : 20;
-        let q = supabase
-          .from("cards")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (params.category && typeof params.category === "string") {
-          q = q.eq("category", params.category);
-        }
-        const { data, error } = await q;
-        if (error) return json({ data: null, error: error.message }, 500);
-        return json({ data, error: null });
-      }
-
       case "get_weekly_synthesis": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
         let q = supabase
           .from("weekly_syntheses")
           .select("*")
+          .eq("user_id", user_id)
           .order("week_start", { ascending: false })
           .limit(1);
         if (params.week_start && typeof params.week_start === "string") {
@@ -100,14 +113,173 @@ serve(async (req) => {
       }
 
       case "get_daily_brief": {
-        const today = new Date().toISOString().split("T")[0];
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
         const { data, error } = await supabase
           .from("daily_brief_settings")
           .select("*")
+          .eq("user_id", user_id)
           .order("created_at", { ascending: false })
           .limit(1);
         if (error) return json({ data: null, error: error.message }, 500);
         return json({ data: data?.[0] ?? null, error: null });
+      }
+
+      case "get_texture": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const periodType = (params.period_type as string) || "weekly";
+        const { data, error } = await supabase
+          .from("reflection_summaries")
+          .select("texture, period_start, period_type")
+          .eq("user_id", user_id)
+          .eq("period_type", periodType)
+          .order("period_start", { ascending: false })
+          .limit(1);
+        if (error) return json({ data: null, error: error.message }, 500);
+        return json({ data: data?.[0] ?? null, error: null });
+      }
+
+      case "get_household": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        // Find household where user is owner or member
+        const { data: memberships, error: memErr } = await supabase
+          .from("household_members")
+          .select("household_id, role")
+          .eq("user_id", user_id);
+        if (memErr) return json({ data: null, error: memErr.message }, 500);
+
+        // Also check if user owns a household
+        const { data: owned, error: ownErr } = await supabase
+          .from("households")
+          .select("id")
+          .eq("owner_id", user_id);
+        if (ownErr) return json({ data: null, error: ownErr.message }, 500);
+
+        const householdIds = new Set<string>();
+        memberships?.forEach((m) => householdIds.add(m.household_id));
+        owned?.forEach((h) => householdIds.add(h.id));
+
+        if (householdIds.size === 0) {
+          return json({ data: { household: null, members: [] }, error: null });
+        }
+
+        const hid = Array.from(householdIds)[0];
+        const { data: members, error: membersErr } = await supabase
+          .from("household_members")
+          .select("user_id, role, joined_at")
+          .eq("household_id", hid);
+        if (membersErr) return json({ data: null, error: membersErr.message }, 500);
+
+        // Get profiles for all members
+        const memberIds = members?.map((m) => m.user_id) || [];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, email, avatar_url")
+          .in("user_id", memberIds);
+
+        return json({
+          data: {
+            household_id: hid,
+            members: members?.map((m) => ({
+              ...m,
+              profile: profiles?.find((p) => p.user_id === m.user_id) || null,
+            })),
+          },
+          error: null,
+        });
+      }
+
+      // ── WRITE ACTIONS ──
+
+      case "add_card": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const title = params.title as string;
+        if (!title) return json({ data: null, error: "title required" }, 400);
+
+        const row: Record<string, unknown> = {
+          user_id,
+          title,
+          body: (params.body as string) || "",
+          source: (params.source as string) || "companion",
+          category: (params.category as string) || "uncategorized",
+          status: "active",
+        };
+        if (params.due_at) row.due_at = params.due_at;
+
+        const { data, error } = await supabase.from("cards").insert(row).select().single();
+        if (error) return json({ data: null, error: error.message }, 500);
+        return json({ data, error: null });
+      }
+
+      case "complete_card": {
+        const card_id = params.card_id as string;
+        if (!card_id) return json({ data: null, error: "card_id required" }, 400);
+        const { data, error } = await supabase
+          .from("cards")
+          .update({ status: "complete" })
+          .eq("id", card_id)
+          .select()
+          .single();
+        if (error) return json({ data: null, error: error.message }, 500);
+        return json({ data, error: null });
+      }
+
+      case "archive_card": {
+        const card_id = params.card_id as string;
+        if (!card_id) return json({ data: null, error: "card_id required" }, 400);
+        const { data, error } = await supabase
+          .from("cards")
+          .update({ status: "archived" })
+          .eq("id", card_id)
+          .select()
+          .single();
+        if (error) return json({ data: null, error: error.message }, 500);
+        return json({ data, error: null });
+      }
+
+      case "process_brain_dump": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const text = params.text as string;
+        if (!text) return json({ data: null, error: "text required" }, 400);
+
+        // Call the process-brain-dump edge function server-to-server
+        const brainDumpRes = await fetch(
+          `${supabaseUrl}/functions/v1/process-brain-dump`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${serviceRoleKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text }),
+          }
+        );
+
+        if (!brainDumpRes.ok) {
+          const errText = await brainDumpRes.text();
+          return json({ data: null, error: `Brain dump processing failed: ${errText}` }, 500);
+        }
+
+        const parsed = await brainDumpRes.json();
+        const items = parsed.items || [];
+
+        // Insert resulting cards
+        if (items.length > 0) {
+          const rows = items.map((item: { title: string; type?: string; theme?: string; due_at?: string }) => ({
+            user_id,
+            title: item.title,
+            body: item.title,
+            source: "companion",
+            category: item.theme || "uncategorized",
+            routed_type: item.type || null,
+            due_at: item.due_at || null,
+            status: "active",
+          }));
+
+          const { error: insertErr } = await supabase.from("cards").insert(rows);
+          if (insertErr) return json({ data: null, error: insertErr.message }, 500);
+        }
+
+        return json({ data: { items_created: items.length, items }, error: null });
       }
 
       default:

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { BrainCard } from "@/types/card";
 
 const LOCAL_CARDS_KEY = "anren_local_cards";
 const ONBOARDING_STEP_KEY = "anren_onboarding_step";
@@ -26,8 +25,8 @@ export function useOnboarding() {
     localStorage.setItem(ONBOARDING_STEP_KEY, String(step));
   }, [step]);
 
-  const nextStep = useCallback(() => setStep((s) => Math.min(s + 1, 6)), []);
-  const skipStep = useCallback(() => setStep((s) => Math.min(s + 1, 6)), []);
+  const nextStep = useCallback(() => setStep((s) => Math.min(s + 1, 5)), []);
+  const skipStep = useCallback(() => setStep((s) => Math.min(s + 1, 5)), []);
 
   // Local card management (pre-auth)
   const getLocalCards = useCallback((): LocalCard[] => {
@@ -66,36 +65,20 @@ export function useOnboarding() {
     }
   }, [user, getLocalCards]);
 
-  // Save calendar preferences
-  const saveCalendarPrefs = useCallback(
-    async (selectedCalendars: string[], birthdaysEnabled: boolean) => {
-      if (!user) return;
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          selected_calendars: selectedCalendars,
-          birthdays_enabled: birthdaysEnabled,
-          onboarding_completed: true,
-        })
-        .eq("user_id", user.id);
-
-      if (error) console.error("Failed to save prefs:", error);
-    },
-    [user]
-  );
-
-  const completeOnboarding = useCallback(() => {
+  const completeOnboarding = useCallback(async () => {
     localStorage.removeItem(ONBOARDING_STEP_KEY);
     localStorage.removeItem(LOCAL_CARDS_KEY);
-  }, []);
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ onboarding_completed: true })
+        .eq("user_id", user.id);
+    }
+  }, [user]);
 
   // Check if onboarding is done (for routing)
   const isOnboardingComplete = useCallback(async (): Promise<boolean> => {
-    if (!user) {
-      // Check localStorage for partial onboarding
-      const savedStep = localStorage.getItem(ONBOARDING_STEP_KEY);
-      return false; // not signed in = not complete
-    }
+    if (!user) return false;
     const { data } = await supabase
       .from("profiles")
       .select("onboarding_completed")
@@ -112,7 +95,6 @@ export function useOnboarding() {
     getLocalCards,
     addLocalCard,
     migrateLocalCards,
-    saveCalendarPrefs,
     completeOnboarding,
     isOnboardingComplete,
   };
