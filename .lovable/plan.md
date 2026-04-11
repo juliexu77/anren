@@ -1,154 +1,78 @@
 
 
-## Daily Reflection Feature — "Quiet Mirror"
+## Combined Plan: Data Proxy Expansion + Calendar Removal
 
-A multi-part feature adding voice-based daily reflections, a history page, weekly texture digests, and monthly insights — all matching Anren's warm, understated aesthetic.
+### A. Data Proxy — Updated Actions
 
----
+**File:** `supabase/functions/data-proxy/index.ts` — rewrite the switch block.
 
-### 1. Database: `reflections` and `reflection_summaries` tables
+**Updated existing actions:**
 
-**Migration:**
+| Old name | New name | Changes |
+|---|---|---|
+| `get_cards` | `get_todo_list` | Rename. Add required `user_id` filter, raise limit to 500, exclude archived |
+| `get_people` | `get_people` | Keep name. Add `user_id` filter |
+| `get_weekly_synthesis` | `get_weekly_synthesis` | Keep name. Add `user_id` filter |
+| `get_daily_brief` | `get_daily_brief` | Keep name. Add `user_id` filter |
 
-```sql
-CREATE TABLE public.reflections (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  reflection_date date NOT NULL DEFAULT CURRENT_DATE,
-  raw_transcript text NOT NULL DEFAULT '',
-  texture text NOT NULL DEFAULT '',
-  texture_why text NOT NULL DEFAULT '',
-  what_this_reveals text NOT NULL DEFAULT '',
-  energy_givers text[] NOT NULL DEFAULT '{}',
-  energy_drainers text[] NOT NULL DEFAULT '{}',
-  unresolved_threads text[] NOT NULL DEFAULT '{}',
-  summary text NOT NULL DEFAULT '',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+**New read actions:**
 
-ALTER TABLE public.reflections ENABLE ROW LEVEL SECURITY;
+| Action | Table | Details |
+|---|---|---|
+| `get_texture` | `reflection_summaries` | Returns only `texture`, `period_start`, `period_type`. Params: `user_id` (required), `period_type` (optional, default "weekly") |
+| `get_household` | `households` + `household_members` + `profiles` | Params: `user_id`. Returns household info and partner details |
 
-CREATE POLICY "Users can view own reflections" ON public.reflections FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own reflections" ON public.reflections FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own reflections" ON public.reflections FOR DELETE TO authenticated USING (auth.uid() = user_id);
+**New write actions:**
 
-CREATE TABLE public.reflection_summaries (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  period_type text NOT NULL DEFAULT 'weekly',  -- 'weekly' or 'monthly'
-  period_start date NOT NULL,
-  texture text NOT NULL DEFAULT '',
-  what_created_it text NOT NULL DEFAULT '',
-  recurring_patterns text NOT NULL DEFAULT '',
-  unresolved_threads text NOT NULL DEFAULT '',
-  what_this_reveals text NOT NULL DEFAULT '',
-  dismissed boolean NOT NULL DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Action | Table | Details |
+|---|---|---|
+| `add_card` | `cards` | Insert a card. Params: `user_id`, `title`, `body`, `category`, `due_at`, `source` (default "companion") |
+| `complete_card` | `cards` | Update status to "complete". Params: `card_id` |
+| `archive_card` | `cards` | Update status to "archived". Params: `card_id` |
+| `process_brain_dump` | calls `process-brain-dump` edge function | Params: `user_id`, `text`. Server-to-server fetch, returns resulting cards |
 
-ALTER TABLE public.reflection_summaries ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own summaries" ON public.reflection_summaries FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can update own summaries" ON public.reflection_summaries FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-```
+No `get_reflections` — raw transcripts stay private. Only synthesized texture is exposed.
 
 ---
 
-### 2. Modify BrainDumpSheet — Mode Selector
+### B. Remove Google Calendar Integration
 
-**File: `src/components/BrainDumpSheet.tsx`**
+**Delete 14 files:**
+- `supabase/functions/google-calendar/index.ts`
+- `supabase/functions/extract-event-details/index.ts`
+- `src/hooks/useGoogleCalendar.ts`
+- `src/hooks/useGoogleCalendarList.ts`
+- `src/hooks/useBirthdaySync.ts`
+- `src/components/GoogleCalendarView.tsx`
+- `src/components/CalendarAgendaSheet.tsx`
+- `src/components/CalendarEventSheet.tsx`
+- `src/components/CalendarPlaceholder.tsx`
+- `src/components/DesktopCalendarPanel.tsx`
+- `src/components/ScheduleSheet.tsx`
+- `src/components/calendar/CalendarHeader.tsx`
+- `src/components/calendar/CalendarTimeGrid.tsx`
+- `src/pages/GoogleCallback.tsx`
 
-- Add a new `mode` state: `"organize" | "reflect"`, defaulting to `null` (selection screen).
-- Before recording starts, show a mode-selection phase with two buttons:
-  - **"Get organized"** → existing brain dump flow
-  - **"How am I doing"** → reflection flow
-- Update the header label: "Speak freely" becomes "Clear your mind" in organize mode, "How am I doing" in reflect mode.
-- In reflection mode, after transcription completes, call a new `process-reflection` edge function instead of `process-brain-dump`. Show a "Reflecting…" processing state, then display the structured reflection result (texture, why, what this reveals, etc.) in a review screen styled like a quiet card. Confirm saves to `reflections` table.
+Also delete the deployed `google-calendar` and `extract-event-details` edge functions.
 
----
+**Modify files:**
 
-### 3. Edge Function: `process-reflection`
+| File | Changes |
+|---|---|
+| `src/pages/Index.tsx` | Remove calendar imports, state, icon button, desktop sidebar, all calendar sheets |
+| `src/components/HomeView.tsx` | Remove `calendarLoading` prop |
+| `src/components/CardDetailSheet.tsx` | Remove calendar event creation UI and `useGoogleCalendar` import |
+| `src/components/SettingsPage.tsx` | Remove calendar picker section |
+| `src/pages/Onboarding.tsx` | Remove calendar step, reduce total steps by 1 |
+| `src/hooks/useDailyPlan.ts` | Remove `calendarSummary` parameter |
+| `src/App.tsx` | Remove `/google-callback` route |
 
-**File: `supabase/functions/process-reflection/index.ts`**
-
-- Receives `{ transcript: string }`.
-- Calls Lovable AI (Gemini Flash) with tool calling to extract structured output:
-  - `texture` (2–4 word qualitative phrase)
-  - `texture_why` (2–3 sentences)
-  - `what_this_reveals` (1 sentence)
-  - `energy_givers` (string array)
-  - `energy_drainers` (string array)
-  - `unresolved_threads` (string array)
-  - `summary` (brief summary)
-- Returns the structured result. The client saves to Supabase directly.
-
----
-
-### 4. Edge Function: `generate-reflection-digest`
-
-**File: `supabase/functions/generate-reflection-digest/index.ts`**
-
-- Receives `{ userId, periodType: "weekly" | "monthly" }`.
-- Fetches all reflections from the past 7 or 30 days.
-- Sends all raw transcripts as a single document to AI.
-- Extracts: overall texture, what created it, recurring patterns, unresolved threads, what this period reveals.
-- Inserts into `reflection_summaries`.
+Google OAuth sign-in stays (it's the auth method). DB columns like `google_access_token` remain unused — no migration needed.
 
 ---
 
-### 5. Reflections History Page — "My Patterns"
+### Execution order
 
-**File: `src/pages/Patterns.tsx`**
-
-- Scrollable log of past reflections: date, texture phrase, one-line why.
-- Tapping an entry expands inline to show full extraction (what this reveals, energy givers/drainers, unresolved threads).
-- Matches Anren aesthetic: sanctuary-card styling, warm tones, serif headings.
-
-**File: `src/hooks/useReflections.ts`**
-
-- Hook to fetch reflections from Supabase, ordered by date desc.
-
-**Route:** Add `/patterns` to `App.tsx` as a protected route.
-
-**Home link:** Add a subtle "My patterns →" text link on HomeView, below the resting section.
-
----
-
-### 6. Weekly Texture Card on Home
-
-**File: `src/components/HomeView.tsx`**
-
-- Add a `useReflectionDigest` hook that checks for an undismissed weekly summary (period_type='weekly', period_start = last Monday, dismissed = false).
-- If found and it's Monday+, render a dismissible card above "Resting here" titled "The texture of your week" showing the overall texture and a tap-to-expand full view.
-- Dismissing updates `dismissed = true` on the summary row.
-
-**File: `src/hooks/useReflectionDigest.ts`**
-
-- Fetches the latest undismissed weekly/monthly summary.
-
----
-
-### 7. Weekly + Monthly Cron Trigger
-
-- Use `pg_cron` + `pg_net` to invoke `generate-reflection-digest` every Monday at 6am (weekly) and the 1st of each month (monthly) for users who have reflections.
-- Alternatively, generate on-demand: when the home screen loads on Monday and no weekly digest exists yet for that week, trigger generation.
-
-**Recommended approach:** On-demand generation from the client (simpler, no cron setup). The `useReflectionDigest` hook checks if a digest exists for the current period; if not, it calls the edge function to generate one.
-
----
-
-### Summary of Files
-
-| Action | File |
-|--------|------|
-| Create | `supabase/functions/process-reflection/index.ts` |
-| Create | `supabase/functions/generate-reflection-digest/index.ts` |
-| Create | `src/pages/Patterns.tsx` |
-| Create | `src/hooks/useReflections.ts` |
-| Create | `src/hooks/useReflectionDigest.ts` |
-| Modify | `src/components/BrainDumpSheet.tsx` (mode selector + reflection flow) |
-| Modify | `src/components/HomeView.tsx` (weekly texture card + "My patterns" link) |
-| Modify | `src/App.tsx` (add /patterns route) |
-| Modify | `supabase/config.toml` (new function entries) |
-| Migration | Create `reflections` and `reflection_summaries` tables with RLS |
+1. Expand data-proxy with renamed + new actions
+2. Delete calendar files and clean up imports
 
