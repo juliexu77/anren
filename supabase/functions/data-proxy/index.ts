@@ -282,12 +282,81 @@ serve(async (req) => {
         return json({ data: { items_created: items.length, items }, error: null });
       }
 
+      // ── ADDRESS BOOK ──
+
+      case "get_address_book": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const { data: abEntries, error: abErr } = await supabase
+          .from("address_book_entries")
+          .select("*")
+          .eq("user_id", user_id)
+          .order("household_name");
+        if (abErr) return json({ data: null, error: abErr.message }, 500);
+
+        const entryIds = (abEntries || []).map((e: { id: string }) => e.id);
+        let abContacts: unknown[] = [];
+        if (entryIds.length > 0) {
+          const { data: cData, error: cErr } = await supabase
+            .from("address_book_contacts")
+            .select("*")
+            .in("entry_id", entryIds);
+          if (cErr) return json({ data: null, error: cErr.message }, 500);
+          abContacts = cData || [];
+        }
+
+        const result = (abEntries || []).map((e: any) => ({
+          ...e,
+          contacts: (abContacts as any[]).filter((c: any) => c.entry_id === e.id),
+        }));
+        return json({ data: result, error: null });
+      }
+
+      case "add_address_entry": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const household_name = params.household_name as string;
+        if (!household_name) return json({ data: null, error: "household_name required" }, 400);
+
+        const entryRow: Record<string, unknown> = {
+          user_id,
+          household_name,
+          address_line_1: (params.address_line_1 as string) || "",
+          address_line_2: (params.address_line_2 as string) || "",
+          city: (params.city as string) || "",
+          state: (params.state as string) || "",
+          zip: (params.zip as string) || "",
+          country: (params.country as string) || "US",
+        };
+
+        const { data: newEntry, error: entryErr } = await supabase
+          .from("address_book_entries")
+          .insert(entryRow)
+          .select()
+          .single();
+        if (entryErr) return json({ data: null, error: entryErr.message }, 500);
+
+        const contacts = Array.isArray(params.contacts) ? params.contacts : [];
+        if (contacts.length > 0) {
+          const contactRows = (contacts as any[]).map((c: any) => ({
+            entry_id: newEntry.id,
+            user_id,
+            first_name: c.first_name || "",
+            last_name: c.last_name || "",
+            email: c.email || null,
+            phone: c.phone || null,
+            birthday: c.birthday || null,
+            is_primary: c.is_primary || false,
+          }));
+          await supabase.from("address_book_contacts").insert(contactRows);
+        }
+
+        return json({ data: newEntry, error: null });
+      }
+
       default:
         return json(
           { data: null, error: `Unknown action: ${action}` },
           400
         );
-    }
   } catch (err) {
     return json({ data: null, error: String(err) }, 500);
   }
