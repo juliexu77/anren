@@ -129,13 +129,36 @@ serve(async (req) => {
         const periodType = (params.period_type as string) || "weekly";
         const { data, error } = await supabase
           .from("reflection_summaries")
-          .select("texture, period_start, period_type")
+          .select("texture, what_created_it, recurring_patterns, unresolved_threads, what_this_reveals, period_start, period_type")
           .eq("user_id", user_id)
           .eq("period_type", periodType)
           .order("period_start", { ascending: false })
           .limit(1);
         if (error) return json({ data: null, error: error.message }, 500);
         return json({ data: data?.[0] ?? null, error: null });
+      }
+
+      case "get_reflections": {
+        if (!user_id) return json({ data: null, error: "user_id required" }, 400);
+        const limit =
+          typeof params.limit === "number" && params.limit > 0
+            ? Math.min(params.limit as number, 30)
+            : 7;
+        let rq = supabase
+          .from("reflections")
+          .select("reflection_date, texture, texture_why, energy_givers, energy_drainers, unresolved_threads, summary")
+          .eq("user_id", user_id)
+          .order("reflection_date", { ascending: false })
+          .limit(limit);
+        if (params.start_date && typeof params.start_date === "string") {
+          rq = rq.gte("reflection_date", params.start_date);
+        }
+        if (params.end_date && typeof params.end_date === "string") {
+          rq = rq.lte("reflection_date", params.end_date);
+        }
+        const { data: refData, error: refErr } = await rq;
+        if (refErr) return json({ data: null, error: refErr.message }, 500);
+        return json({ data: refData, error: null });
       }
 
       case "get_household": {
