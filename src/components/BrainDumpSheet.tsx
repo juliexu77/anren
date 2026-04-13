@@ -176,6 +176,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    releaseWakeLock();
     setIsRecording(false);
   };
 
