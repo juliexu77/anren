@@ -47,6 +47,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const autoStartedRef = useRef(false);
 
   const cleanup = useCallback(() => {
