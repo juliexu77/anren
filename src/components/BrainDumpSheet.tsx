@@ -47,7 +47,15 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const autoStartedRef = useRef(false);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try { await wakeLockRef.current.release(); } catch {}
+      wakeLockRef.current = null;
+    }
+  }, []);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -57,9 +65,10 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     }
     mediaRecorderRef.current = null;
     chunksRef.current = [];
+    releaseWakeLock();
     setIsRecording(false);
     setElapsed(0);
-  }, []);
+  }, [releaseWakeLock]);
 
   const handleClose = () => {
     cleanup();
@@ -87,6 +96,15 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         audio: { echoCancellation: true, noiseSuppression: true },
       });
       streamRef.current = stream;
+
+      // Keep screen awake during recording
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        }
+      } catch (e) {
+        console.warn("Wake lock not available:", e);
+      }
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -158,6 +176,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    releaseWakeLock();
     setIsRecording(false);
   };
 
