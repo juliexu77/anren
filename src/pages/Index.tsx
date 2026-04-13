@@ -13,7 +13,7 @@ import { NewCardSheet } from "@/components/NewCardSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
 
-import { Settings, X, Orbit } from "lucide-react";
+import { Settings, X, Orbit, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
@@ -141,6 +141,12 @@ const Index = () => {
           <div className="w-12" />
           <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">ANREN</h1>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate("/address-book")}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Users className="w-5 h-5" />
+            </button>
             <button
               onClick={() => navigate("/patterns")}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"

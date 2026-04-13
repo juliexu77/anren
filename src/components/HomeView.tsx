@@ -6,22 +6,6 @@ import { RunMyDay } from "@/components/RunMyDay";
 import { useReflectionDigest } from "@/hooks/useReflectionDigest";
 import type { ReflectionSummary } from "@/hooks/useReflectionDigest";
 
-const LOADING_LINES = [
-  "Tell me, what is it you plan to do with your one wild and precious life?",
-  "Someone I loved once gave me a box full of darkness. It took me years to understand that this too, was a gift.",
-  "Keep some room in your heart for the unimaginable.",
-  "I don't want to end up simply having visited this world.",
-  "Attention is the beginning of devotion.",
-  "Let yourself be silently drawn by the strange pull of what you really love.",
-  "The wound is the place where the light enters you.",
-  "Respond to every call that excites your spirit.",
-  "Why do you stay in prison when the door is so wide open?",
-  "Wherever you are, and whatever you do, be in love.",
-  "Anything or anyone that does not bring you alive is too small for you.",
-  "The rest is yet to come.",
-  "Sometimes it takes darkness and the sweet confinement of your aloneness to learn that anything or anyone that does not bring you alive is too small for you.",
-  "Start close in. Don't take the second step or the third. Start with the first thing close in.",
-];
 
 interface Props {
   cards: BrainCard[];
@@ -42,10 +26,6 @@ interface Props {
 export function HomeView({ cards, cardsLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
   
   const { weeklyDigest, monthlyDigest, dismiss: dismissDigest } = useReflectionDigest();
-  const [meditativeIndex] = useState(() =>
-    Math.floor(Math.random() * LOADING_LINES.length)
-  );
-  const [meditativeDismissed, setMeditativeDismissed] = useState(false);
 
   // All non-completed, non-parsing items in one list
   const allItems = useMemo(
@@ -60,29 +40,10 @@ export function HomeView({ cards, cardsLoading, onCardClick, onComplete, onOpenC
 
   const restingSectionRef = useRef<HTMLDivElement>(null);
 
-  if (cardsLoading || !meditativeDismissed) {
+  if (cardsLoading) {
     return (
       <main className="px-4 pb-4 flex flex-col items-center justify-center" style={{ minHeight: "60vh" }}>
-        <div className="flex flex-col items-center gap-6 animate-fade-in max-w-[300px]">
-          {cardsLoading && (
-            <div className="w-8 h-8 rounded-full border-2 animate-spin border-divider-color/20 border-t-text-muted-color" />
-          )}
-          <p
-            key={meditativeIndex}
-            className="text-caption text-center italic animate-fade-in text-text-muted-color leading-relaxed"
-          >
-            {LOADING_LINES[meditativeIndex]}
-          </p>
-          {!cardsLoading && (
-            <button
-              onClick={() => setMeditativeDismissed(true)}
-              className="mt-2 flex items-center gap-1.5 text-micro tracking-wider uppercase transition-opacity active:opacity-60 text-text-muted-color"
-            >
-              <span>Continue</span>
-              <span className="text-xs">→</span>
-            </button>
-          )}
-        </div>
+        <div className="w-8 h-8 rounded-full border-2 animate-spin border-divider-color/20 border-t-text-muted-color" />
       </main>
     );
   }
