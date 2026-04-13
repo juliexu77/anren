@@ -50,6 +50,13 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const autoStartedRef = useRef(false);
 
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try { await wakeLockRef.current.release(); } catch {}
+      wakeLockRef.current = null;
+    }
+  }, []);
+
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (streamRef.current) {
@@ -58,9 +65,10 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     }
     mediaRecorderRef.current = null;
     chunksRef.current = [];
+    releaseWakeLock();
     setIsRecording(false);
     setElapsed(0);
-  }, []);
+  }, [releaseWakeLock]);
 
   const handleClose = () => {
     cleanup();
