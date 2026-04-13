@@ -97,6 +97,15 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       });
       streamRef.current = stream;
 
+      // Keep screen awake during recording
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request("screen");
+        }
+      } catch (e) {
+        console.warn("Wake lock not available:", e);
+      }
+
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
