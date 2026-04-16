@@ -1,41 +1,65 @@
 
 
-## Fix Data Proxy Syntax + Add Address Book Search for MCP
+## Unified "Clear Your Mind" — Single Stream, Dual Output
 
-### A. Breaking Bug: Missing closing brace
+### The Change
+Remove the mode-select screen ("Get organized" vs "How am I doing") entirely. The user just opens, talks (or types), and Anren processes the single stream into **both** tasks and reflection data simultaneously. One input, two outputs — quietly sorted.
 
-The `switch` block in `data-proxy/index.ts` is missing a closing `}` before the `} catch` on line 360. The switch opens at line 61 but only one `}` exists where two are needed (one to close `switch`, one to close `try`). This means the function likely fails to deploy or crashes at runtime.
+### How It Works
 
-**Fix:** Add `}` to close the switch block before the catch.
+**New edge function: `process-stream`**
+A single edge function replaces the two separate calls. It receives the raw transcript and returns a unified response:
 
+```text
+{
+  items: [ { title, type, theme, due_at } ],     // tasks/events/ongoing
+  reflection: { texture, texture_why, ..., summary }  // emotional layer
+}
 ```
-      default:
-        return json({ data: null, error: `Unknown action: ${action}` }, 400);
-    }  // ← close switch
-  } catch (err) {  // ← close try
-    return json({ data: null, error: String(err) }, 500);
-  }
+
+The AI prompt instructs the model to read the stream as a whole — extract actionable items AND the emotional texture from the same text. The interleaving IS the signal.
+
+**Updated `BrainDumpSheet.tsx`**
+- Remove `Mode` type, `mode-select` phase, and the two-button screen
+- Sheet opens directly into voice recording (existing auto-start behavior)
+- After transcription, calls `process-stream` instead of choosing between `process-brain-dump` / `process-reflection`
+- New **unified review screen** shows both:
+  - The task list (existing review UI)
+  - A reflection summary card (texture + energy + threads) — shown only if the AI detected emotional content
+- Single "Confirm" button saves tasks via `onConfirm` AND saves the reflection to the `reflections` table in one action
+- If the AI found no emotional content, reflection section is simply absent — no awkward empty state
+
+### Files Changed
+
+1. **`supabase/functions/process-stream/index.ts`** (new) — Combined AI function with a single tool call that returns `{ items, reflection }`. Uses the same Lovable AI gateway + Gemini Flash. The prompt merges the best of both existing prompts: extract tasks AND reflect.
+
+2. **`src/components/BrainDumpSheet.tsx`** — Remove mode selection, simplify phases to `voice → transcribing → typing → processing → review`. Single review screen shows tasks + reflection card. Single confirm saves both.
+
+3. **`supabase/functions/process-brain-dump/index.ts`** and **`supabase/functions/process-reflection/index.ts`** — Keep as-is (the data-proxy still calls `process-reflection` for the companion's `log_reflection` action). No breaking changes to external callers.
+
+### UX Flow
+
+```text
+Open sheet → Recording starts automatically
+         → Stop / "Type instead"
+         → "Sorting through everything…"
+         → Review screen:
+              ┌─────────────────────────┐
+              │ Today's texture          │  ← only if detected
+              │ "scattered but alive"    │
+              │ energy givers / drainers │
+              └─────────────────────────┘
+              ┌─────────────────────────┐
+              │ TASKS                   │
+              │ • Call pediatrician      │
+              │ • Book camp thing        │
+              └─────────────────────────┘
+              [ Confirm — 2 items + reflection ]
 ```
 
-### B. New action: `search_address_book`
+### Technical Details
 
-For Claude to answer "when is X's birthday" or "what is Y's address," the current `get_address_book` works but dumps the entire book. A search action is better:
-
-**New action: `search_address_book`**
-- Params: `user_id` (required), `query` (required — name to search)
-- Searches `address_book_contacts.first_name`, `last_name` and `address_book_entries.household_name` using `ilike`
-- Returns matching entries with their contacts and addresses
-- Claude can then pull birthday or address from the result
-
-This means when someone asks "when is Sarah's birthday," Claude calls `search_address_book` with `query: "Sarah"` and gets back the matching household entry with Sarah's contact record including her birthday.
-
-### Files changed
-
-| File | Change |
-|---|---|
-| `supabase/functions/data-proxy/index.ts` | Fix missing `}`, add `search_address_book` action |
-
-### Companion project impact
-
-The MCP tool registry needs a new tool definition for `search_address_book` with `user_id` and `query` params. This is additive — no breaking changes to existing tools.
+- The new `process-stream` function uses a single tool call with two top-level properties: `items` (array) and `reflection` (object with nullable fields). The prompt tells the model: "If there is no emotional or reflective content, return reflection as null."
+- Header label simplifies to: "Clear your mind" → "Speak freely" → "Listening…" → "Sorting through everything…" → "What I heard"
+- The reflection section in the review screen reuses the existing reflection UI (texture, energy givers/drainers, threads) but is conditional on `reflection !== null`
 
