@@ -1,65 +1,51 @@
 
 
-## Unified "Clear Your Mind" — Single Stream, Dual Output
+## Three-tab nav: HOME · MIND · ENERGY
 
-### The Change
-Remove the mode-select screen ("Get organized" vs "How am I doing") entirely. The user just opens, talks (or types), and Anren processes the single stream into **both** tasks and reflection data simultaneously. One input, two outputs — quietly sorted.
+### Tabs
 
-### How It Works
+1. **HOME** (default) — `WeeklyReview` component (already drafted in `src/components/WeeklyReview.tsx`). The "you've been seen" weekly life review built from existing reflections + digest + cards data.
+2. **MIND** — Existing `HomeView` (Run My Day + active items list).
+3. **ENERGY** — Reflection patterns content (currently at `/patterns`), embedded inline.
 
-**New edge function: `process-stream`**
-A single edge function replaces the two separate calls. It receives the raw transcript and returns a unified response:
+### Bottom nav
 
-```text
-{
-  items: [ { title, type, theme, due_at } ],     // tasks/events/ongoing
-  reflection: { texture, texture_why, ..., summary }  // emotional layer
-}
-```
+Fixed bottom bar, three text-only buttons in all-caps. No icons.
+- `text-label uppercase tracking-[0.2em]`, `py-4`, full-width split in thirds
+- Active: `text-foreground` + 1px underline
+- Inactive: `text-text-muted-color`
+- Subtle top border (`border-divider-color`), backdrop blur, safe-area aware (`pb-[env(safe-area-inset-bottom)]`)
+- Main content gets `pb-24` so nav doesn't cover it
 
-The AI prompt instructs the model to read the stream as a whole — extract actionable items AND the emotional texture from the same text. The interleaving IS the signal.
+### HOME tab feel
 
-**Updated `BrainDumpSheet.tsx`**
-- Remove `Mode` type, `mode-select` phase, and the two-button screen
-- Sheet opens directly into voice recording (existing auto-start behavior)
-- After transcription, calls `process-stream` instead of choosing between `process-brain-dump` / `process-reflection`
-- New **unified review screen** shows both:
-  - The task list (existing review UI)
-  - A reflection summary card (texture + energy + threads) — shown only if the AI detected emotional content
-- Single "Confirm" button saves tasks via `onConfirm` AND saves the reflection to the `reflections` table in one action
-- If the AI found no emotional content, reflection section is simply absent — no awkward empty state
+Uses only existing data — no new integrations:
+- `useReflections` (last 7 days: textures, energy givers/drainers, threads)
+- `useReflectionDigest` (weekly + monthly AI synthesis)
+- `useCards` (completed this week, overdue/pressing)
 
-### Files Changed
+Sections (Cormorant for felt lines, Inter muted for lists, no metrics, no red):
+- Header: `Weekly life review` micro-label + date range (e.g. "Apr 9–Apr 16")
+- **The arc** — digest texture in italic serif + what created it; falls back to date-stamped daily textures
+- **What's working** — energy givers (deduped, `+` prefix) + count of items moved this week
+- **The friction points** — energy drainers (`−` prefix) + pressing/overdue threads
+- **The pattern underneath** — digest's recurring patterns, or unresolved threads
+- **What this reveals** — digest's `what_this_reveals` in italic serif
+- Closing: gentle muted italic line
 
-1. **`supabase/functions/process-stream/index.ts`** (new) — Combined AI function with a single tool call that returns `{ items, reflection }`. Uses the same Lovable AI gateway + Gemini Flash. The prompt merges the best of both existing prompts: extract tasks AND reflect.
+Empty state: single contemplative line ("Your week will take shape here as you move through it.")
 
-2. **`src/components/BrainDumpSheet.tsx`** — Remove mode selection, simplify phases to `voice → transcribing → typing → processing → review`. Single review screen shows tasks + reflection card. Single confirm saves both.
+### Files
 
-3. **`supabase/functions/process-brain-dump/index.ts`** and **`supabase/functions/process-reflection/index.ts`** — Keep as-is (the data-proxy still calls `process-reflection` for the companion's `log_reflection` action). No breaking changes to external callers.
+1. **`src/pages/Index.tsx`** — Add `activeTab` state (`"home" | "mind" | "energy"`, default `"home"`). Conditionally render the three views. Add fixed bottom nav. Remove top-right Orbit icon (replaced by ENERGY tab); keep Users (address book) + Settings in top header. Add `pb-24` to content wrapper.
 
-### UX Flow
+2. **`src/components/EnergyView.tsx`** (new) — Extract body of `src/pages/Patterns.tsx` (reflections list + digest sections) into a chrome-less reusable component.
 
-```text
-Open sheet → Recording starts automatically
-         → Stop / "Type instead"
-         → "Sorting through everything…"
-         → Review screen:
-              ┌─────────────────────────┐
-              │ Today's texture          │  ← only if detected
-              │ "scattered but alive"    │
-              │ energy givers / drainers │
-              └─────────────────────────┘
-              ┌─────────────────────────┐
-              │ TASKS                   │
-              │ • Call pediatrician      │
-              │ • Book camp thing        │
-              └─────────────────────────┘
-              [ Confirm — 2 items + reflection ]
-```
+3. **`src/pages/Patterns.tsx`** — Redirect `/patterns` → `/` (Energy tab) so old deep links still work; or render `<EnergyView />` inside existing page chrome. Going with redirect for simplicity.
 
-### Technical Details
+4. **`src/components/WeeklyReview.tsx`** — Already exists; polish during build if needed.
 
-- The new `process-stream` function uses a single tool call with two top-level properties: `items` (array) and `reflection` (object with nullable fields). The prompt tells the model: "If there is no emotional or reflective content, return reflection as null."
-- Header label simplifies to: "Clear your mind" → "Speak freely" → "Listening…" → "Sorting through everything…" → "What I heard"
-- The reflection section in the review screen reuses the existing reflection UI (texture, energy givers/drainers, threads) but is conditional on `reflection !== null`
+### Out of scope
+
+No new data sources (Whoop, calendar, glucose). HOME runs strictly off existing reflection + card data; richer integrations come later.
 
