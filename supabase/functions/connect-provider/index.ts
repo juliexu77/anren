@@ -1,0 +1,72 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const SUPPORTED = ["google_calendar", "whoop", "oura", "strava"] as const;
+type Provider = typeof SUPPORTED[number];
+
+function googleCalendarUrl(userId: string, redirectUri: string) {
+  const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
+  if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "https://www.googleapis.com/auth/calendar.readonly",
+    access_type: "offline",
+    prompt: "consent",
+    state: JSON.stringify({ provider: "google_calendar", user_id: userId }),
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No auth header");
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) throw new Error("Unauthorized");
+
+    const { provider, redirectUri } = await req.json();
+    if (!SUPPORTED.includes(provider)) {
+      return new Response(
+        JSON.stringify({ error: `Provider ${provider} not yet supported` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let url: string;
+    switch (provider as Provider) {
+      case "google_calendar":
+        url = googleCalendarUrl(user.id, redirectUri);
+        break;
+      case "whoop":
+      case "oura":
+      case "strava":
+        throw new Error(`${provider} OAuth coming soon`);
+    }
+
+    return new Response(JSON.stringify({ url }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e: any) {
+    console.error("connect-provider error:", e);
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
