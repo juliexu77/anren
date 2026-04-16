@@ -1,10 +1,8 @@
 import { useMemo, useState, useRef } from "react";
 import { format, parseISO } from "date-fns";
-import { Loader2, Camera, ChevronDown, Check, X } from "lucide-react";
+import { Loader2, Camera, ChevronDown, Check } from "lucide-react";
 import type { BrainCard } from "@/types/card";
 import { RunMyDay } from "@/components/RunMyDay";
-import { useReflectionDigest } from "@/hooks/useReflectionDigest";
-import type { ReflectionSummary } from "@/hooks/useReflectionDigest";
 
 
 interface Props {
@@ -24,8 +22,7 @@ interface Props {
 }
 
 export function HomeView({ cards, cardsLoading, onCardClick, onComplete, onOpenCamera, onOpenBrainDump, onReorder, reordering, reorderMessage, readOnly, viewerBanner, dailyPlan, dailyPlanLoading }: Props) {
-  
-  const { weeklyDigest, monthlyDigest, dismiss: dismissDigest } = useReflectionDigest();
+
 
   // All non-completed, non-parsing items in one list
   const allItems = useMemo(
@@ -232,45 +229,3 @@ function ItemRow({
   );
 }
 
-/* ── Texture Digest Card ── */
-function TextureDigestCard({ digest, onDismiss }: { digest: ReflectionSummary; onDismiss: (id: string) => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const label = digest.period_type === "monthly" ? "The texture of your month" : "The texture of your week";
-
-  return (
-    <div className="sanctuary-card px-4 py-4 relative">
-      <button
-        onClick={() => onDismiss(digest.id)}
-        className="absolute top-3 right-3 p-1"
-      >
-        <X className="w-3.5 h-3.5 text-text-muted-color" />
-      </button>
-
-      <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
-        <p className="text-micro uppercase tracking-wider text-text-muted-color mb-1">
-          {label}
-        </p>
-        <p className="font-display text-lg italic text-text-primary pr-6">
-          "{digest.texture}"
-        </p>
-      </button>
-
-      {expanded && (
-        <div className="mt-3 pt-3 border-t border-divider-color/20 space-y-3 animate-fade-in">
-          <div>
-            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What created it</h4>
-            <p className="text-caption text-text-secondary-color">{digest.what_created_it}</p>
-          </div>
-          <div>
-            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Recurring patterns</h4>
-            <p className="text-caption text-text-secondary-color">{digest.recurring_patterns}</p>
-          </div>
-          <div>
-            <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
-            <p className="text-caption text-text-secondary-color italic">{digest.what_this_reveals}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
