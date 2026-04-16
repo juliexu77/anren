@@ -29,8 +29,9 @@ export function useAppleHealth() {
     if (!isNative) return false;
     try {
       const { CapacitorHealthkit } = await import("@perfood/capacitor-healthkit");
-      const available = await CapacitorHealthkit.isAvailable();
-      if (!available) {
+      try {
+        await CapacitorHealthkit.isAvailable();
+      } catch {
         toast.error("Apple Health is not available on this device");
         return false;
       }
@@ -192,8 +193,4 @@ export function useAppleHealth() {
   };
 
   return { busy, isNative, requestAuthorization, syncNow, useAutoSyncOnForeground };
-}
-
-function now() {
-  return Date.now();
 }
