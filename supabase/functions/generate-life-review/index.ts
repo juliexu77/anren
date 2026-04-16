@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
       Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
     };
 
-    const [reflResp, completedResp, pressingResp] = await Promise.all([
+    const [reflResp, completedResp, pressingResp, signalsResp] = await Promise.all([
       fetch(
         `${SUPABASE_URL}/rest/v1/reflections?user_id=eq.${userId}&reflection_date=gte.${weekStart}&reflection_date=lte.${weekEnd}&order=reflection_date.asc`,
         { headers },
@@ -346,27 +346,36 @@ Deno.serve(async (req) => {
         `${SUPABASE_URL}/rest/v1/cards?user_id=eq.${userId}&status=eq.active&due_at=not.is.null&order=due_at.asc`,
         { headers },
       ),
+      fetch(
+        `${SUPABASE_URL}/rest/v1/health_signals?user_id=eq.${userId}&recorded_at=gte.${weekStart}T00:00:00Z&recorded_at=lte.${weekEnd}T23:59:59Z&select=provider,signal_type,recorded_at,value&order=recorded_at.asc`,
+        { headers },
+      ),
     ]);
 
     const reflections: ReflectionRow[] = await reflResp.json();
     const completed: CardRow[] = await completedResp.json();
     const allActive: CardRow[] = await pressingResp.json();
+    const signals: SignalRow[] = await signalsResp.json();
 
-    // Pressing = due within week or overdue
     const weekEndPlus2 = addDays(weekEnd, 2);
     const pressing = allActive.filter(
       (c) => c.due_at && c.due_at.slice(0, 10) <= weekEndPlus2,
     );
 
-    // Need *some* signal
-    if (reflections.length === 0 && completed.length === 0 && pressing.length === 0) {
+    if (
+      reflections.length === 0 &&
+      completed.length === 0 &&
+      pressing.length === 0 &&
+      signals.length === 0
+    ) {
       return new Response(
         JSON.stringify({ review: null, cached: false, reason: "no_data" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const document = buildDocument(reflections, completed, pressing, weekStart, weekEnd);
+    const signalSummary = summarizeSignals(signals);
+    const document = buildDocument(reflections, completed, pressing, signalSummary, weekStart, weekEnd);
 
     // Call Claude
     const anthropicResp = await fetch("https://api.anthropic.com/v1/messages", {
