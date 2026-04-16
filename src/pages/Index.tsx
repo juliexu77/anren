@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCards } from "@/hooks/useCards";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
@@ -12,11 +12,15 @@ import { BrainDumpSheet } from "@/components/BrainDumpSheet";
 import { NewCardSheet } from "@/components/NewCardSheet";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
+import { WeeklyReview } from "@/components/WeeklyReview";
+import { EnergyView } from "@/components/EnergyView";
 
-import { Settings, X, Orbit, Users } from "lucide-react";
+import { Settings, X, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
+
+type Tab = "home" | "mind" | "energy";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -26,24 +30,37 @@ const Index = () => {
 
   const { plan: dailyPlan, loading: dailyPlanLoading, regenerate: regeneratePlan } = useDailyPlan(!cardsLoading);
   usePushNotifications();
-  
+
   const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const t = searchParams.get("tab");
+    return t === "mind" || t === "energy" ? t : "home";
+  });
   const [selectedCard, setSelectedCard] = useState<BrainCard | null>(null);
   const [showBrainDump, setShowBrainDump] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [reordering, setReordering] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
-  
+
   const [reorderMessage, setReorderMessage] = useState<string | null>(null);
   const [researching, setResearching] = useState(false);
 
   // Handle deep link
   useEffect(() => {
     const openCardId = searchParams.get("openCard");
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "mind" || tabParam === "energy" || tabParam === "home") {
+      setActiveTab(tabParam as Tab);
+    }
     if (openCardId && cards.length > 0) {
       const found = cards.find((c) => c.id === openCardId);
-      if (found) setSelectedCard(found);
+      if (found) {
+        setSelectedCard(found);
+        setActiveTab("mind");
+      }
+      setSearchParams({}, { replace: true });
+    } else if (tabParam) {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, cards, setSearchParams]);
@@ -148,12 +165,6 @@ const Index = () => {
               <Users className="w-5 h-5" />
             </button>
             <button
-              onClick={() => navigate("/patterns")}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Orbit className="w-5 h-5" />
-            </button>
-            <button
               onClick={() => setShowSettings(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -164,23 +175,59 @@ const Index = () => {
       </header>
 
       {/* Main content */}
-      <div className="max-w-xl mx-auto">
-        <HomeView
-          cards={cards}
-          cardsLoading={cardsLoading}
-          onCardClick={(card) => setSelectedCard(card)}
-          onComplete={handleComplete}
-          onOpenCamera={() => setShowCamera(true)}
-          onOpenBrainDump={() => setShowBrainDump(true)}
-          onReorder={() => { setReorderMessage(null); handleReorder(); }}
-          reordering={reordering}
-          reorderMessage={reorderMessage}
-          readOnly={household.isViewer}
-          viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
-          dailyPlan={dailyPlan}
-          dailyPlanLoading={dailyPlanLoading}
-        />
+      <div className="pb-24">
+        {activeTab === "home" && (
+          <WeeklyReview cards={cards} cardsLoading={cardsLoading} />
+        )}
+
+        {activeTab === "mind" && (
+          <div className="max-w-xl mx-auto">
+            <HomeView
+              cards={cards}
+              cardsLoading={cardsLoading}
+              onCardClick={(card) => setSelectedCard(card)}
+              onComplete={handleComplete}
+              onOpenCamera={() => setShowCamera(true)}
+              onOpenBrainDump={() => setShowBrainDump(true)}
+              onReorder={() => { setReorderMessage(null); handleReorder(); }}
+              reordering={reordering}
+              reorderMessage={reorderMessage}
+              readOnly={household.isViewer}
+              viewerBanner={household.isViewer ? `Viewing ${household.ownerName || "your partner"}'s list` : null}
+              dailyPlan={dailyPlan}
+              dailyPlanLoading={dailyPlanLoading}
+            />
+          </div>
+        )}
+
+        {activeTab === "energy" && <EnergyView />}
       </div>
+
+      {/* Bottom nav */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 bg-background/85 backdrop-blur-md border-t border-divider-color"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="max-w-5xl mx-auto grid grid-cols-3">
+          {(["home", "mind", "energy"] as const).map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="relative py-4 text-label uppercase tracking-[0.2em] transition-colors"
+              >
+                <span className={isActive ? "text-foreground" : "text-text-muted-color"}>
+                  {tab}
+                </span>
+                {isActive && (
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-2 w-6 h-px bg-foreground" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* Sheets */}
       <CardDetailSheet
