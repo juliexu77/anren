@@ -1,9 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Heart, Activity, Watch, Apple, Zap, Check, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Heart, Activity, Watch, Zap, Check, Loader2, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useConnections, type ConnectionProvider } from "@/hooks/useConnections";
+import { useAppleHealth } from "@/hooks/useAppleHealth";
 import { Capacitor } from "@capacitor/core";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -21,16 +24,21 @@ const PROVIDERS: ProviderDef[] = [
   { id: "apple_calendar", name: "Apple Calendar", description: "Native iOS calendar events", icon: Calendar, iosOnly: true, comingSoon: true },
   { id: "whoop", name: "WHOOP", description: "Recovery, strain, and sleep", icon: Activity },
   { id: "oura", name: "Oura", description: "Sleep, readiness, and HRV", icon: Watch, comingSoon: true },
-  { id: "apple_health", name: "Apple Health", description: "Steps, sleep, and workouts", icon: Heart, iosOnly: true, comingSoon: true },
+  { id: "apple_health", name: "Apple Health", description: "Steps, sleep, and workouts", icon: Heart, iosOnly: true },
   { id: "strava", name: "Strava", description: "Runs, rides, and workouts", icon: Zap, comingSoon: true },
 ];
 
 export default function Connections() {
   const navigate = useNavigate();
-  const { connections, loading, busyProvider, isConnected, getConnection, connect, disconnect } = useConnections();
+  const { user } = useAuth();
+  const { connections, loading, busyProvider, isConnected, getConnection, connect, disconnect, refresh } = useConnections();
   const isNative = Capacitor.isNativePlatform();
+  const appleHealth = useAppleHealth();
 
-  // Handle return from OAuth flow (?connected=google_calendar or ?error=...)
+  // Auto-sync Apple Health on foreground when connected
+  appleHealth.useAutoSyncOnForeground(isConnected("apple_health"));
+
+  // Handle return from OAuth flow (?connected=... or ?error=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get("connected");
@@ -45,6 +53,28 @@ export default function Connections() {
     }
   }, []);
 
+  const handleAppleHealthToggle = async (currentlyOn: boolean) => {
+    if (!user) return;
+    if (currentlyOn) {
+      // Soft disconnect: mark inactive, keep historical signals
+      await supabase
+        .from("user_connections")
+        .update({ status: "inactive" })
+        .eq("user_id", user.id)
+        .eq("provider", "apple_health");
+      await refresh();
+      toast("Disconnected");
+      return;
+    }
+    const ok = await appleHealth.requestAuthorization();
+    if (!ok) return;
+    const result = await appleHealth.syncNow();
+    if (result) {
+      toast.success(`Apple Health connected · ${result.count} samples`);
+      await refresh();
+    }
+  };
+
   const handleToggle = async (provider: ProviderDef, currentlyOn: boolean) => {
     if (provider.comingSoon) {
       toast("Coming soon");
@@ -52,6 +82,10 @@ export default function Connections() {
     }
     if (provider.iosOnly && !isNative) {
       toast("Available on the iOS app");
+      return;
+    }
+    if (provider.id === "apple_health") {
+      await handleAppleHealthToggle(currentlyOn);
       return;
     }
     if (currentlyOn) {
@@ -103,7 +137,7 @@ export default function Connections() {
           {PROVIDERS.map((p) => {
             const conn = getConnection(p.id);
             const on = isConnected(p.id);
-            const busy = busyProvider === p.id;
+            const busy = busyProvider === p.id || (p.id === "apple_health" && appleHealth.busy);
             const Icon = p.icon;
             const lastSync = conn?.last_synced_at
               ? formatDistanceToNow(new Date(conn.last_synced_at), { addSuffix: true })
@@ -153,8 +187,8 @@ export default function Connections() {
       )}
 
       <p className="text-xs text-text-muted-color mt-8 leading-relaxed">
-        Connections sync every few minutes in the background. Disconnecting stops syncing
-        but keeps the data we already have.
+        Connections sync every few minutes in the background. Apple Health syncs when you open the app.
+        Disconnecting stops syncing but keeps the data we already have.
       </p>
     </main>
   );

@@ -32,10 +32,11 @@ Your job: read everything they shared and write back something that makes them f
 
 CRITICAL RULES:
 - Name specifics. Quote phrases from their reflections. Cite task titles. Reference dates ("Tuesday", "on April 15").
+- When connected health/calendar signals are present, you may cite them concretely: sleep duration on a specific night, recovery/readiness scores, named workouts, calendar load on a heavy day. Weave them into themes — never list metrics on their own.
 - Use NAMED THEMES that group multiple data points under one insight (e.g. "Tennis is your anchor — three lessons this week, and your Tuesday reflection was your best of the week").
 - Connect threads across days. If something appeared in Monday's reflection AND Thursday's, name that.
 - Each theme closes with one forward note — a gentle directive, not a metric.
-- Contemplative voice. No bullet points in prose. No metrics. No scores. No "great job!" cheerleading.
+- Contemplative voice. No bullet points in prose. No metrics. No scores in isolation. No "great job!" cheerleading.
 - Never use clinical or productivity language ("brain dump", "todo", "completed tasks count"). Say "what you moved through" not "completed items".
 - No red/destructive framing. Friction is honest, not alarming.
 - If data is thin, write less — but still specific. Never pad with platitudes.`;
@@ -117,10 +118,100 @@ interface CardRow {
   created_at: string;
 }
 
+interface SignalRow {
+  provider: string;
+  signal_type: string;
+  recorded_at: string;
+  value: any;
+}
+
+function summarizeSignals(signals: SignalRow[]): string {
+  if (!signals.length) return "(no connected health/calendar data this week)";
+
+  const lines: string[] = [];
+  const byKey = (k: string) => signals.filter((s) => `${s.provider}:${s.signal_type}` === k);
+
+  const sleeps = signals.filter((s) => s.signal_type === "sleep");
+  if (sleeps.length) {
+    const durations = sleeps
+      .map((s) => Number(s.value?.duration_minutes ?? s.value?.total_sleep_minutes))
+      .filter((n) => isFinite(n) && n > 0);
+    if (durations.length) {
+      const avg = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+      const min = Math.min(...durations);
+      const minNight = sleeps.find(
+        (s) => Number(s.value?.duration_minutes ?? s.value?.total_sleep_minutes) === min
+      );
+      const minDate = minNight?.recorded_at?.slice(0, 10) || "?";
+      lines.push(
+        `Sleep (${sleeps[0].provider}): ${sleeps.length} nights logged, avg ${Math.floor(avg / 60)}h${String(avg % 60).padStart(2, "0")}m, lowest ${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}m on ${minDate}.`
+      );
+    }
+  }
+
+  const recoveries = byKey("whoop:recovery");
+  if (recoveries.length) {
+    const scores = recoveries.map((r) => Number(r.value?.score)).filter((n) => isFinite(n));
+    if (scores.length) {
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      lines.push(`WHOOP recovery: avg ${avg}% across ${scores.length} days.`);
+    }
+  }
+
+  const readiness = byKey("oura:readiness");
+  if (readiness.length) {
+    const scores = readiness.map((r) => Number(r.value?.score)).filter((n) => isFinite(n));
+    if (scores.length) {
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      lines.push(`Oura readiness: avg ${avg} across ${scores.length} days.`);
+    }
+  }
+
+  const workouts = signals.filter((s) => s.signal_type === "workout");
+  if (workouts.length) {
+    const summaries = workouts.slice(0, 12).map((w) => {
+      const date = w.recorded_at.slice(0, 10);
+      const type =
+        w.value?.type ||
+        w.value?.sport_type ||
+        w.value?.activity ||
+        (w.value?.sport_id ? `sport ${w.value.sport_id}` : "workout");
+      const dur = w.value?.duration_minutes ? ` ${w.value.duration_minutes}m` : "";
+      return `${date} ${type}${dur}`;
+    });
+    lines.push(`Workouts (${workouts.length}): ${summaries.join("; ")}.`);
+  }
+
+  const steps = byKey("apple_health:steps");
+  if (steps.length) {
+    const counts = steps.map((s) => Number(s.value?.count)).filter((n) => isFinite(n));
+    if (counts.length) {
+      const avg = Math.round(counts.reduce((a, b) => a + b, 0) / counts.length);
+      lines.push(`Steps: avg ${avg.toLocaleString()}/day across ${counts.length} days.`);
+    }
+  }
+
+  const cal = signals.filter((s) => s.signal_type === "calendar_event");
+  if (cal.length) {
+    const byDay = new Map<string, number>();
+    for (const c of cal) {
+      const d = c.recorded_at.slice(0, 10);
+      byDay.set(d, (byDay.get(d) || 0) + 1);
+    }
+    const heaviest = [...byDay.entries()].sort((a, b) => b[1] - a[1])[0];
+    lines.push(
+      `Calendar: ${cal.length} events across ${byDay.size} days${heaviest ? `, heaviest ${heaviest[0]} (${heaviest[1]} events)` : ""}.`
+    );
+  }
+
+  return lines.join("\n");
+}
+
 function buildDocument(
   reflections: ReflectionRow[],
   completed: CardRow[],
   pressing: CardRow[],
+  signalSummary: string,
   weekStart: string,
   weekEnd: string,
 ): string {
@@ -166,7 +257,11 @@ function buildDocument(
       const due = c.due_at ? c.due_at.slice(0, 10) : "no date";
       lines.push(`- [due ${due}] (${c.category}) ${c.title}`);
     }
+    lines.push("");
   }
+
+  lines.push(`## Signals from connected sources\n`);
+  lines.push(signalSummary);
 
   return lines.join("\n");
 }
@@ -238,7 +333,7 @@ Deno.serve(async (req) => {
       Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
     };
 
-    const [reflResp, completedResp, pressingResp] = await Promise.all([
+    const [reflResp, completedResp, pressingResp, signalsResp] = await Promise.all([
       fetch(
         `${SUPABASE_URL}/rest/v1/reflections?user_id=eq.${userId}&reflection_date=gte.${weekStart}&reflection_date=lte.${weekEnd}&order=reflection_date.asc`,
         { headers },
@@ -251,27 +346,36 @@ Deno.serve(async (req) => {
         `${SUPABASE_URL}/rest/v1/cards?user_id=eq.${userId}&status=eq.active&due_at=not.is.null&order=due_at.asc`,
         { headers },
       ),
+      fetch(
+        `${SUPABASE_URL}/rest/v1/health_signals?user_id=eq.${userId}&recorded_at=gte.${weekStart}T00:00:00Z&recorded_at=lte.${weekEnd}T23:59:59Z&select=provider,signal_type,recorded_at,value&order=recorded_at.asc`,
+        { headers },
+      ),
     ]);
 
     const reflections: ReflectionRow[] = await reflResp.json();
     const completed: CardRow[] = await completedResp.json();
     const allActive: CardRow[] = await pressingResp.json();
+    const signals: SignalRow[] = await signalsResp.json();
 
-    // Pressing = due within week or overdue
     const weekEndPlus2 = addDays(weekEnd, 2);
     const pressing = allActive.filter(
       (c) => c.due_at && c.due_at.slice(0, 10) <= weekEndPlus2,
     );
 
-    // Need *some* signal
-    if (reflections.length === 0 && completed.length === 0 && pressing.length === 0) {
+    if (
+      reflections.length === 0 &&
+      completed.length === 0 &&
+      pressing.length === 0 &&
+      signals.length === 0
+    ) {
       return new Response(
         JSON.stringify({ review: null, cached: false, reason: "no_data" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const document = buildDocument(reflections, completed, pressing, weekStart, weekEnd);
+    const signalSummary = summarizeSignals(signals);
+    const document = buildDocument(reflections, completed, pressing, signalSummary, weekStart, weekEnd);
 
     // Call Claude
     const anthropicResp = await fetch("https://api.anthropic.com/v1/messages", {
