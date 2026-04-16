@@ -8,12 +8,9 @@ const corsHeaders = {
 };
 
 /**
- * OAuth callback handler. Receives ?code=...&state=... from the provider,
- * exchanges code for tokens, stores them in user_connections, and redirects
- * the user back to /connections with a success/error flag.
- *
- * This function is called by the browser (no JWT) — auth is bound to state.user_id
- * which is signed-back via the OAuth provider after we set it in the auth URL.
+ * OAuth callback handler. Exchanges code for tokens for any supported provider,
+ * stores tokens in user_connections, kicks off an initial sync, then redirects
+ * the browser back to /connections with a status flag.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -23,7 +20,6 @@ serve(async (req) => {
   const stateRaw = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  // App origin to redirect back to. Default to production; can be overridden via state.origin.
   const APP_ORIGIN_DEFAULT = "https://anren.app";
   const redirectBack = (origin: string, qs: string) =>
     Response.redirect(`${origin}/connections?${qs}`, 302);
@@ -47,54 +43,100 @@ serve(async (req) => {
 
     const callbackUri = `${Deno.env.get("SUPABASE_URL")}/functions/v1/connections-callback`;
 
-    if (state.provider === "google_calendar") {
-      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          code,
-          client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
-          client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
-          redirect_uri: callbackUri,
-          grant_type: "authorization_code",
-        }),
-      });
-      if (!tokenRes.ok) {
-        const t = await tokenRes.text();
-        console.error("Google token exchange failed:", t);
-        return redirectBack(`error=${encodeURIComponent("token_exchange_failed")}`);
-      }
-      const tokens = await tokenRes.json();
+    type TokenExchange = {
+      tokenUrl: string;
+      clientId: string;
+      clientSecret: string;
+      extraBody?: Record<string, string>;
+      authHeader?: boolean; // some providers want client creds in Basic auth
+    };
 
-      await service.from("user_connections").upsert(
-        {
-          user_id: state.user_id,
-          provider: "google_calendar",
-          status: "active",
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token || null,
-          token_expires_at: new Date(
-            Date.now() + (tokens.expires_in || 3600) * 1000
-          ).toISOString(),
-          last_sync_error: null,
-        },
-        { onConflict: "user_id,provider" }
-      );
+    let cfg: TokenExchange | null = null;
 
-      // Fire-and-forget initial sync
-      fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/sync-provider`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        },
-        body: JSON.stringify({ provider: "google_calendar", user_id: state.user_id }),
-      }).catch((e) => console.error("initial sync dispatch failed:", e));
-
-      return redirectBack(appOrigin, `connected=google_calendar`);
+    switch (state.provider) {
+      case "google_calendar":
+        cfg = {
+          tokenUrl: "https://oauth2.googleapis.com/token",
+          clientId: Deno.env.get("GOOGLE_CLIENT_ID")!,
+          clientSecret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
+        };
+        break;
+      case "whoop":
+        cfg = {
+          tokenUrl: "https://api.prod.whoop.com/oauth/oauth2/token",
+          clientId: Deno.env.get("WHOOP_CLIENT_ID")!,
+          clientSecret: Deno.env.get("WHOOP_CLIENT_SECRET")!,
+        };
+        break;
+      case "oura":
+        cfg = {
+          tokenUrl: "https://api.ouraring.com/oauth/token",
+          clientId: Deno.env.get("OURA_CLIENT_ID")!,
+          clientSecret: Deno.env.get("OURA_CLIENT_SECRET")!,
+        };
+        break;
+      case "strava":
+        cfg = {
+          tokenUrl: "https://www.strava.com/api/v3/oauth/token",
+          clientId: Deno.env.get("STRAVA_CLIENT_ID")!,
+          clientSecret: Deno.env.get("STRAVA_CLIENT_SECRET")!,
+        };
+        break;
+      default:
+        return redirectBack(appOrigin, `error=${encodeURIComponent("unsupported_provider")}`);
     }
 
-    return redirectBack(appOrigin, `error=${encodeURIComponent("unsupported_provider")}`);
+    const body: Record<string, string> = {
+      code,
+      client_id: cfg.clientId,
+      client_secret: cfg.clientSecret,
+      redirect_uri: callbackUri,
+      grant_type: "authorization_code",
+      ...(cfg.extraBody || {}),
+    };
+
+    const tokenRes = await fetch(cfg.tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(body),
+    });
+
+    if (!tokenRes.ok) {
+      const t = await tokenRes.text();
+      console.error(`${state.provider} token exchange failed:`, t);
+      return redirectBack(appOrigin, `error=${encodeURIComponent("token_exchange_failed")}`);
+    }
+    const tokens = await tokenRes.json();
+
+    // Strava returns expires_at (epoch seconds) instead of expires_in
+    const expiresAt = tokens.expires_at
+      ? new Date(tokens.expires_at * 1000).toISOString()
+      : new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString();
+
+    await service.from("user_connections").upsert(
+      {
+        user_id: state.user_id,
+        provider: state.provider,
+        status: "active",
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || null,
+        token_expires_at: expiresAt,
+        last_sync_error: null,
+      },
+      { onConflict: "user_id,provider" }
+    );
+
+    // Fire-and-forget initial sync
+    fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/sync-provider`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ provider: state.provider, user_id: state.user_id }),
+    }).catch((e) => console.error("initial sync dispatch failed:", e));
+
+    return redirectBack(appOrigin, `connected=${state.provider}`);
   } catch (e: any) {
     console.error("connections-callback error:", e);
     return redirectBack(appOrigin, `error=${encodeURIComponent(e.message)}`);

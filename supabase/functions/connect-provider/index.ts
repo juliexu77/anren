@@ -10,17 +10,16 @@ const corsHeaders = {
 const SUPPORTED = ["google_calendar", "whoop", "oura", "strava"] as const;
 type Provider = typeof SUPPORTED[number];
 
-const SUPPORTED = ["google_calendar", "whoop", "oura", "strava"] as const;
-type Provider = typeof SUPPORTED[number];
+function callbackUri() {
+  return `${Deno.env.get("SUPABASE_URL")}/functions/v1/connections-callback`;
+}
 
 function googleCalendarUrl(userId: string, appOrigin: string) {
   const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
-  // Use the edge-function callback as the redirect URI — must be pre-registered in Google Cloud Console
-  const redirectUri = `${Deno.env.get("SUPABASE_URL")}/functions/v1/connections-callback`;
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: redirectUri,
+    redirect_uri: callbackUri(),
     response_type: "code",
     scope: "https://www.googleapis.com/auth/calendar.readonly",
     access_type: "offline",
@@ -28,6 +27,46 @@ function googleCalendarUrl(userId: string, appOrigin: string) {
     state: JSON.stringify({ provider: "google_calendar", user_id: userId, origin: appOrigin }),
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+function whoopUrl(userId: string, appOrigin: string) {
+  const clientId = Deno.env.get("WHOOP_CLIENT_ID");
+  if (!clientId) throw new Error("WHOOP_CLIENT_ID not configured");
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: callbackUri(),
+    response_type: "code",
+    scope: "read:recovery read:cycles read:sleep read:workout read:profile offline",
+    state: JSON.stringify({ provider: "whoop", user_id: userId, origin: appOrigin }),
+  });
+  return `https://api.prod.whoop.com/oauth/oauth2/auth?${params.toString()}`;
+}
+
+function ouraUrl(userId: string, appOrigin: string) {
+  const clientId = Deno.env.get("OURA_CLIENT_ID");
+  if (!clientId) throw new Error("OURA_CLIENT_ID not configured");
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: callbackUri(),
+    response_type: "code",
+    scope: "personal daily heartrate workout session",
+    state: JSON.stringify({ provider: "oura", user_id: userId, origin: appOrigin }),
+  });
+  return `https://cloud.ouraring.com/oauth/authorize?${params.toString()}`;
+}
+
+function stravaUrl(userId: string, appOrigin: string) {
+  const clientId = Deno.env.get("STRAVA_CLIENT_ID");
+  if (!clientId) throw new Error("STRAVA_CLIENT_ID not configured");
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: callbackUri(),
+    response_type: "code",
+    approval_prompt: "auto",
+    scope: "read,activity:read_all",
+    state: JSON.stringify({ provider: "strava", user_id: userId, origin: appOrigin }),
+  });
+  return `https://www.strava.com/oauth/authorize?${params.toString()}`;
 }
 
 serve(async (req) => {
@@ -60,9 +99,14 @@ serve(async (req) => {
         url = googleCalendarUrl(user.id, appOrigin);
         break;
       case "whoop":
+        url = whoopUrl(user.id, appOrigin);
+        break;
       case "oura":
+        url = ouraUrl(user.id, appOrigin);
+        break;
       case "strava":
-        throw new Error(`${provider} OAuth coming soon`);
+        url = stravaUrl(user.id, appOrigin);
+        break;
     }
 
     return new Response(JSON.stringify({ url }), {

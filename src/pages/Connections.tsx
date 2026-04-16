@@ -19,7 +19,7 @@ interface ProviderDef {
 const PROVIDERS: ProviderDef[] = [
   { id: "google_calendar", name: "Google Calendar", description: "See your day in context", icon: Calendar },
   { id: "apple_calendar", name: "Apple Calendar", description: "Native iOS calendar events", icon: Calendar, iosOnly: true, comingSoon: true },
-  { id: "whoop", name: "WHOOP", description: "Recovery, strain, and sleep", icon: Activity, comingSoon: true },
+  { id: "whoop", name: "WHOOP", description: "Recovery, strain, and sleep", icon: Activity },
   { id: "oura", name: "Oura", description: "Sleep, readiness, and HRV", icon: Watch, comingSoon: true },
   { id: "apple_health", name: "Apple Health", description: "Steps, sleep, and workouts", icon: Heart, iosOnly: true, comingSoon: true },
   { id: "strava", name: "Strava", description: "Runs, rides, and workouts", icon: Zap, comingSoon: true },
