@@ -162,13 +162,13 @@ export function useAppleHealth() {
       (async () => {
         const handle = await CapacitorApp.addListener("appStateChange", async (state) => {
           if (!state.isActive) return;
-          const now = Date.now();
-          if (now - lastForegroundSync.current < 30 * 60 * 1000) return;
-          lastForegroundSync.current = now;
+          const ts = Date.now();
+          if (ts - lastForegroundSync.current < 30 * 60 * 1000) return;
+          lastForegroundSync.current = ts;
           await syncNow();
         });
         if (!mounted) {
-          handle.remove();
+          await handle.remove();
           return;
         }
         cleanup = () => {
@@ -176,8 +176,9 @@ export function useAppleHealth() {
         };
 
         // Initial sync on mount
-        if (now() - lastForegroundSync.current > 30 * 60 * 1000) {
-          lastForegroundSync.current = now();
+        const ts = Date.now();
+        if (ts - lastForegroundSync.current > 30 * 60 * 1000) {
+          lastForegroundSync.current = ts;
           await syncNow();
         }
       })();

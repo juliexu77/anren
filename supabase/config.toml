@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.generate-life-review]
 verify_jwt = false
+
+[functions.ingest-apple-health]
+verify_jwt = false
