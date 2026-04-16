@@ -13,7 +13,7 @@ type Provider = typeof SUPPORTED[number];
 const SUPPORTED = ["google_calendar", "whoop", "oura", "strava"] as const;
 type Provider = typeof SUPPORTED[number];
 
-function googleCalendarUrl(userId: string) {
+function googleCalendarUrl(userId: string, appOrigin: string) {
   const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
   // Use the edge-function callback as the redirect URI — must be pre-registered in Google Cloud Console
@@ -25,7 +25,7 @@ function googleCalendarUrl(userId: string) {
     scope: "https://www.googleapis.com/auth/calendar.readonly",
     access_type: "offline",
     prompt: "consent",
-    state: JSON.stringify({ provider: "google_calendar", user_id: userId }),
+    state: JSON.stringify({ provider: "google_calendar", user_id: userId, origin: appOrigin }),
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
