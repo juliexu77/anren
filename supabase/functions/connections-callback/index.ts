@@ -91,12 +91,12 @@ serve(async (req) => {
         body: JSON.stringify({ provider: "google_calendar", user_id: state.user_id }),
       }).catch((e) => console.error("initial sync dispatch failed:", e));
 
-      return redirectBack(`connected=google_calendar`);
+      return redirectBack(appOrigin, `connected=google_calendar`);
     }
 
-    return redirectBack(`error=${encodeURIComponent("unsupported_provider")}`);
+    return redirectBack(appOrigin, `error=${encodeURIComponent("unsupported_provider")}`);
   } catch (e: any) {
     console.error("connections-callback error:", e);
-    return redirectBack(`error=${encodeURIComponent(e.message)}`);
+    return redirectBack(appOrigin, `error=${encodeURIComponent(e.message)}`);
   }
 });
