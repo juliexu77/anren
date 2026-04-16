@@ -23,27 +23,21 @@ serve(async (req) => {
   const stateRaw = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  // Determine app origin to redirect back to
-  const referer = req.headers.get("referer") || "";
-  const origin = (() => {
-    try {
-      return new URL(referer).origin;
-    } catch {
-      return "https://anren.app";
-    }
-  })();
-  const redirectBack = (qs: string) =>
+  // App origin to redirect back to. Default to production; can be overridden via state.origin.
+  const APP_ORIGIN_DEFAULT = "https://anren.app";
+  const redirectBack = (origin: string, qs: string) =>
     Response.redirect(`${origin}/connections?${qs}`, 302);
 
-  if (error) return redirectBack(`error=${encodeURIComponent(error)}`);
-  if (!code || !stateRaw) return redirectBack("error=missing_code");
+  if (error) return redirectBack(APP_ORIGIN_DEFAULT, `error=${encodeURIComponent(error)}`);
+  if (!code || !stateRaw) return redirectBack(APP_ORIGIN_DEFAULT, "error=missing_code");
 
-  let state: { provider: string; user_id: string };
+  let state: { provider: string; user_id: string; origin?: string };
   try {
     state = JSON.parse(stateRaw);
   } catch {
-    return redirectBack("error=invalid_state");
+    return redirectBack(APP_ORIGIN_DEFAULT, "error=invalid_state");
   }
+  const appOrigin = state.origin || APP_ORIGIN_DEFAULT;
 
   try {
     const service = createClient(
