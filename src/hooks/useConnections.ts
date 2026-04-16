@@ -59,7 +59,7 @@ export function useConnections() {
       setBusyProvider(provider);
       try {
         const { data, error } = await supabase.functions.invoke("connect-provider", {
-          body: { provider, redirectUri: `${window.location.origin}/connections/callback` },
+          body: { provider, origin: window.location.origin },
         });
         if (error) return { error: error.message };
         return { url: data?.url };

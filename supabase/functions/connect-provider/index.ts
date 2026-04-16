@@ -45,7 +45,8 @@ serve(async (req) => {
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
     if (userErr || !user) throw new Error("Unauthorized");
 
-    const { provider } = await req.json();
+    const { provider, origin } = await req.json();
+    const appOrigin = origin || "https://anren.app";
     if (!SUPPORTED.includes(provider)) {
       return new Response(
         JSON.stringify({ error: `Provider ${provider} not yet supported` }),
@@ -56,7 +57,7 @@ serve(async (req) => {
     let url: string;
     switch (provider as Provider) {
       case "google_calendar":
-        url = googleCalendarUrl(user.id);
+        url = googleCalendarUrl(user.id, appOrigin);
         break;
       case "whoop":
       case "oura":
