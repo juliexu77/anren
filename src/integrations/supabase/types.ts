@@ -326,6 +326,36 @@ export type Database = {
         }
         Relationships: []
       }
+      life_reviews: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          model: string
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          model?: string
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          model?: string
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       people: {
         Row: {
           created_at: string
