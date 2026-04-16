@@ -10,9 +10,14 @@ const corsHeaders = {
 const SUPPORTED = ["google_calendar", "whoop", "oura", "strava"] as const;
 type Provider = typeof SUPPORTED[number];
 
-function googleCalendarUrl(userId: string, redirectUri: string) {
+const SUPPORTED = ["google_calendar", "whoop", "oura", "strava"] as const;
+type Provider = typeof SUPPORTED[number];
+
+function googleCalendarUrl(userId: string) {
   const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
+  // Use the edge-function callback as the redirect URI — must be pre-registered in Google Cloud Console
+  const redirectUri = `${Deno.env.get("SUPABASE_URL")}/functions/v1/connections-callback`;
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -40,7 +45,7 @@ serve(async (req) => {
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
     if (userErr || !user) throw new Error("Unauthorized");
 
-    const { provider, redirectUri } = await req.json();
+    const { provider } = await req.json();
     if (!SUPPORTED.includes(provider)) {
       return new Response(
         JSON.stringify({ error: `Provider ${provider} not yet supported` }),
@@ -51,7 +56,7 @@ serve(async (req) => {
     let url: string;
     switch (provider as Provider) {
       case "google_calendar":
-        url = googleCalendarUrl(user.id, redirectUri);
+        url = googleCalendarUrl(user.id);
         break;
       case "whoop":
       case "oura":
