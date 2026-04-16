@@ -20,6 +20,7 @@ import ExtensionAuthComplete from "./pages/ExtensionAuthComplete";
 import InviteJoin from "./pages/InviteJoin";
 import Patterns from "./pages/Patterns";
 import AddressBook from "./pages/AddressBook";
+import Connections from "./pages/Connections";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/card/:cardId" element={<ProtectedRoute><CardDeepLink /></ProtectedRoute>} />
               <Route path="/patterns" element={<ProtectedRoute><Patterns /></ProtectedRoute>} />
               <Route path="/address-book" element={<ProtectedRoute><AddressBook /></ProtectedRoute>} />
+              <Route path="/connections" element={<ProtectedRoute><Connections /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

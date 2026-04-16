@@ -50,3 +50,21 @@ verify_jwt = false
 
 [functions.generate-reflection-digest]
 verify_jwt = false
+
+[functions.connect-provider]
+verify_jwt = false
+
+[functions.connections-callback]
+verify_jwt = false
+
+[functions.sync-provider]
+verify_jwt = false
+
+[functions.disconnect-provider]
+verify_jwt = false
+
+[functions.sync-all-active]
+verify_jwt = false
+
+[functions.generate-life-review]
+verify_jwt = false

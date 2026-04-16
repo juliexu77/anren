@@ -2,7 +2,8 @@ import { useColorTheme } from "@/contexts/ColorThemeContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useDailyBrief } from "@/hooks/useDailyBrief";
 import { cn } from "@/lib/utils";
-import { Check, LogOut, Bell, BookUser } from "lucide-react";
+import { Check, LogOut, Bell, BookUser, Plug } from "lucide-react";
+import { useConnections } from "@/hooks/useConnections";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useCallback } from "react";
@@ -33,6 +34,8 @@ export function SettingsPage() {
   const { currentTheme, setTheme, themes } = useColorTheme();
   const { user, signOut } = useAuth();
   const { settings, settingsLoaded, updateSettings } = useDailyBrief();
+  const { connections } = useConnections();
+  const activeConnections = connections.filter((c) => c.status === "active").length;
 
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
@@ -78,6 +81,25 @@ export function SettingsPage() {
           <div className="text-left">
             <p className="text-sm font-medium text-foreground">Manage Address Book</p>
             <p className="text-xs text-muted-foreground">Import, edit, and export for Minted</p>
+          </div>
+        </button>
+      </section>
+
+      {/* Connections */}
+      <section>
+        <h2 className="text-section-header text-text-muted-color mb-4">Connections</h2>
+        <button
+          onClick={() => navigate("/connections")}
+          className="w-full rounded-2xl border border-divider-color/25 p-4 flex items-center gap-3 hover:bg-foreground/5 transition-colors"
+        >
+          <Plug className="w-5 h-5 text-muted-foreground" />
+          <div className="text-left">
+            <p className="text-sm font-medium text-foreground">Integrations</p>
+            <p className="text-xs text-muted-foreground">
+              {activeConnections === 0
+                ? "Connect your calendar, sleep, and activity"
+                : `${activeConnections} active`}
+            </p>
           </div>
         </button>
       </section>
