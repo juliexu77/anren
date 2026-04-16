@@ -241,6 +241,42 @@ export type Database = {
         }
         Relationships: []
       }
+      health_signals: {
+        Row: {
+          created_at: string
+          external_id: string | null
+          id: string
+          provider: string
+          raw: Json | null
+          recorded_at: string
+          signal_type: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          provider: string
+          raw?: Json | null
+          recorded_at: string
+          signal_type: string
+          user_id: string
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          provider?: string
+          raw?: Json | null
+          recorded_at?: string
+          signal_type?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       household_invites: {
         Row: {
           created_at: string
@@ -521,6 +557,51 @@ export type Database = {
           unresolved_threads?: string[]
           user_id?: string
           what_this_reveals?: string
+        }
+        Relationships: []
+      }
+      user_connections: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          last_sync_error: string | null
+          last_synced_at: string | null
+          provider: string
+          refresh_token: string | null
+          settings: Json
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          provider: string
+          refresh_token?: string | null
+          settings?: Json
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          settings?: Json
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
