@@ -91,13 +91,6 @@ export function HomeView({ cards, cardsLoading, onCardClick, onComplete, onOpenC
         </div>
       )}
 
-      {/* ── Weekly / Monthly texture digest ── */}
-      {(weeklyDigest || monthlyDigest) && (
-        <TextureDigestCard
-          digest={(monthlyDigest || weeklyDigest)!}
-          onDismiss={dismissDigest}
-        />
-      )}
 
       {/* ── Help me get organized (above the list) ── */}
       {!readOnly && allItems.length >= 2 && (
