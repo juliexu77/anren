@@ -117,10 +117,100 @@ interface CardRow {
   created_at: string;
 }
 
+interface SignalRow {
+  provider: string;
+  signal_type: string;
+  recorded_at: string;
+  value: any;
+}
+
+function summarizeSignals(signals: SignalRow[]): string {
+  if (!signals.length) return "(no connected health/calendar data this week)";
+
+  const lines: string[] = [];
+  const byKey = (k: string) => signals.filter((s) => `${s.provider}:${s.signal_type}` === k);
+
+  const sleeps = signals.filter((s) => s.signal_type === "sleep");
+  if (sleeps.length) {
+    const durations = sleeps
+      .map((s) => Number(s.value?.duration_minutes ?? s.value?.total_sleep_minutes))
+      .filter((n) => isFinite(n) && n > 0);
+    if (durations.length) {
+      const avg = Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+      const min = Math.min(...durations);
+      const minNight = sleeps.find(
+        (s) => Number(s.value?.duration_minutes ?? s.value?.total_sleep_minutes) === min
+      );
+      const minDate = minNight?.recorded_at?.slice(0, 10) || "?";
+      lines.push(
+        `Sleep (${sleeps[0].provider}): ${sleeps.length} nights logged, avg ${Math.floor(avg / 60)}h${String(avg % 60).padStart(2, "0")}m, lowest ${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}m on ${minDate}.`
+      );
+    }
+  }
+
+  const recoveries = byKey("whoop:recovery");
+  if (recoveries.length) {
+    const scores = recoveries.map((r) => Number(r.value?.score)).filter((n) => isFinite(n));
+    if (scores.length) {
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      lines.push(`WHOOP recovery: avg ${avg}% across ${scores.length} days.`);
+    }
+  }
+
+  const readiness = byKey("oura:readiness");
+  if (readiness.length) {
+    const scores = readiness.map((r) => Number(r.value?.score)).filter((n) => isFinite(n));
+    if (scores.length) {
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      lines.push(`Oura readiness: avg ${avg} across ${scores.length} days.`);
+    }
+  }
+
+  const workouts = signals.filter((s) => s.signal_type === "workout");
+  if (workouts.length) {
+    const summaries = workouts.slice(0, 12).map((w) => {
+      const date = w.recorded_at.slice(0, 10);
+      const type =
+        w.value?.type ||
+        w.value?.sport_type ||
+        w.value?.activity ||
+        (w.value?.sport_id ? `sport ${w.value.sport_id}` : "workout");
+      const dur = w.value?.duration_minutes ? ` ${w.value.duration_minutes}m` : "";
+      return `${date} ${type}${dur}`;
+    });
+    lines.push(`Workouts (${workouts.length}): ${summaries.join("; ")}.`);
+  }
+
+  const steps = byKey("apple_health:steps");
+  if (steps.length) {
+    const counts = steps.map((s) => Number(s.value?.count)).filter((n) => isFinite(n));
+    if (counts.length) {
+      const avg = Math.round(counts.reduce((a, b) => a + b, 0) / counts.length);
+      lines.push(`Steps: avg ${avg.toLocaleString()}/day across ${counts.length} days.`);
+    }
+  }
+
+  const cal = signals.filter((s) => s.signal_type === "calendar_event");
+  if (cal.length) {
+    const byDay = new Map<string, number>();
+    for (const c of cal) {
+      const d = c.recorded_at.slice(0, 10);
+      byDay.set(d, (byDay.get(d) || 0) + 1);
+    }
+    const heaviest = [...byDay.entries()].sort((a, b) => b[1] - a[1])[0];
+    lines.push(
+      `Calendar: ${cal.length} events across ${byDay.size} days${heaviest ? `, heaviest ${heaviest[0]} (${heaviest[1]} events)` : ""}.`
+    );
+  }
+
+  return lines.join("\n");
+}
+
 function buildDocument(
   reflections: ReflectionRow[],
   completed: CardRow[],
   pressing: CardRow[],
+  signalSummary: string,
   weekStart: string,
   weekEnd: string,
 ): string {
@@ -166,7 +256,11 @@ function buildDocument(
       const due = c.due_at ? c.due_at.slice(0, 10) : "no date";
       lines.push(`- [due ${due}] (${c.category}) ${c.title}`);
     }
+    lines.push("");
   }
+
+  lines.push(`## Signals from connected sources\n`);
+  lines.push(signalSummary);
 
   return lines.join("\n");
 }
