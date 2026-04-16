@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { X, Mic, Square, Send, Check, Pencil, Loader2, Keyboard, Heart, ListChecks } from "lucide-react";
+import { X, Mic, Square, Send, Check, Pencil, Loader2, Keyboard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -28,13 +28,11 @@ interface Props {
   onConfirm: (items: ExtractedItem[]) => Promise<void>;
 }
 
-type Mode = "organize" | "reflect" | null;
-type Phase = "mode-select" | "voice" | "transcribing" | "typing" | "processing" | "review" | "reflection-review";
+type Phase = "voice" | "transcribing" | "typing" | "processing" | "review";
 
 export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const { user } = useAuth();
-  const [mode, setMode] = useState<Mode>(null);
-  const [phase, setPhase] = useState<Phase>("mode-select");
+  const [phase, setPhase] = useState<Phase>("voice");
   const [text, setText] = useState("");
   const [items, setItems] = useState<ExtractedItem[]>([]);
   const [reflectionResult, setReflectionResult] = useState<ReflectionResult | null>(null);
@@ -72,8 +70,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
   const handleClose = () => {
     cleanup();
-    setMode(null);
-    setPhase("mode-select");
+    setPhase("voice");
     setText("");
     setItems([]);
     setReflectionResult(null);
@@ -81,12 +78,6 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     setMicError(false);
     autoStartedRef.current = false;
     onClose();
-  };
-
-  const selectMode = (m: Mode) => {
-    setMode(m);
-    setPhase("voice");
-    autoStartedRef.current = false;
   };
 
   const startRecording = async () => {
@@ -97,7 +88,6 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       });
       streamRef.current = stream;
 
-      // Keep screen awake during recording
       try {
         if ("wakeLock" in navigator) {
           wakeLockRef.current = await navigator.wakeLock.request("screen");
@@ -147,12 +137,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
         const transcript = data.body || data.text || "";
         setText(transcript);
-
-        if (mode === "reflect") {
-          await processReflection(transcript);
-        } else {
-          await processOrganize(transcript);
-        }
+        await processStream(transcript);
       };
 
       mediaRecorderRef.current = recorder;
@@ -187,10 +172,10 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
     }
   }, [open, phase]);
 
-  const processOrganize = async (transcript: string) => {
+  const processStream = async (transcript: string) => {
     setPhase("processing");
     try {
-      const { data, error } = await supabase.functions.invoke("process-brain-dump", {
+      const { data, error } = await supabase.functions.invoke("process-stream", {
         body: { text: transcript.trim() },
       });
       if (error || !data || data.error) {
@@ -199,26 +184,8 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         return;
       }
       setItems(data.items || []);
+      setReflectionResult(data.reflection || null);
       setPhase("review");
-    } catch {
-      toast.error("Something went wrong");
-      setPhase("typing");
-    }
-  };
-
-  const processReflection = async (transcript: string) => {
-    setPhase("processing");
-    try {
-      const { data, error } = await supabase.functions.invoke("process-reflection", {
-        body: { transcript: transcript.trim() },
-      });
-      if (error || !data || data.error) {
-        toast.error(data?.error || "Couldn't process reflection. Try again.");
-        setPhase("typing");
-        return;
-      }
-      setReflectionResult(data as ReflectionResult);
-      setPhase("reflection-review");
     } catch {
       toast.error("Something went wrong");
       setPhase("typing");
@@ -227,46 +194,41 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
 
   const handleSubmit = async () => {
     if (!text.trim()) return;
-    if (mode === "reflect") {
-      await processReflection(text);
-    } else {
-      await processOrganize(text);
-    }
+    await processStream(text);
   };
 
   const handleConfirm = async () => {
     setPhase("processing");
     try {
-      await onConfirm(items);
-      toast.success("Everything's been captured");
+      // Save reflection if present
+      if (reflectionResult && user) {
+        const { error: reflError } = await supabase.from("reflections").insert({
+          user_id: user.id,
+          raw_transcript: text,
+          texture: reflectionResult.texture,
+          texture_why: reflectionResult.texture_why,
+          what_this_reveals: reflectionResult.what_this_reveals,
+          energy_givers: reflectionResult.energy_givers,
+          energy_drainers: reflectionResult.energy_drainers,
+          unresolved_threads: reflectionResult.unresolved_threads,
+          summary: reflectionResult.summary,
+        } as any);
+        if (reflError) console.error("Failed to save reflection:", reflError);
+      }
+
+      // Save items
+      if (items.length > 0) {
+        await onConfirm(items);
+      }
+
+      const parts: string[] = [];
+      if (items.length > 0) parts.push(`${items.length} item${items.length !== 1 ? "s" : ""}`);
+      if (reflectionResult) parts.push("reflection");
+      toast.success(parts.length > 0 ? `Captured ${parts.join(" + ")}` : "Everything's been captured");
       handleClose();
     } catch {
       toast.error("Failed to save");
       setPhase("review");
-    }
-  };
-
-  const handleSaveReflection = async () => {
-    if (!reflectionResult || !user) return;
-    setPhase("processing");
-    try {
-      const { error } = await supabase.from("reflections").insert({
-        user_id: user.id,
-        raw_transcript: text,
-        texture: reflectionResult.texture,
-        texture_why: reflectionResult.texture_why,
-        what_this_reveals: reflectionResult.what_this_reveals,
-        energy_givers: reflectionResult.energy_givers,
-        energy_drainers: reflectionResult.energy_drainers,
-        unresolved_threads: reflectionResult.unresolved_threads,
-        summary: reflectionResult.summary,
-      } as any);
-      if (error) throw error;
-      toast.success("Reflection saved");
-      handleClose();
-    } catch {
-      toast.error("Failed to save reflection");
-      setPhase("reflection-review");
     }
   };
 
@@ -284,26 +246,21 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
   const secs = elapsed % 60;
   const timeStr = `${mins}:${secs.toString().padStart(2, "0")}`;
 
-  const TYPE_LABELS: Record<ItemType, string> = { task: "One-time", ongoing: "Ongoing", event: "Event" };
-
   const timeSensitive = items.filter((i) => i.due_at);
   const oneTime = items.filter((i) => !i.due_at && i.type === "task");
   const ongoing = items.filter((i) => i.type === "ongoing");
   const events = items.filter((i) => !i.due_at && i.type === "event");
 
-  const headerLabel = phase === "mode-select"
-    ? "Clear your mind"
-    : phase === "voice"
-    ? (mode === "reflect" ? "How am I doing" : "Speak freely")
-    : phase === "transcribing"
-    ? "Listening…"
-    : phase === "typing"
-    ? (mode === "reflect" ? "How am I doing" : "Set it down")
-    : phase === "processing"
-    ? (mode === "reflect" ? "Reflecting…" : "Processing")
-    : phase === "reflection-review"
-    ? "Your reflection"
-    : "What I'm holding";
+  const headerLabel =
+    phase === "voice"
+      ? "Speak freely"
+      : phase === "transcribing"
+      ? "Listening…"
+      : phase === "typing"
+      ? "Clear your mind"
+      : phase === "processing"
+      ? "Sorting through everything…"
+      : "What I heard";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg-color">
@@ -318,44 +275,11 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         <div className="w-9" />
       </div>
 
-      {/* ── MODE SELECT PHASE ── */}
-      {phase === "mode-select" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 px-5 pb-6">
-          <p className="text-caption text-text-muted-color text-center mb-2">
-            What brings you here?
-          </p>
-
-          <button
-            onClick={() => selectMode("organize")}
-            className="sanctuary-btn w-full max-w-[280px] flex items-center gap-3 px-5 py-4 text-left"
-          >
-            <ListChecks className="w-5 h-5 text-accent-1 shrink-0" />
-            <div>
-              <span className="text-button text-text-primary block">Get organized</span>
-              <span className="text-micro text-text-muted-color">Clear what's on your mind</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => selectMode("reflect")}
-            className="sanctuary-btn w-full max-w-[280px] flex items-center gap-3 px-5 py-4 text-left"
-          >
-            <Heart className="w-5 h-5 text-accent-1 shrink-0" />
-            <div>
-              <span className="text-button text-text-primary block">How am I doing</span>
-              <span className="text-micro text-text-muted-color">Reflect on how the day feels</span>
-            </div>
-          </button>
-        </div>
-      )}
-
       {/* ── VOICE PHASE ── */}
       {phase === "voice" && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-5 pb-6">
           <p className="text-body-sm text-text-muted-color text-center">
-            {mode === "reflect"
-              ? "Talk about how your day is going."
-              : "Say everything that's on your mind."}
+            Say everything that's on your mind — tasks, feelings, all of it.
           </p>
 
           <div className="relative">
@@ -407,17 +331,13 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
       {phase === "typing" && (
         <div className="flex-1 flex flex-col px-5 pb-6">
           <p className="text-caption mb-3 text-text-muted-color">
-            {mode === "reflect"
-              ? "How is your day going? What's the texture of it?"
-              : text
-              ? "Review or add more, then let go."
-              : "What's weighing on you…"}
+            {text ? "Review or add more, then let go." : "What's on your mind — everything, all of it…"}
           </p>
 
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={mode === "reflect" ? "How am I really doing…" : "What's weighing on you…"}
+            placeholder="Tasks, feelings, worries, plans — just let it out…"
             className="flex-1 w-full resize-none rounded-lg px-4 py-3 text-body-sm focus:outline-none"
             style={{ minHeight: "200px" }}
             autoFocus
@@ -440,7 +360,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
               className="accent-btn flex items-center gap-2 px-5 py-2.5 text-button-sm disabled:opacity-30"
             >
               <Send className="w-4 h-4" />
-              {mode === "reflect" ? "Reflect" : "Let go"}
+              Let go
             </button>
           </div>
         </div>
@@ -451,94 +371,78 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-5">
           <Loader2 className="w-8 h-8 animate-spin text-accent-1" />
           <p className="text-caption text-text-muted-color">
-            {mode === "reflect" ? "Reflecting on what you shared…" : "Sorting through everything…"}
+            Sorting through everything…
           </p>
         </div>
       )}
 
-      {/* ── REFLECTION REVIEW PHASE ── */}
-      {phase === "reflection-review" && reflectionResult && (
-        <div className="flex-1 flex flex-col px-5 pb-6 overflow-y-auto">
-          {/* Texture heading */}
-          <div className="text-center py-4">
-            <p className="text-micro uppercase tracking-wider text-text-muted-color mb-1">
-              Today's texture
-            </p>
-            <p className="font-display text-xl italic text-text-primary">
-              "{reflectionResult.texture}"
-            </p>
-          </div>
-
-          <div className="sanctuary-card px-4 py-4 space-y-4">
-            <div>
-              <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Why</h4>
-              <p className="text-caption text-text-secondary-color">{reflectionResult.texture_why}</p>
-            </div>
-
-            <div>
-              <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
-              <p className="text-caption text-text-secondary-color italic">{reflectionResult.what_this_reveals}</p>
-            </div>
-
-            {reflectionResult.energy_givers.length > 0 && (
-              <div>
-                <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Energy givers</h4>
-                <ul className="space-y-0.5">
-                  {reflectionResult.energy_givers.map((g, i) => (
-                    <li key={i} className="text-caption text-text-secondary-color">+ {g}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {reflectionResult.energy_drainers.length > 0 && (
-              <div>
-                <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Energy drainers</h4>
-                <ul className="space-y-0.5">
-                  {reflectionResult.energy_drainers.map((d, i) => (
-                    <li key={i} className="text-caption text-text-secondary-color">− {d}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {reflectionResult.unresolved_threads.length > 0 && (
-              <div>
-                <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Unresolved threads</h4>
-                <ul className="space-y-0.5">
-                  {reflectionResult.unresolved_threads.map((t, i) => (
-                    <li key={i} className="text-caption text-text-secondary-color">◦ {t}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-auto pt-4">
-            <button
-              onClick={handleSaveReflection}
-              className="accent-btn w-full py-3 text-button"
-            >
-              <Check className="w-4 h-4 inline mr-2" />
-              Save reflection
-            </button>
-            <button
-              onClick={handleClose}
-              className="w-full py-2.5 mt-2 rounded-lg text-button-sm transition-colors text-text-muted-color"
-            >
-              Discard
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── ORGANIZE REVIEW PHASE ── */}
+      {/* ── UNIFIED REVIEW PHASE ── */}
       {phase === "review" && (
         <div className="flex-1 flex flex-col px-5 pb-6 overflow-y-auto">
           <p className="text-body-sm mb-4 text-text-secondary-color">
-            Here's what I'm holding for you.
+            Here's what I heard.
           </p>
 
+          {/* Reflection card — only if emotional content detected */}
+          {reflectionResult && (
+            <div className="mb-5">
+              <div className="text-center py-3">
+                <p className="text-micro uppercase tracking-wider text-text-muted-color mb-1">
+                  Today's texture
+                </p>
+                <p className="font-display text-xl italic text-text-primary">
+                  "{reflectionResult.texture}"
+                </p>
+              </div>
+
+              <div className="sanctuary-card px-4 py-4 space-y-3">
+                <div>
+                  <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Why</h4>
+                  <p className="text-caption text-text-secondary-color">{reflectionResult.texture_why}</p>
+                </div>
+
+                <div>
+                  <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">What this reveals</h4>
+                  <p className="text-caption text-text-secondary-color italic">{reflectionResult.what_this_reveals}</p>
+                </div>
+
+                {reflectionResult.energy_givers.length > 0 && (
+                  <div>
+                    <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Energy givers</h4>
+                    <ul className="space-y-0.5">
+                      {reflectionResult.energy_givers.map((g, i) => (
+                        <li key={i} className="text-caption text-text-secondary-color">+ {g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {reflectionResult.energy_drainers.length > 0 && (
+                  <div>
+                    <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Energy drainers</h4>
+                    <ul className="space-y-0.5">
+                      {reflectionResult.energy_drainers.map((d, i) => (
+                        <li key={i} className="text-caption text-text-secondary-color">− {d}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {reflectionResult.unresolved_threads.length > 0 && (
+                  <div>
+                    <h4 className="text-micro uppercase tracking-wider text-text-muted-color mb-1">Unresolved threads</h4>
+                    <ul className="space-y-0.5">
+                      {reflectionResult.unresolved_threads.map((t, i) => (
+                        <li key={i} className="text-caption text-text-secondary-color">◦ {t}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Task items */}
           {timeSensitive.length > 0 && (
             <ReviewSection label="Time-sensitive" items={timeSensitive} allItems={items} editingIdx={editingIdx} onEdit={setEditingIdx} onUpdate={updateItem} onRemove={removeItem} />
           )}
@@ -552,7 +456,7 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
             <ReviewSection label="Open loops" items={events} allItems={items} editingIdx={editingIdx} onEdit={setEditingIdx} onUpdate={updateItem} onRemove={removeItem} />
           )}
 
-          {items.length === 0 && (
+          {items.length === 0 && !reflectionResult && (
             <p className="text-caption py-8 text-center text-text-muted-color">
               Nothing extracted. Try adding more detail.
             </p>
@@ -561,14 +465,19 @@ export function BrainDumpSheet({ open, onClose, onConfirm }: Props) {
           <div className="mt-auto pt-4">
             <button
               onClick={handleConfirm}
-              disabled={items.length === 0}
+              disabled={items.length === 0 && !reflectionResult}
               className="accent-btn w-full py-3 text-button disabled:opacity-30"
             >
               <Check className="w-4 h-4 inline mr-2" />
-              Confirm — {items.length} item{items.length !== 1 ? "s" : ""}
+              Confirm
+              {(items.length > 0 || reflectionResult) && " — "}
+              {[
+                items.length > 0 ? `${items.length} item${items.length !== 1 ? "s" : ""}` : "",
+                reflectionResult ? "reflection" : "",
+              ].filter(Boolean).join(" + ")}
             </button>
             <button
-              onClick={() => { setPhase("typing"); setItems([]); }}
+              onClick={() => { setPhase("typing"); setItems([]); setReflectionResult(null); }}
               className="w-full py-2.5 mt-2 rounded-lg text-button-sm transition-colors text-text-muted-color"
             >
               Back to editing
