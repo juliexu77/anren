@@ -68,7 +68,7 @@ export function WeeklyReview({ cards, cardsLoading }: Props) {
       {/* Arc */}
       {review.arc && (
         <section>
-          <p className="font-display text-lg italic text-text-primary leading-relaxed">
+          <p className="text-body-reading text-text-primary leading-relaxed">
             {review.arc}
           </p>
         </section>
