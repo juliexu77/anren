@@ -223,7 +223,8 @@ function buildDocument(
     lines.push("(none this period)\n");
   } else {
     for (const r of reflections) {
-      lines.push(`### ${r.reflection_date}`);
+      const dow = new Date(r.reflection_date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+      lines.push(`### ${dow}, ${r.reflection_date}`);
       if (r.texture) lines.push(`Texture: "${r.texture}"`);
       if (r.texture_why) lines.push(`Why: ${r.texture_why}`);
       if (r.raw_transcript) lines.push(`Raw: ${r.raw_transcript}`);
