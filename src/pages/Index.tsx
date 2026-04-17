@@ -132,7 +132,7 @@ const Index = () => {
       <div className="min-h-screen max-w-5xl mx-auto">
         <header className="sticky top-0 z-40 px-5 pt-16 pb-2">
           <div className="flex items-center justify-between">
-            <div className="w-12" />
+          <div className="w-10" />
             <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">ANREN</h1>
             <button onClick={() => setShowSettings(false)} className="p-2">
               <X className="w-5 h-5 text-muted-foreground" />
