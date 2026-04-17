@@ -130,7 +130,7 @@ export function WeeklyReview({ cards, cardsLoading }: Props) {
           <h3 className="text-label uppercase tracking-wider text-text-muted-color">
             What this reveals
           </h3>
-          <p className="font-display text-lg italic text-text-primary leading-relaxed">
+          <p className="text-body-reading text-text-primary leading-relaxed">
             {review.reveals}
           </p>
         </section>
