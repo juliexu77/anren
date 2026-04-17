@@ -15,7 +15,7 @@ import { DailyBriefOverlay } from "@/components/DailyBriefOverlay";
 import { WeeklyReview } from "@/components/WeeklyReview";
 import { EnergyView } from "@/components/EnergyView";
 
-import { Settings, X, Users } from "lucide-react";
+import { Settings, X, Users, Plug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { BrainCard, ItemType } from "@/types/card";
@@ -161,12 +161,21 @@ const Index = () => {
             <button
               onClick={() => navigate("/address-book")}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Address book"
             >
               <Users className="w-5 h-5" />
             </button>
             <button
+              onClick={() => navigate("/connections")}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Integrations"
+            >
+              <Plug className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => setShowSettings(true)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Settings"
             >
               <Settings className="w-5 h-5" />
             </button>
