@@ -155,7 +155,7 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 px-5 pt-16 pb-2">
         <div className="flex items-center justify-between">
-          <div className="w-12" />
+          <div className="w-[120px]" />
           <h1 className="text-display-caps-sm text-foreground tracking-[0.25em]">ANREN</h1>
           <div className="flex items-center gap-1">
             <button
