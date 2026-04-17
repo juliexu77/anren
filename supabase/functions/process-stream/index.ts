@@ -21,8 +21,6 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const today = new Date().toISOString().split("T")[0];
-
     const systemPrompt = `You are Anren, a gentle companion that helps people externalize everything on their mind — both the logistics and the emotional weight.
 
 You will receive a single stream of consciousness. It will contain a mix of tasks, worries, feelings, logistics, and emotional processing. That's how real minds work. Your job is to receive ALL of it and sort it into two layers:
@@ -32,7 +30,7 @@ For each item:
 - A short, clear title (5-10 words max)
 - Type: "task" (one-time action), "ongoing" (recurring responsibility), or "event" (time-bound)
 - Theme: one of "household", "school", "health", "admin", "travel", "social", "work", "finance", "family", "personal"
-- due_at: ONLY if the user explicitly mentioned a specific date/deadline. Today is ${today}. If no date mentioned, set to null.
+- Do NOT assign a date or deadline to any item. The user will add those manually if they want them.
 
 **Layer 2: Reflection** — Read the emotional texture woven through the stream.
 If there is ANY emotional, energetic, or reflective content (tiredness, frustration, joy, overwhelm, gratitude, resentment, etc.), extract:
@@ -84,7 +82,6 @@ Rules:
                           type: "string",
                           enum: ["household", "school", "health", "admin", "travel", "social", "work", "finance", "family", "personal"],
                         },
-                        due_at: { type: "string", description: "ISO 8601 date if time-sensitive, or null" },
                       },
                       required: ["title", "type", "theme"],
                       additionalProperties: false,

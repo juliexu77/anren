@@ -287,14 +287,13 @@ serve(async (req) => {
 
         // Insert resulting cards
         if (items.length > 0) {
-          const rows = items.map((item: { title: string; type?: string; theme?: string; due_at?: string }) => ({
+          const rows = items.map((item: { title: string; type?: string; theme?: string }) => ({
             user_id,
             title: item.title,
             body: item.title,
             source: "companion",
             category: item.theme || "uncategorized",
             routed_type: item.type || null,
-            due_at: item.due_at || null,
             status: "active",
           }));
 
