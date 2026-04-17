@@ -249,13 +249,12 @@ function buildDocument(
     lines.push("");
   }
 
-  lines.push(`## Pressing or overdue threads right now (${pressing.length})\n`);
+  lines.push(`## Threads still open (${pressing.length})\n`);
   if (pressing.length === 0) {
-    lines.push("(none pressing)\n");
+    lines.push("(none open)\n");
   } else {
     for (const c of pressing) {
-      const due = c.due_at ? c.due_at.slice(0, 10) : "no date";
-      lines.push(`- [due ${due}] (${c.category}) ${c.title}`);
+      lines.push(`- (${c.category}) ${c.title}`);
     }
     lines.push("");
   }

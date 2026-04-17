@@ -51,9 +51,8 @@ serve(async (req) => {
     const dateStr = today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
     const cardList = cards.map((c: any, i: number) => {
-      const due = c.due_at ? `(due: ${new Date(c.due_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })})` : "";
       const type = c.routed_type ? `[${c.routed_type}]` : "";
-      return `${i + 1}. ${c.title || c.body?.substring(0, 80)} ${type} ${due}`.trim();
+      return `${i + 1}. ${c.title || c.body?.substring(0, 80)} ${type}`.trim();
     }).join("\n");
 
     const calSection = calendarSummary
@@ -68,14 +67,14 @@ ${calSection}
 Create a short "Run My Day" plan — 3 to 5 lines maximum. Each line is one action or awareness item for the day.
 
 Rules:
-- Prioritize by urgency: approaching deadlines first, then time-sensitive items, then everything else
-- Group by time of day when it makes sense (this morning, this afternoon, before end of week)
+- This is a calm rundown of what's on her plate — not a deadline tracker. Do NOT invent urgency or mention deadlines unless they appear in the calendar section above.
+- Group by time of day when it makes sense (this morning, this afternoon, sometime today)
 - Tone: warm, confident, concise. Like a trusted friend who already figured it out for her.
-- No bullet points or numbering. Use natural phrasing like "This morning:", "This afternoon:", "Before Friday:"
+- No bullet points or numbering. Use natural phrasing like "This morning:", "This afternoon:", "Whenever:"
 - Don't repeat exact card titles — rephrase naturally
-- If a deadline is close, gently note it without alarm ("deadline is close", "don't let this slip")
-- If there's nothing urgent, say something like "No rush today — just these when you're ready."
+- If there's not much pressing, say something like "No rush today — just these when you're ready."
 - NEVER use exclamation marks or productivity language
+- NEVER use words like "overdue", "pressing", "urgent", or "deadline" unless a calendar event explicitly says so
 - Output ONLY the plan lines, one per line. No intro, no sign-off.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
