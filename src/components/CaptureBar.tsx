@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, PenLine } from "lucide-react";
 import { useRecorder } from "@/contexts/RecorderContext";
+import { ComposeSheet } from "@/components/ComposeSheet";
 import { formatDuration } from "@/lib/wav";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +11,7 @@ export function CaptureBar() {
   const navigate = useNavigate();
   const params = useParams();
   const folderId = params.projectId ?? null;
+  const [writing, setWriting] = useState(false);
 
   const recording = status === "recording";
 
@@ -23,6 +26,7 @@ export function CaptureBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
+      <ComposeSheet open={writing} onOpenChange={setWriting} projectId={folderId} />
       <div className="mx-auto w-full max-w-[720px] px-5 md:px-10 pb-6 md:pl-[calc(248px+2.5rem)] md:max-w-[968px]">
         <div
           className={cn(
@@ -73,6 +77,17 @@ export function CaptureBar() {
                 </p>
               )}
             </div>
+
+            {!recording && status !== "saving" && (
+              <button
+                onClick={() => setWriting(true)}
+                aria-label="Write a note instead"
+                className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-[0.82rem] text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors"
+              >
+                <PenLine className="w-[15px] h-[15px]" strokeWidth={1.5} />
+                <span className="hidden sm:inline">Write</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
