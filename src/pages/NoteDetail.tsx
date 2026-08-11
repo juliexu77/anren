@@ -284,8 +284,9 @@ const NoteDetail = () => {
             value={bodyDraft}
             onChange={(e) => setBodyDraft(e.target.value)}
             onBlur={() => {
-              if (bodyDraft !== (note.body ?? "")) void patch({ body: bodyDraft });
+              if (bodyDraft !== (note.body ?? "")) void saveBody(bodyDraft);
             }}
+
             rows={Math.max(4, bodyDraft.split("\n").length + 2)}
             aria-label="Note body"
             className="mt-3 w-full resize-none rounded-[16px] bg-transparent px-0 text-[0.95rem] leading-[1.8] text-muted-foreground outline-none focus:text-foreground transition-colors"
