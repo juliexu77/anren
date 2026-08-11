@@ -1,62 +1,67 @@
-# Keep capture free, gate the intelligence layer
+# $5-per-user AI budget, cheap transcription, no Lovable credits
 
-## Where the money goes today
+## Why transcription was on Lovable credits
 
-Confirmed by reading the code:
+No good reason — it was just the default. `transcribe-audio` posts the audio to the Lovable AI Gateway's `openai/gpt-4o-transcribe`, which bills your Lovable balance. Claude has no speech-to-text, so it can't take over.
 
-- **Claude** (note write-ups, folder reflections, look back, search answers, ask-a-note, folder emoji) runs on **your** `ANTHROPIC_API_KEY`.
-- **Transcription** (`transcribe-audio`) runs on Lovable credits.
+Two changes, in order of how much they save:
 
-Nothing is metered — anyone signed in can generate without limit on your accounts.
+**1. Transcribe on the device when possible — free.**
+- On iOS, Apple's own speech recognition (`SFSpeechRecognizer`) runs on-device through a Capacitor plugin. No API, no cost, works offline, and the audio never leaves the phone.
+- In the browser, the Web Speech API does the same in Chrome and Safari.
+- The recording is still saved either way, so the transcript can always be redone server-side if the device result looks empty or garbled.
 
-## The rule
+**2. Server fallback on a cheap dedicated STT provider, on your key, not Lovable's.**
+Whisper-class hosted transcription runs roughly **$0.002–0.007 per minute** of audio — around a tenth of a cent for a two-minute memo. Groq's hosted Whisper and Deepgram are both in that range; I'd default to Groq for price and speed, and you'd add one `GROQ_API_KEY`. Nothing in the app touches Lovable credits after this.
 
-**Capture is always free and never gated.** Recording, transcription, typed notes, folders, editing, browsing the archive — unlimited, on the house, forever. That's the app.
+Realistically most transcription lands on the free on-device path, and the fallback costs cents a month.
 
-**The intelligence layer needs a Claude key.** Write-ups, reflections, look back, search answers, ask-a-note. Everyone gets a small taste on your key — enough to feel why it matters — then it asks them to connect their own Claude key. Once connected, unlimited and billed to them.
+## The $5 budget, done properly
 
-Free taste: **10 AI generations, one time** (not monthly — a trial, not an allowance). Your own account is exempt via a flag on your profile.
+A count of 10 was a made-up number — you're right that it's the wrong unit. The unit should be money, because that's what you actually care about.
 
-Nothing breaks when the taste runs out: a voice note still transcribes and saves with its full transcript, it just doesn't get a title and summary until a key is connected. The raw words are always yours.
+Anthropic returns exact input and output token counts on every response. So: **meter real spend per user, cap it at $5 lifetime.** For scale, at Sonnet's rates a note write-up costs roughly 1.5–2 cents, a folder reflection 3–5 cents. So $5 is on the order of 150–250 write-ups per person — a genuinely generous trial, not a tease, and your worst case is bounded at exactly $5 no matter what they do.
+
+When someone crosses it, the intelligence layer asks for their own Claude key. Capture keeps working, unmetered and free, forever — recording, transcription, typed notes, folders, editing, searching by keyword. Only the interpretation layer needs the key.
+
+The ceiling lives in one constant so you can raise or lower it without touching anything else. Your own account is exempt.
 
 ### What the user sees
 
-- **Where the write-up would be**: "Anren's write-ups run on Claude. Connect your own key to keep going — about a cent a note." One quiet link, no red, no countdown.
-- **Settings**: "Claude — connected" or "Claude — not connected · 7 of 10 free write-ups left."
-- **Connect page** (`/settings/claude`): plain steps — go to console.anthropic.com, add a few dollars of credit, create a key, paste it here. Notes on rough cost per note, that the key is encrypted and never shown again, and a Remove button.
-- **Retroactive catch-up**: after connecting a key, any note still missing a write-up gets one — a single "Write up 3 waiting notes" action, not an automatic surprise bill.
+- **Where the write-up would be**: "Anren's write-ups run on Claude. Connect your own key to keep going — about two cents a note." One quiet link, no red, no countdown, no dollar figure shown to them.
+- **Settings**: "Claude — connected", or "Claude — using Anren's key" with the connect link underneath. People never see a running balance; that's your concern, not theirs.
+- **Connect page** (`/settings/claude`): plain steps for console.anthropic.com, a note that a few dollars of credit lasts months, that the key is encrypted and never displayed again, and a Remove button.
+- **After connecting**: one "Write up N waiting notes" action, so nothing is silently generated on their new key.
 
 ## Technical notes
 
-**`ai_usage`** — `user_id`, `used_count`, `updated_at`. RLS: owner selects, service_role writes. GRANT select to authenticated, all to service_role.
+**`ai_spend`** — `user_id`, `micro_cents_used`, `updated_at`. RLS: owner selects, service_role writes. Cost computed per call from Anthropic's returned `usage` at Sonnet's per-token rates, held as a constant next to the model id.
 
-**`user_ai_keys`** — `user_id`, `encrypted_key`. No select grant to `authenticated`; the client only learns whether a key exists through a security-definer function returning a boolean. Encrypted at rest with a generated `AI_KEY_SECRET` (AES-GCM, WebCrypto).
+**`user_ai_keys`** — `user_id`, `encrypted_key`. No select grant to `authenticated`; the client only learns *whether* a key exists via a security-definer boolean. AES-GCM with a generated `AI_KEY_SECRET`.
 
-**`save-claude-key`** edge function validates the key with a 1-token Anthropic ping before storing, so a bad key is rejected rather than saved. Plus `delete-claude-key`.
+**`_shared/ai.ts`** is the single choke point. `chat()` takes a `userId`: own key → use it, no metering; no key and under $5 → house key, then record actual cost; over $5 → throw `QuotaError` → HTTP 402 `{ error: "needs_own_key" }`. `process-note` keeps the transcript and marks the note `needs_key`, never `failed`. `suggest-folder-emoji` falls back to keywords silently.
 
-**`_shared/ai.ts`** is the single choke point. `chat()` takes a `userId`:
-1. User has their own key → use it, no metering.
-2. No key, trial not used up → house key, increment.
-3. No key, trial spent → throw `QuotaError`.
+**Transcription** — new Capacitor iOS speech plugin, Web Speech API on web, `transcribe-audio` rewritten against Groq Whisper as fallback. Unmetered. `embed()` moves off the Lovable gateway too — either drop embeddings in favour of Postgres full-text search, or run them on the same cheap provider; I'd flag that as a small follow-up decision rather than block this work.
 
-`transcribe-audio` and `embed()` are **not** metered — capture stays free.
+**Files**: migration; `_shared/ai.ts`, `_shared/usage.ts`; `transcribe-audio`; the six Claude callers; `src/hooks/useAiAccess.ts`, `src/lib/speech.ts`, `src/pages/ClaudeKey.tsx`; `Settings.tsx`, `NoteDetail.tsx`, `SearchPage.tsx`, `FolderReflection.tsx`, `OnMyMind.tsx`, `App.tsx`, `CaptureBar.tsx`.
 
-**Error surfacing** — `QuotaError` → HTTP 402 `{ error: "needs_own_key" }`. Callers pass it through; the client renders the connect prompt in place. `process-note` leaves the note's transcript intact and marks it `needs_key` rather than `failed`. `suggest-folder-emoji` silently falls back to keywords.
+## Apple Developer flow, step by step
 
-**Files**: new migration; `_shared/ai.ts` and `_shared/usage.ts`; the seven calling functions; `src/hooks/useAiAccess.ts`; `src/pages/ClaudeKey.tsx`; `Settings.tsx`, `NoteDetail.tsx`, `SearchPage.tsx`, `FolderReflection.tsx`, `OnMyMind.tsx`, `App.tsx`.
+You need this anyway for the App Store. Roughly 15 minutes.
 
-## Apple sign-in branding
+1. **Apple Developer Program** — $99/year at developer.apple.com. You need it to ship to the App Store regardless.
+2. **App ID** — Identifiers → new App ID with your bundle ID, and tick **Sign In with Apple**.
+3. **Services ID** — Identifiers → new **Services ID** (e.g. `app.anren.web`), description "anren" — *this description is the name Apple shows on the sign-in sheet, so it must read "anren"*. Enable Sign In with Apple, click Configure, pick your App ID as primary, and add:
+   - Domain: `anren.app` (and `www.anren.app`)
+   - Return URL: the backend auth callback URL — I'll give you the exact string when we get there.
+4. **Key** — Keys → new key, tick Sign In with Apple, download the `.p8`. **It downloads once only.** Note the **Key ID**, and your **Team ID** from the top-right of the console.
+5. **Domain verification** — Apple gives you a file to host at `/.well-known/apple-developer-domain-association.txt`. I'll add it to the app and deploy, then you click Verify.
+6. **Back in the app's backend** — Authentication Settings → Sign In Methods → Apple → "use your own credentials", generate the client secret from Team ID + Key ID + Services ID + `.p8` contents, and save. **The generated secret expires every 6 months** — I'll add a reminder note to the App Store doc.
 
-Anren currently uses Lovable's **managed** Apple credentials, so the Apple sheet shows Lovable's registered name, not "anren" — managed credentials can't be rebranded, that's inherent to sharing them.
-
-To show your own name you need your own Apple Developer account (which you need anyway for the App Store) and a switch to your own credentials:
-
-1. Create a **Services ID** with Sign In with Apple enabled, and add both your domain (`anren.app`) and the auth callback URL to it.
-2. Create a **Sign In with Apple key** (`.p8`, Key ID, Team ID).
-3. In the backend dashboard under Apple sign-in, choose your own credentials, generate the client secret JWT from the Team ID / Key ID / Services ID / `.p8`, and save. The JWT expires every 6 months and needs regenerating.
-
-I'll verify the flow end-to-end in a real browser afterwards and confirm what name the sheet shows. I can walk you through the Apple Developer steps and hand you the exact callback URL when you're ready — say the word and I'll do that part after the credits gate is in.
+Then I'll run the real sign-in flow in a browser and confirm the sheet says "anren" and not Lovable.
 
 ## What I need from you
 
-Nothing for the gate — I'll generate `AI_KEY_SECRET` myself. For Apple branding, your own Apple Developer account and about ten minutes in their console with me.
+- One `GROQ_API_KEY` (free to create, pay-as-you-go, cents).
+- The Apple Developer steps above, at your pace — I'll hand you the exact callback URL and host the verification file.
+- `AI_KEY_SECRET` I generate myself.
