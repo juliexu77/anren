@@ -24,6 +24,8 @@ export interface RecordingSession {
   segmentCount: number;
   state: "recording" | "interrupted" | "finishing";
   uploaded: boolean;
+  /** How many slices have already been pushed to storage during recording. */
+  uploadedParts?: number;
 }
 
 function openDb(): Promise<IDBDatabase> {
