@@ -132,6 +132,24 @@ async function stitchParts(admin: any, userId: string, noteId: string, prefix: s
   return blob;
 }
 
+/**
+ * Once the words are written down, the recording has done its job. Keeping it
+ * would only mean storing your voice for no reason, so it goes.
+ */
+async function discardAudio(admin: any, userId: string, noteId: string, path: string) {
+  try {
+    const folder = `${userId}/${noteId}`;
+    const { data: files } = await admin.storage.from('voice-notes').list(folder, { limit: 1000 });
+    const targets = (files ?? []).map((f: { name: string }) => `${folder}/${f.name}`);
+    if (!path.endsWith('/')) targets.push(path);
+    if (targets.length) await admin.storage.from('voice-notes').remove(targets);
+    await admin.from('notes').update({ audio_path: null }).eq('id', noteId);
+  } catch (error) {
+    console.error('audio cleanup failed:', (error as Error).message);
+  }
+}
+
+
 
 
 
