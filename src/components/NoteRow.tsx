@@ -25,6 +25,8 @@ export function NoteRow({ note, projects = [], onFile, onDelete }: NoteRowProps)
   const time = new Date(note.recordedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   const processing = note.status === "processing";
   const stillSaving = processing && note.source === "voice" && !note.audioPath;
+  // A long recording is written up in pieces, so it takes a while longer.
+  const long = (note.durationSeconds ?? 0) >= 600;
 
   return (
     <div className="group relative border-b border-hairline last:border-b-0">
@@ -32,7 +34,13 @@ export function NoteRow({ note, projects = [], onFile, onDelete }: NoteRowProps)
         <div className="flex items-baseline gap-3">
           <h3 className="note-title flex-1 min-w-0">
             {note.title ??
-              (stillSaving ? "Still saving…" : processing ? "Writing this up…" : "Untitled note")}
+              (stillSaving
+                ? "Still saving…"
+                : processing
+                  ? long
+                    ? "Writing this up — this one's long"
+                    : "Writing this up…"
+                  : "Untitled note")}
           </h3>
           {processing && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-muted-foreground/70" />}
         </div>
