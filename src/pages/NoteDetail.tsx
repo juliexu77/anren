@@ -39,6 +39,27 @@ const NoteDetail = () => {
     };
   }, [note?.audioPath]);
 
+  useEffect(() => {
+    if (!note?.id || note.status !== "ready") return;
+    let active = true;
+    setLoadingRelated(true);
+    supabase.functions
+      .invoke("related-notes", { body: { noteId: note.id } })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error("related-notes failed:", error);
+          return;
+        }
+        const payload = data as { related?: { note_id: string; title: string | null; recorded_at: string }[] };
+        setRelated(payload.related ?? []);
+      })
+      .finally(() => setLoadingRelated(false));
+    return () => {
+      active = false;
+    };
+  }, [note?.id, note?.status]);
+
   const moveToFolder = async (projectId: string | null) => {
     if (!note) return;
     await supabase.from("notes").update({ project_id: projectId }).eq("id", note.id);
