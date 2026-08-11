@@ -16,6 +16,8 @@ import Auth from "./pages/Auth";
 import LovableOAuthCallback from "./pages/LovableOAuthCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Support from "./pages/Support";
+import DeleteAccount from "./pages/DeleteAccount";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
