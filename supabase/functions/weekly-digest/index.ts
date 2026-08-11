@@ -78,18 +78,22 @@ Deno.serve(async (req) => {
     const parsed = parseJsonBlock<Digest>(raw);
     if (!parsed?.narrative) throw new Error('Could not compose the digest');
 
+    await supabase
+      .from('weekly_digests')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('week_start', weekStart)
+      .is('project_id', null);
+
     const { data: saved, error: saveError } = await supabase
       .from('weekly_digests')
-      .upsert(
-        {
-          user_id: user.id,
-          week_start: weekStart,
-          narrative: parsed.narrative,
-          themes: parsed.themes ?? [],
-          notes_analyzed: notes.length,
-        },
-        { onConflict: 'user_id,week_start' },
-      )
+      .insert({
+        user_id: user.id,
+        week_start: weekStart,
+        narrative: parsed.narrative,
+        themes: parsed.themes ?? [],
+        notes_analyzed: notes.length,
+      })
       .select('id')
       .single();
     if (saveError) throw saveError;
