@@ -34,9 +34,10 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
     label: "Pot of tea",
     path: (
       <>
-        <path d="M5 11h11a3 3 0 0 1 0 6H8a3 3 0 0 1-3-3v-3Z" />
-        <path d="M16 12c2 0 3 1 3 2.5" />
-        <path d="M9 11V9M9 9c0-1 1-1.5 2-1.5" />
+        <path d="M4 11h11v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3Z" />
+        <path d="M15 12.5h1.5a2.5 2.5 0 0 1 0 5H14" />
+        <path d="M7 11c0-1.5 1.8-2.5 3.5-2.5" />
+        <path d="M10.5 8.5V7" />
       </>
     ),
   },
