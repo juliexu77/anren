@@ -24,16 +24,19 @@ export function NoteRow({ note, projects = [], onFile, onDelete }: NoteRowProps)
   const navigate = useNavigate();
   const time = new Date(note.recordedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   const processing = note.status === "processing";
+  const stillSaving = processing && note.source === "voice" && !note.audioPath;
 
   return (
     <div className="group relative border-b border-hairline last:border-b-0">
       <Link to={`/note/${note.id}`} className="block py-5 pr-9">
         <div className="flex items-baseline gap-3">
           <h3 className="note-title flex-1 min-w-0">
-            {note.title ?? (processing ? "Writing this up…" : "Untitled note")}
+            {note.title ??
+              (stillSaving ? "Still saving…" : processing ? "Writing this up…" : "Untitled note")}
           </h3>
           {processing && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-muted-foreground/70" />}
         </div>
+
 
         {note.synthesis && (
           <p className="mt-2 text-[0.93rem] leading-[1.65] text-muted-foreground line-clamp-2">
