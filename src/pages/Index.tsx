@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { NoteRow } from "@/components/NoteRow";
 import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
