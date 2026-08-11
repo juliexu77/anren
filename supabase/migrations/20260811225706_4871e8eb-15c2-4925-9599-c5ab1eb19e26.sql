@@ -1,0 +1,1 @@
+update public.notes set status = 'failed', error_message = 'Anren never got the audio for this one.' where id = 'ef8ed7e6-f4a2-40eb-8e23-fc04257f1fa9' and audio_path is null;
