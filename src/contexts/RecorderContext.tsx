@@ -76,47 +76,57 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     setLevel(0);
   }, []);
 
-  /** Move whatever is in memory onto the device, and keep the session fresh. */
-  const flush = useCallback(async (): Promise<void> => {
+  /**
+   * Move whatever is in memory onto the device, and keep the session fresh.
+   * Returns the slice just written, so it can also go to the server.
+   */
+  const flush = useCallback(async (): Promise<{ index: number; samples: Float32Array } | null> => {
     const session = sessionRef.current;
-    if (!session || flushingRef.current) return;
+    if (!session || flushingRef.current) return null;
     flushingRef.current = true;
     try {
       const pending = chunksRef.current;
       chunksRef.current = [];
+      let written: { index: number; samples: Float32Array } | null = null;
       if (pending.length) {
-        const total = pending.reduce((n, c) => n + c.length, 0);
-        const merged = new Float32Array(total);
-        let offset = 0;
-        for (const chunk of pending) {
-          merged.set(chunk, offset);
-          offset += chunk.length;
-        }
-        await appendSegment(session.sessionId, segmentIndexRef.current, merged);
+        const rate = ctxRef.current?.sampleRate ?? STORE_RATE;
+        const merged = mergeAndResample(pending, rate, STORE_RATE);
+        const index = segmentIndexRef.current;
+        await appendSegment(session.sessionId, index, merged);
         segmentIndexRef.current += 1;
+        written = { index, samples: merged };
       }
       session.elapsed = elapsedRef.current;
       session.liveText = liveTextRef.current;
       session.segmentCount = segmentIndexRef.current;
       await saveSession({ ...session });
+      return written;
     } finally {
       flushingRef.current = false;
     }
   }, []);
 
-  /** Push the audio so far to storage, so a lost device still has the thought. */
-  const snapshot = useCallback(async () => {
+  /**
+   * Push one slice to storage as it's recorded, so the thought survives even
+   * if the browser dies at the moment of stopping. No size ceiling — long
+   * recordings are exactly the ones that need this.
+   */
+  const pushPart = useCallback(async (index: number, samples: Float32Array) => {
     const session = sessionRef.current;
-    if (!session?.noteId) return;
-    const segments = await readSegments(session.sessionId);
-    if (!segments.length) return;
-    const bytes = segments.reduce((n, s) => n + s.length, 0) * 2;
-    if (bytes > 12 * 1024 * 1024) return; // long recordings ride on the local copy
-    const path = await uploadAudio(session.userId, session.noteId, segments, session.sampleRate);
-    if (path) {
+    if (!session?.noteId || !samples.length) return;
+    const ok = await uploadPart(session.userId, session.noteId, index, [samples], STORE_RATE);
+    if (!ok) return;
+    session.uploadedParts = Math.max(session.uploadedParts ?? 0, index + 1);
+    if (!session.uploaded) {
       session.uploaded = true;
-      await supabase.from("notes").update({ audio_path: path }).eq("id", session.noteId);
+      // Point the note at the parts folder; the write-up stitches them if the
+      // single-file upload never happens.
+      await supabase
+        .from("notes")
+        .update({ audio_path: partsPrefix(session.userId, session.noteId) })
+        .eq("id", session.noteId);
     }
+    await saveSession({ ...session });
   }, []);
 
   useEffect(() => () => teardownAudio(), [teardownAudio]);
