@@ -37,9 +37,9 @@ So it will feel very familiar, minus the meeting scaffolding. The moment that ma
 6. **Ask this note.** Granola's per-note chat is one of its best moments. Anren gets a single-line "Ask about this" at the bottom of note detail — answers grounded in that transcript only.
 7. **Keyboard/gesture-fast, quiet visuals.** Text-forward, generous whitespace, no chrome competing with the writing. Our existing serif/sans system already fits this.
 
-Deliberately not copied: templates, sharing/permissions, calendar integration, attendee handling, teams.
+8. **Sidebar with projects/folders.** Granola's left rail lists folders above the notes list. Anren keeps that shape: a projects rail, and any note can be filed into a project (or left unfiled in the feed).
 
-Folders are worth keeping as a later addition — not for organization, but because a long chronological feed eventually needs a way to say "these are all about one thing." They would be simple named collections, private to the user, added after v1.
+Deliberately not copied: templates, sharing/permissions, calendar integration, attendee handling, teams — this is a single-user app throughout.
 
 ## What gets deleted
 
