@@ -242,6 +242,16 @@ const NoteDetail = () => {
       )}
 
 
+      {note.status === "needs_key" && (
+        <p className="mt-6 text-[0.9rem] leading-relaxed text-muted-foreground">
+          Your words are saved. Write-ups are written by Claude —{" "}
+          <Link to="/settings/claude" className="text-foreground underline decoration-hairline underline-offset-4">
+            connect your own key
+          </Link>{" "}
+          to keep them coming.
+        </p>
+      )}
+
       {note.status === "failed" && (
         <p className="mt-6 text-[0.9rem] text-muted-foreground">
           {note.errorMessage ?? "Something interrupted the write-up."}
