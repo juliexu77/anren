@@ -10,6 +10,7 @@ import {
   type RecordingSession,
 } from "@/lib/recordingStore";
 import { finishSession, uploadAudio } from "@/lib/recordingFinish";
+import { keepScreenAwake, type WakeLockHandle } from "@/lib/wakeLock";
 import { toast } from "sonner";
 
 type RecorderStatus = "idle" | "recording" | "saving";
@@ -46,7 +47,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const timerRef = useRef<number | null>(null);
   const flushTimerRef = useRef<number | null>(null);
   const stopLiveRef = useRef<(() => void) | null>(null);
-  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
+  const wakeLockRef = useRef<WakeLockHandle | null>(null);
   const sessionRef = useRef<RecordingSession | null>(null);
   const segmentIndexRef = useRef(0);
   const elapsedRef = useRef(0);
@@ -69,7 +70,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     sourceRef.current = null;
     streamRef.current = null;
     ctxRef.current = null;
-    wakeLockRef.current?.release().catch(() => undefined);
+    wakeLockRef.current?.release();
     wakeLockRef.current = null;
     setLevel(0);
   }, []);
@@ -173,14 +174,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       sourceRef.current = source;
       nodeRef.current = node;
 
-      try {
-        const nav = navigator as Navigator & {
-          wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
-        };
-        if (nav.wakeLock) wakeLockRef.current = await nav.wakeLock.request("screen");
-      } catch {
-        /* wake lock unavailable */
-      }
+      // Keep the phone from locking mid-thought (wake lock, video fallback).
+      wakeLockRef.current?.release();
+      wakeLockRef.current = keepScreenAwake();
 
       timerRef.current = window.setInterval(() => {
         elapsedRef.current += 1;
@@ -295,16 +291,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       sessionRef.current.state = "recording";
       const ctx = ctxRef.current;
       if (ctx?.state === "suspended") await ctx.resume().catch(() => undefined);
-      try {
-        const nav = navigator as Navigator & {
-          wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
-        };
-        if (nav.wakeLock && !wakeLockRef.current) {
-          wakeLockRef.current = await nav.wakeLock.request("screen");
-        }
-      } catch {
-        /* wake lock unavailable */
-      }
+      if (!wakeLockRef.current) wakeLockRef.current = keepScreenAwake();
     };
 
     const onVisibilityChange = () => {
