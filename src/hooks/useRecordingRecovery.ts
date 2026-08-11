@@ -84,9 +84,10 @@ export function useRecordingRecovery() {
     if (!session || busy) return null;
     setBusy(true);
     const segments = await readSegments(session.sessionId);
-    const noteId = await finishSession(session, segments);
-    await clearSession(session.sessionId);
-    setSession(null);
+    const { noteId, saved } = await finishSession(session, segments);
+    // Hold on to the device copy if the audio still hasn't reached the server.
+    if (saved) await clearSession(session.sessionId);
+    if (saved) setSession(null);
     setBusy(false);
     return noteId;
   }, [session, busy]);
