@@ -14,7 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 bg-background/85 backdrop-blur-xl border-b border-hairline">
         <button
           onClick={() => setRailOpen(true)}
-          aria-label="Open menu"
+          aria-label="open menu"
           className="p-2 -ml-2 text-muted-foreground"
         >
           <Menu className="w-5 h-5" strokeWidth={1.5} />

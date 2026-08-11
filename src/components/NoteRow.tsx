@@ -14,7 +14,7 @@ export function NoteRow({ note }: { note: Note }) {
     >
       <div className="flex items-baseline gap-3">
         <h3 className="note-title flex-1 min-w-0">
-          {note.title ?? (processing ? "Writing this up…" : "Untitled note")}
+          {note.title ?? (processing ? "writing this up…" : "untitled note")}
         </h3>
         {processing && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-muted-foreground/70" />}
       </div>
