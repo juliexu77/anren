@@ -120,10 +120,22 @@ export function useNotes(projectId?: string | null) {
   }, [user, projectId, load]);
 
 
-  const updateNote = useCallback(async (id: string, updates: NoteEdits) => {
-    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...updates } : n)));
-    await supabase.from("notes").update(noteUpdatePayload(updates)).eq("id", id);
-  }, []);
+  const updateNote = useCallback(
+    async (id: string, updates: NoteEdits) => {
+      const before = notes.find((n) => n.id === id);
+      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...updates } : n)));
+      const { error } = await supabase.from("notes").update(noteUpdatePayload(updates)).eq("id", id);
+      if (error) {
+        // Put it back the way it was rather than showing a change that never landed.
+        if (before) setNotes((prev) => prev.map((n) => (n.id === id ? before : n)));
+        toast("That change didn't save. Try again in a moment.");
+        return false;
+      }
+      return true;
+    },
+    [notes],
+  );
+
 
   const deleteNote = useCallback(
     (id: string) => {
@@ -163,7 +175,7 @@ export function useNote(noteId: string | undefined) {
   useEffect(() => {
     if (!noteId) return;
     const channel = supabase
-      .channel(`note-${noteId}`)
+      .channel(`note-${noteId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "notes", filter: `id=eq.${noteId}` },
@@ -177,12 +189,23 @@ export function useNote(noteId: string | undefined) {
 
   const patch = useCallback(
     async (updates: NoteEdits) => {
-      if (!note) return;
+      if (!note) return false;
+      const before = note;
       setNote({ ...note, ...updates });
-      await supabase.from("notes").update(noteUpdatePayload(updates)).eq("id", note.id);
+      const { error } = await supabase
+        .from("notes")
+        .update(noteUpdatePayload(updates))
+        .eq("id", note.id);
+      if (error) {
+        setNote(before);
+        toast("That change didn't save. Try again in a moment.");
+        return false;
+      }
+      return true;
     },
     [note],
   );
+
 
   return { note, loading, reload: load, patch };
 }
