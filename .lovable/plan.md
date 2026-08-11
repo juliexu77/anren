@@ -6,7 +6,7 @@ Folders get a small emoji chosen automatically from the name, editable any time,
 
 **Creating a folder.** You type a name and hit enter. The folder appears immediately with a soft placeholder mark, and a moment later the emoji settles in — "Coworking space" gets a key or a doorway, "Mom" gets something warm, "Book ideas" gets a book. No dialog, no picking.
 
-**The sparkle.** When a folder lands in the sidebar it fades and lifts in over about half a second, and two or three tiny points of light drift out from behind the emoji and dissolve. Clay-rose, hairline-thin, gone in under a second. It only plays for a folder that was just created — never on page load or navigation, so the sidebar stays still when you're just moving around.
+**Arriving into place.** No particles, no colored specks. The folder's own text does the work: the name appears slightly blurred, faintly transparent and a hair wider in letter-spacing, then resolves — blur clears, letters draw back together, opacity settles — over about 600ms. The emoji resolves the same way, a beat behind the name. It reads like the words condensing out of the paper rather than sliding in. Plays only for a folder you just created, never on page load or navigation.
 
 **Changing the emoji.** Click the emoji next to any folder in the sidebar and a small panel opens: a row of alternate suggestions for that name, a short list of common marks, and a field where you can type or paste any emoji you like. Pick one and it saves instantly. Same panel is reachable from the folder's own page header, next to the title.
 
