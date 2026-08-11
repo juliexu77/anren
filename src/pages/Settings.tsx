@@ -42,7 +42,7 @@ const Settings = () => {
       <section className="mb-10">
         <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Folders</h2>
         {!projects.length ? (
-          <p className="text-[0.9rem] text-muted-foreground">No folders yet.</p>
+          <p className="text-[0.9rem] text-muted-foreground">no folders yet.</p>
         ) : (
           <div className="flex flex-col">
             {projects.map((p) => (
@@ -50,7 +50,7 @@ const Settings = () => {
                 <span className="text-[0.94rem]">{p.name}</span>
                 <button
                   onClick={() => deleteProject(p.id)}
-                  aria-label={`Delete ${p.name}`}
+                  aria-label={`delete ${p.name}`}
                   className="p-1.5 text-muted-foreground/70 hover:text-foreground transition-colors"
                 >
                   <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -58,7 +58,7 @@ const Settings = () => {
               </div>
             ))}
             <p className="mt-3 text-[0.82rem] leading-relaxed text-muted-foreground/80">
-              Deleting a folder keeps its notes — they simply return to the main list.
+              deleting a folder keeps its notes — they simply return to the main list.
             </p>
           </div>
         )}
@@ -68,7 +68,7 @@ const Settings = () => {
         onClick={signOut}
         className="rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground hover:text-foreground transition-colors"
       >
-        Sign out
+        sign out
       </button>
     </div>
   );

@@ -88,7 +88,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        toast.error("Anren needs microphone access to listen.");
+        toast.error("anren needs microphone access to listen.");
         return;
       }
 
@@ -152,7 +152,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     chunksRef.current = [];
 
     if (blob.size < 4096) {
-      toast.error("That was too quiet to keep. Try again?");
+      toast.error("that was too quiet to keep. try again?");
       setStatus("idle");
       return null;
     }
@@ -169,7 +169,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       .single();
 
     if (insertError || !inserted) {
-      toast.error("Couldn't save that note.");
+      toast.error("couldn't save that note.");
       setStatus("idle");
       return null;
     }
@@ -184,9 +184,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     if (uploadError) {
       await supabase
         .from("notes")
-        .update({ status: "failed", error_message: "Audio upload failed" })
+        .update({ status: "failed", error_message: "audio upload failed" })
         .eq("id", noteId);
-      toast.error("Couldn't upload the audio.");
+      toast.error("couldn't upload the audio.");
       setStatus("idle");
       return noteId;
     }
