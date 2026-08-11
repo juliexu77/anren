@@ -19,13 +19,8 @@ Deno.serve(async (req) => {
 
   const token = req.headers.get('Authorization')?.replace('Bearer ', '') ?? '';
   const { data: auth } = await supabase.auth.getUser(token);
-  let userId = auth?.user?.id ?? null;
+  const userId = auth?.user?.id ?? null;
 
-  // Admin path: a service-role call may name the account to clean up.
-  if (!userId && token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
-    const body = await req.json().catch(() => ({}));
-    userId = typeof body.user_id === 'string' ? body.user_id : null;
-  }
 
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Not signed in' }), {
