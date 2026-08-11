@@ -1,56 +1,70 @@
+# Anren v2: a private voice-memo notetaker
 
-## What's happening
+Reset the app to one idea: tap, ramble, and get back a titled, synthesized, searchable memory.
 
-Three things are causing AI-assigned due dates to slip through:
+## Review of your thinking
 
-1. **`process-brain-dump`** and **`process-stream`** ask the AI to extract `due_at` "only if explicitly mentioned" — but the AI still over-interprets phrases like "soon", "this week", "Friday", or even derives a date from context. The schema also exposes `due_at` as a field, which biases the model toward filling it.
-2. **`generate-life-review`** literally renders a section called "Pressing or overdue threads right now" and feeds the AI a "due [date]" line per pressing card — which is where the word "overdue" surfaces in the weekly briefing.
-3. **`generate-daily-plan` (Run My Day)** injects `(due: Mar 5)` strings into the prompt and tells the AI to "prioritize approaching deadlines" and "gently note if a deadline is close" — so even good cards without dates get nudged, and bad AI-assigned dates get amplified.
+You're right on the core bet, and right to make it smaller than Granola. Granola's complexity comes from meetings — attendees, calendar hooks, templates, shared notes. Solo capture removes all of that, which leaves exactly the part that made it feel magical: messy capture in, a titled synthesis out, permanently findable.
 
-Voice (`transcribe-voice`) and image (`parse-image`) paths already do **not** set due dates — confirmed.
+Two refinements worth making:
 
-## The fix (server-only, no DB migration)
+- **The title is the product.** "Why Nancy's idea made me protective of mine" is what makes the feed feel like a mind, not a folder. That deserves its own prompt pass with real care — it is not a byproduct of the summary.
+- **Skipping Google Docs in v1 is correct.** Export can arrive later as plain markdown; a Doc is a worse database.
 
-**Principle:** due dates are a user-only field. The AI never writes one. Anything the user didn't type or pick on a date control stays `null`.
+One thing I'd push back on gently: don't defer "What's been on my mind?" too long. Once you have ~10 entries, the weekly synthesis is what turns a recorder into a second brain — but it should be a quiet fourth surface, not a homepage.
 
-### 1. Strip `due_at` extraction from all AI intake paths
+## What gets deleted
 
-- **`process-brain-dump/index.ts`** — remove the `due_at` property from the `extract_items` tool schema entirely, and remove the rule about it from the system prompt. Items come back with title + type + theme only.
-- **`process-stream/index.ts`** — same: remove `due_at` from the tool schema and prompt.
-- **`data-proxy/index.ts`** — keep `due_at` accepted on the explicit `create_card` action (that's the MCP path where the user/Claude explicitly passes a date), but strip it from the `process_brain_dump` action's mapping so a date can never enter that way either.
+Everything currently in the app is a different product. Removing it all:
 
-Result: nothing the AI generates can ever populate `due_at`. Only the user's manual date picker, the calendar event sync (`google_event_id` flow), and explicit MCP `create_card` calls can.
+- Screens: tasks/cards list, Run My Day, weekly life review, Energy/patterns, address book, connections hub, household sharing, daily brief, current onboarding
+- All health/calendar/fitness integrations (Google Calendar, WHOOP, Oura, Strava, Apple Health) and their sync jobs
+- The Chrome extension folder, the MCP data-proxy, inbound email capture, push notifications
+- All existing tables except `profiles` (auth stays, along with Google sign-in)
 
-### 2. Soften "overdue" language in the weekly review
+The 74 existing cards and 5 reflections will be dropped. If you want them preserved as read-only memories, say so and I'll migrate them into the new notes table instead.
 
-- **`generate-life-review/index.ts`** — rename the section "Pressing or overdue threads right now" → "Threads still open" and drop the `[due …]` prefix in favor of plain titles. The model already weaves prose; without the word "overdue" in its source document, it stops echoing it.
+Kept: the design system (Cormorant Garamond + Inter, sanctuary palette, no red), auth, the Capacitor iOS shell, and the microphone/wake-lock recording logic.
 
-### 3. Stop amplifying dates in Run My Day
+## What gets built
 
-- **`generate-daily-plan/index.ts`** — drop the `(due: Mar 5)` annotation from the card list and remove the "approaching deadlines first" / "deadline is close" rules from the system prompt. The plan becomes a calm rundown of what's on the plate, not a deadline tracker. (Calendar items still flow through `calendarSummary`, which is the correct place for actual time-bound things.)
+**1. Record** — one large button at center. Tap to start, tap to stop. Elapsed time, a soft waveform, screen stays awake. That's the entire screen.
 
-### 4. One-time cleanup of existing AI-assigned dates
+**2. Feed** — reverse-chronological, grouped by day ("Today", "Yesterday", then dates). Each entry is a title in serif, a two-sentence synthesis underneath, and the time. Processing entries show a gentle "listening back…" state and fill in when ready.
 
-Cards that were created before this change and got an AI date will still look "due". Two options — I'll go with the safer one by default:
+**3. Search** — one box, no filters or toggles. Typing matches exact words; asking a question matches by meaning. Results show the entry plus the matching passage.
 
-- **Default:** clear `due_at` on any card where `source IN ('voice', 'brain_dump', 'text', 'extension')` AND `google_event_id IS NULL` AND the card was created before today. This wipes only AI-assigned dates and preserves anything tied to a real calendar event. Run as a one-off SQL migration.
+**4. Note detail** — title, synthesis, then the full transcript in comfortable reading type. Audio playback available but understated. Edit the title, delete the note.
 
-If you'd rather keep history intact and only fix new items going forward, say so and I'll skip step 4.
+**5. On my mind** (built last) — a weekly pass across recent entries that names the threads running through them. Appears only once there's enough to say something honest.
 
-## Files touched
+## Technical approach
 
-- `supabase/functions/process-brain-dump/index.ts`
-- `supabase/functions/process-stream/index.ts`
-- `supabase/functions/data-proxy/index.ts`
-- `supabase/functions/generate-life-review/index.ts`
-- `supabase/functions/generate-daily-plan/index.ts`
-- One migration: `UPDATE cards SET due_at = NULL WHERE …` (step 4)
+**Data**
 
-No client UI changes — the date pill in `HomeView` already only renders when `dueAt` exists, so it'll just stop showing for items that no longer have AI-assigned dates.
+- `notes`: user_id, title, synthesis, transcript, audio_path, duration_seconds, recorded_at, status (`processing` / `ready` / `failed`)
+- `note_embeddings`: note_id, chunk_index, content, embedding vector(1536) — transcripts are chunked so search points at passages, not whole notes
+- `weekly_digests`: user_id, week_start, narrative, themes
+- A generated `tsvector` column on `notes` for keyword search
+- Private `voice-notes` storage bucket, one folder per user, RLS-scoped so audio is only reachable by its owner via signed URLs
+- Enable the `vector` and `pg_trgm` extensions (both available, currently uninstalled)
 
-## What this changes for you
+**Pipeline** — client records PCM and uploads a complete WAV to storage, then calls `process-note`, which: transcribes via Lovable AI speech-to-text → generates title + synthesis via one structured-output call → chunks the transcript and stores embeddings → flips status to `ready`. The feed subscribes to changes so the entry fills in live.
 
-- Voice notes, brain dumps, screenshots, emails, extension captures → never get a due date unless you add one yourself in the card detail.
-- The weekly briefing stops talking about "overdue" or "pressing deadlines."
-- Run My Day reads as a calm overview, not a deadline dashboard.
-- Existing AI-assigned dates get wiped (step 4); your manually-picked dates and calendar-synced events stay.
+**Search** — a `hybrid_search_notes` database function combining full-text rank with vector cosine distance (reciprocal rank fusion). The query is embedded server-side in a `search-notes` function, so one box handles both literal and conceptual queries with no mode switch.
+
+**Digest** — a weekly scheduled job builds the "On my mind" narrative from the week's entries.
+
+## Order of work
+
+1. Migration: drop old tables, create the new ones, extensions, bucket, RLS and grants
+2. Strip the old app down to auth + shell; three-tab nav (RECORD · FEED · SEARCH), all caps, text only
+3. Record screen + upload + `process-note` pipeline
+4. Feed with live status, and note detail with playback
+5. Hybrid search
+6. Weekly "On my mind"
+7. A short, honest onboarding: record once, watch it become a memory
+
+## What I need from you
+
+Nothing new — the transcription, synthesis, and embedding models all run on infrastructure already wired into this project. Just confirm whether to discard or migrate the existing 74 cards.
