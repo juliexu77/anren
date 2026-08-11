@@ -85,7 +85,9 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     noteId = typeof body.noteId === 'string' ? body.noteId : undefined;
+    const regenerate = body.regenerate === true;
     if (!noteId) return jsonResponse({ error: 'noteId is required' }, 400);
+
 
     const { data: note, error: noteError } = await admin
       .from('notes')
