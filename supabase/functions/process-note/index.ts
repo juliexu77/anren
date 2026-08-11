@@ -39,7 +39,7 @@ interface Synthesis {
   synthesis: string;
 }
 
-async function transcribe(audio: Blob): Promise<string> {
+async function transcribeOne(audio: Blob): Promise<string> {
   const openAiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openAiKey) throw new Error('OPENAI_API_KEY is not configured');
 
@@ -61,6 +61,7 @@ async function transcribe(audio: Blob): Promise<string> {
   const data = await response.json();
   return (data.text ?? '').trim();
 }
+
 
 const WAV_HEADER = 44;
 const PART_RATE = 16000;
