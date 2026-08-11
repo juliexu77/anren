@@ -54,8 +54,8 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
     label: "Knot",
     path: (
       <>
-        <path d="M8 8c4 0 4 8 8 8" />
-        <path d="M16 8c-4 0-4 8-8 8" />
+        <path d="M9 6c-4 2-4 6 0 8s4 4 0 5" />
+        <path d="M15 6c4 2 4 6 0 8s-4 4 0 5" />
       </>
     ),
   },
