@@ -52,7 +52,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
 
         <main className="flex-1 min-w-0">
-          <div key={location.pathname} className="mx-auto w-full max-w-[720px] px-5 md:px-10 pt-6 pb-40 animate-fade-up">
+          <div key={location.pathname} className="mx-auto w-full max-w-[720px] px-5 md:px-10 pt-6 animate-fade-up"
+            style={{ paddingBottom: "calc(var(--capture-bar-h, 10rem) + 2rem)" }}
+          >
             {children}
           </div>
         </main>

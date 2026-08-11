@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Mic, Square, PenLine } from "lucide-react";
 import { useRecorder } from "@/contexts/RecorderContext";
@@ -19,6 +19,20 @@ export function CaptureBar() {
 
   const recording = status === "recording";
 
+  // The bar grows (recovery card, live transcript), so publish its real height
+  // and let the page reserve exactly that much room.
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const publish = () =>
+      document.documentElement.style.setProperty("--capture-bar-h", `${el.offsetHeight}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const handleClick = async () => {
     if (status === "idle") {
       await start(folderId);
@@ -31,7 +45,7 @@ export function CaptureBar() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
       <ComposeSheet open={writing} onOpenChange={setWriting} projectId={folderId} />
-      <div className="mx-auto w-full max-w-[720px] px-5 md:px-10 pb-6 md:pl-[calc(248px+2.5rem)] md:max-w-[968px]">
+      <div ref={barRef} className="mx-auto w-full max-w-[720px] px-5 md:px-10 pb-6 md:pl-[calc(248px+2.5rem)] md:max-w-[968px]">
         {recovered && !recording && (
           <div className="pointer-events-auto mb-3 rounded-[18px] border border-hairline bg-paper/95 backdrop-blur-xl p-4 animate-fade-up">
             <p className="text-[0.92rem] leading-[1.6] text-foreground">
