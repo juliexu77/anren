@@ -142,8 +142,9 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
     label: "Match",
     path: (
       <>
-        <path d="M12 21V10" />
-        <path d="M12 10c-2-2-1-5 0-7 1 2 2 5 0 7Z" />
+        <path d="M11 21V11" />
+        <path d="M11 11c-2.5-1.5-2.5-4.5 0-8 3 3.5 3 6.5 0 8Z" />
+        <path d="M13.5 9c1.5-1 2-2.5 1.5-4" />
       </>
     ),
   },
