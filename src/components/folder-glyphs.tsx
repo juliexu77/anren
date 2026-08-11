@@ -179,9 +179,9 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
     label: "Lamp",
     path: (
       <>
-        <path d="M6 11 12 4l6 7H6Z" />
-        <path d="M12 11v6" />
-        <path d="M9 20h6" />
+        <path d="M12 2v3" />
+        <path d="M7 9h10l-2-4H9L7 9Z" />
+        <path d="M9.5 12l.8-1.6M14.5 12l-.8-1.6M12 12.8V11" />
       </>
     ),
   },
