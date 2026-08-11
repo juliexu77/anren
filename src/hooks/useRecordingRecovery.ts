@@ -8,8 +8,44 @@ import {
   readSegments,
   type RecordingSession,
 } from "@/lib/recordingStore";
-import { finishSession } from "@/lib/recordingFinish";
+import { finishSession, requestWriteUp } from "@/lib/recordingFinish";
 import { useRecorder } from "@/contexts/RecorderContext";
+
+const STALLED_MS = 3 * 60 * 1000;
+const ABANDONED_MS = 30 * 60 * 1000;
+
+/**
+ * Notes whose audio reached the server but whose write-up never got kicked off
+ * — the tab closed at exactly the wrong moment. Nudge them along quietly.
+ */
+async function resumeStalledNotes(userId: string): Promise<void> {
+  const { data } = await supabase
+    .from("notes")
+    .select("id, audio_path, created_at")
+    .eq("user_id", userId)
+    .eq("source", "voice")
+    .eq("status", "processing")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  for (const note of data ?? []) {
+    const age = Date.now() - new Date(note.created_at as string).getTime();
+    if (age < STALLED_MS) continue;
+    if (note.audio_path) {
+      requestWriteUp(note.id as string);
+    } else if (age > ABANDONED_MS) {
+      // No audio ever arrived and nothing is left to send — stop it spinning.
+      await supabase
+        .from("notes")
+        .update({
+          status: "failed",
+          error_message: "Anren never got the audio for this one.",
+        })
+        .eq("id", note.id);
+    }
+  }
+}
 
 /**
  * Offers back a recording that never got to finish — the screen locked, the
@@ -26,6 +62,7 @@ export function useRecordingRecovery() {
     let cancelled = false;
     void (async () => {
       await pruneStaleSessions();
+      void resumeStalledNotes(user.id);
       const found = await findUnfinishedSession(user.id);
       if (cancelled || !found) return;
       const segments = await readSegments(found.sessionId);
