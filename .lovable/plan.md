@@ -1,41 +1,50 @@
-# Reflection: lead with the reading, sharpen the details
+# Reflection: lead with the reading, compress the patterns
 
-Right now the panel gives you four grounded observations and then, at the very bottom behind a rule, the one part that actually says something. That's backwards. And the observations read like careful summaries because the prompt still asks them to be evidence-first.
+Right now the panel gives you four grounded mini-essays and then, at the very bottom behind a rule, the one part that actually says something. The hierarchy is backwards — you have to work through the evidence before you get the insight.
 
-## 1. Flip the order
-
-The reading becomes the lead — the first thing you see when the panel opens.
+## 1. The reading leads
 
 ```text
 Reflect on these notes  ⌄
 ┌─ (hairline)
-│  You keep walking into rooms you didn't choose to be in, and
-│  never once try the door you came through.
+│  ONE WAY TO READ THIS
+│  You keep walking into rooms you didn't choose to be in, and the
+│  moment you understand what's wrong you become the one expected
+│  to fix it. Nobody hands you the rules first.
 │  ─────────────────
-│  IN THE DETAIL
-│  Two of these end mid-scene…
-│     Unfamiliar house · Long hallway
-│  … 2-4 more …
+│  PATTERNS BEHIND IT
+│  Competence becoming responsibility
+│      See notes ⌄
+│  Rules arriving too late
+│      See notes ⌄
+│  Tools failing under threat
+│      See notes ⌄
 │  Read again
 └─
 ```
 
-- The reading sits at the top, unlabelled, in the editorial serif at the largest size in the panel — it reads as the thing being said, not a footnote.
-- A hairline rule below it, then the observations under a quiet small-caps label (`IN THE DETAIL`) so they clearly serve the reading rather than compete with it.
-- The observations lose their serif prominence: they become the smaller supporting layer, grounding text and note links unchanged.
-- If the model returns no reading, the observations simply lead as they do now — no empty label, no rule.
+- "One way to read this" moves to the top, 2-4 sentences, editorial serif at the largest size in the panel. It is the product.
+- Hairline rule, then `PATTERNS BEHIND IT` as a quiet small-caps label.
+- Each pattern is **one line** — a named motif, not a paragraph. No prose retelling the notes by default.
+- Under each, a quiet "See notes" text toggle. Collapsed by default; expanding reveals the grounding sentence and the links to the notes it rests on.
+- 2-3 patterns maximum.
+- If the model returns no reading, the patterns lead on their own — no empty label or rule.
 
-## 2. Make the observations insightful, not factual
+## 2. Ruthless about recurrence
 
-The prompt currently frames each observation as "evidence from the specific notes", which is why they land as descriptions. Reframe them as the reading's load-bearing parts:
+A pattern only earns a place if it shows up across **multiple notes**. A single clever observation from one note — however good — is cut. That's what makes the reflection feel discovered rather than manufactured.
 
-- Generate the reading first, then the observations as the specific places in the notes where that reading shows itself. Each observation says something the person wouldn't have said themselves; the `grounding` field carries the factual citation so the observation text is free to be a claim.
-- Add explicit failure examples to the prohibitions ("two of these mention water" is a fact, not an observation) so the model can tell the difference.
-- Keep the existing hard rules: never name the genre or format, no throat-clearing, no invented detail, note_ids only where the claim actually rests.
-- Keep 2-4 observations. If the reading is thin, fewer is correct.
+Prompt changes:
+
+- Write the reading first, then name only the motifs that recur across two or more notes and support that reading. Cap at 3.
+- Each pattern is a short named phrase (roughly 3-8 words), stated as a claim about a shape or dynamic — not a description of content. "Two of these mention water" is a fact, not a pattern; "competence becoming responsibility" is a pattern.
+- `note_ids` must contain **at least two** ids. Anything with one is dropped server-side, so single-note cleverness can't survive even if the model tries.
+- Grounding becomes one tight sentence of evidence, since it now lives behind a toggle.
+- Keep the existing hard rules: never name the genre or format of the notes, no throat-clearing, no invented details, no advice or therapy voice.
+- If nothing recurs, return the reading with zero or one pattern and say so plainly rather than padding.
 
 ## Technical notes
 
-- `src/components/FolderReflection.tsx`: reorder the render — reading block first (serif, `text-[1.15rem]`, no uppercase header), hairline rule, `IN THE DETAIL` label, then the observation list at reduced weight/size. "Read again" and the "N new notes since this reading" line stay where they are.
-- `supabase/functions/folder-reflection/index.ts`: rewrite `PROMPT` per above — reading-first instruction order, sharpened observation definition, added anti-examples. JSON shape (`{ observations: [{text, grounding, note_ids}], reading }`), the `folder_reflections` table, and validation logic stay unchanged, so cached reflections keep rendering.
-- Redeploy `folder-reflection`. Existing cached rows will render in the new order immediately; their observation text stays as generated until "Read again".
+- `supabase/functions/folder-reflection/index.ts`: rewrite `PROMPT` per above. Add a server-side filter dropping observations with fewer than two valid `note_ids`, and truncate to the first 3. JSON shape (`{ observations: [{text, grounding, note_ids}], reading }`) and the `folder_reflections` table stay unchanged, so cached rows keep rendering.
+- `src/components/FolderReflection.tsx`: reorder — reading block first (`ONE WAY TO READ THIS` label, serif ~`1.15rem`), hairline rule, `PATTERNS BEHIND IT` label, then the one-line patterns. Add local per-pattern expanded state for the "See notes" toggle wrapping the grounding text and note links. "Read again" and the "N new notes since this reading" line keep their positions.
+- Redeploy `folder-reflection`. Cached reflections render in the new order immediately but keep their long observation text until "Read again".
