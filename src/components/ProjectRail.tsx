@@ -205,7 +205,33 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
             </p>
           )}
         </div>
+
+        {notes.length > 0 && (
+          <div className="mt-8">
+            <span className="block px-3 mb-2 text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
+              Recent
+            </span>
+            <div className="flex flex-col gap-0.5">
+              {notes.slice(0, 10).map((n) => (
+                <NavLink
+                  key={n.id}
+                  to={`/note/${n.id}`}
+                  onClick={onNavigate}
+                  className={cn(
+                    navItemClass({ isActive: location.pathname === `/note/${n.id}` }),
+                    "block truncate text-[0.85rem]",
+                  )}
+                >
+                  <span className="truncate">
+                    {n.title ?? (n.status === "processing" ? "Writing this up…" : "Untitled note")}
+                  </span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
 
       <NavLink to="/settings" className={navItemClass} onClick={onNavigate}>
         <Settings className="w-[17px] h-[17px]" strokeWidth={1.5} />
