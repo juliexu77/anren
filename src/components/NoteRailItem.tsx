@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,9 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { useLongPress } from "@/hooks/useLongPress";
 import { cn } from "@/lib/utils";
 import type { Note, Project } from "@/types/note";
@@ -70,25 +72,37 @@ export function NoteRailItem({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <NavLink
-        to={`/note/${note.id}`}
-        onClick={(e) => {
-          handlers.onClick(e);
-          if (!e.defaultPrevented) onNavigate?.();
-        }}
-        onTouchStart={handlers.onTouchStart}
-        onTouchMove={handlers.onTouchMove}
-        onTouchEnd={handlers.onTouchEnd}
-        onTouchCancel={handlers.onTouchCancel}
-        onContextMenu={handlers.onContextMenu}
-        className={cn(
-          className,
-          "block truncate text-[0.85rem] select-none",
-          location.pathname === `/note/${note.id}` && "bg-paper-sunk text-foreground",
-        )}
-      >
-        <span className="truncate">{label}</span>
-      </NavLink>
+      <div className="group/rail relative flex items-center">
+        <NavLink
+          to={`/note/${note.id}`}
+          onClick={(e) => {
+            handlers.onClick(e);
+            if (!e.defaultPrevented) onNavigate?.();
+          }}
+          onTouchStart={handlers.onTouchStart}
+          onTouchMove={handlers.onTouchMove}
+          onTouchEnd={handlers.onTouchEnd}
+          onTouchCancel={handlers.onTouchCancel}
+          onContextMenu={handlers.onContextMenu}
+          className={cn(
+            className,
+            "block flex-1 min-w-0 truncate pr-7 text-[0.85rem] select-none",
+            location.pathname === `/note/${note.id}` && "bg-paper-sunk text-foreground",
+          )}
+        >
+          <span className="truncate">{label}</span>
+        </NavLink>
+
+        <DropdownMenuTrigger asChild>
+          <button
+            aria-label={`Options for ${label}`}
+            className="absolute right-1.5 p-1 rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-paper-sunk focus-visible:opacity-100 group-hover/rail:opacity-100 data-[state=open]:opacity-100"
+          >
+            <MoreHorizontal className="w-3.5 h-3.5" strokeWidth={1.5} />
+          </button>
+        </DropdownMenuTrigger>
+      </div>
+
 
       <DropdownMenuContent align="start" className="w-52">
         <DropdownMenuItem
