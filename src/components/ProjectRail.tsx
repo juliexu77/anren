@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Search, Sparkles, LayoutList, Plus, Settings, Check } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
+import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { cn } from "@/lib/utils";
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
@@ -11,17 +12,25 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
   );
 
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
-  const { projects, createProject } = useProjects();
+  const { projects, createProject, setProjectEmoji } = useProjects();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
+  const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!justCreatedId) return;
+    const timer = window.setTimeout(() => setJustCreatedId(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [justCreatedId]);
 
   const submit = async () => {
     const created = await createProject(name);
     setName("");
     setAdding(false);
     if (created) {
+      setJustCreatedId(created.id);
       navigate(`/folder/${created.id}`);
       onNavigate?.();
     }
@@ -75,10 +84,29 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                 "truncate",
               )}
             >
-              <span className="w-[17px] text-center text-muted-foreground/60">·</span>
-              <span className="truncate">{p.name}</span>
+              <span
+                className={cn(
+                  "inline-flex shrink-0",
+                  p.id === justCreatedId && "motion-safe:animate-resolve-in [animation-delay:180ms]",
+                )}
+              >
+                <FolderEmojiPicker
+                  name={p.name}
+                  emoji={p.emoji}
+                  onSelect={(emoji) => setProjectEmoji(p.id, emoji)}
+                />
+              </span>
+              <span
+                className={cn(
+                  "truncate",
+                  p.id === justCreatedId && "motion-safe:animate-resolve-in",
+                )}
+              >
+                {p.name}
+              </span>
             </NavLink>
           ))}
+
 
           {adding && (
             <div className="flex items-center gap-2 px-3 py-1.5">

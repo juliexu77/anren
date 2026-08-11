@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { NoteRow } from "@/components/NoteRow";
 import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
+import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import type { Note } from "@/types/note";
 
 function dayLabel(iso: string) {
@@ -30,19 +31,31 @@ function groupByDay(notes: Note[]) {
 const Index = () => {
   const { projectId } = useParams();
   const { notes, loading } = useNotes(projectId ?? null);
-  const { projects } = useProjects();
+  const { projects, setProjectEmoji } = useProjects();
 
-  const heading = projectId ? projects.find((p) => p.id === projectId)?.name ?? "Folder" : "Notes";
+  const project = projectId ? projects.find((p) => p.id === projectId) : undefined;
+  const heading = projectId ? project?.name ?? "Folder" : "Notes";
   const groups = useMemo(() => groupByDay(notes), [notes]);
 
   return (
     <div>
       <header className="mb-8">
-        <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">{heading}</h1>
+        <div className="flex items-center gap-2.5">
+          {project && (
+            <FolderEmojiPicker
+              name={project.name}
+              emoji={project.emoji}
+              size="lg"
+              onSelect={(emoji) => setProjectEmoji(project.id, emoji)}
+            />
+          )}
+          <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">{heading}</h1>
+        </div>
         <p className="mt-1.5 text-[0.9rem] text-muted-foreground">
           {notes.length ? `${notes.length} note${notes.length === 1 ? "" : "s"}` : "Nothing here yet"}
         </p>
       </header>
+
 
       {loading ? (
         <p className="text-[0.9rem] text-muted-foreground">Gathering your notes…</p>

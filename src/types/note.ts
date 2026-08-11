@@ -17,6 +17,7 @@ export interface Project {
   id: string;
   name: string;
   position: number;
+  emoji: string | null;
   noteCount?: number;
 }
 

@@ -97,6 +97,11 @@ export default {
           from: { opacity: "0", transform: "translateY(6px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "resolve-in": {
+          "0%": { opacity: "0", filter: "blur(6px)", letterSpacing: "0.14em" },
+          "60%": { opacity: "0.85", filter: "blur(1.5px)", letterSpacing: "0.04em" },
+          "100%": { opacity: "1", filter: "blur(0)", letterSpacing: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -104,6 +109,7 @@ export default {
         breathe: "breathe 3.4s ease-in-out infinite",
         ripple: "ripple 2.6s ease-out infinite",
         "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "resolve-in": "resolve-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },

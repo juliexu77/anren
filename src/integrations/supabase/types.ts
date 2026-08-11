@@ -162,6 +162,7 @@ export type Database = {
       projects: {
         Row: {
           created_at: string
+          emoji: string | null
           id: string
           name: string
           position: number
@@ -170,6 +171,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          emoji?: string | null
           id?: string
           name: string
           position?: number
@@ -178,6 +180,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          emoji?: string | null
           id?: string
           name?: string
           position?: number
