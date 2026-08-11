@@ -26,6 +26,8 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
   const [reflection, setReflection] = useState<Reflection | null>(null);
   const fetched = useRef(false);
   const [working, setWorking] = useState(false);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+
 
   const titleById = useMemo(
     () => new Map(notes.map((n) => [n.id, n.title ?? "Untitled"])),
