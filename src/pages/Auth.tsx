@@ -95,6 +95,19 @@ const Auth = () => {
         <p className="mt-6 text-[0.78rem] leading-relaxed text-muted-foreground/70">
           Your notes are private to your account.
         </p>
+        <p className="mt-2 text-[0.75rem] text-muted-foreground/60">
+          <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground transition-colors">
+            Privacy
+          </Link>
+          {" · "}
+          <Link to="/terms" className="underline underline-offset-4 hover:text-foreground transition-colors">
+            Terms
+          </Link>
+          {" · "}
+          <Link to="/support" className="underline underline-offset-4 hover:text-foreground transition-colors">
+            Support
+          </Link>
+        </p>
       </div>
     </main>
   );
