@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Search, Sparkles, LayoutList, Plus, Settings, Check } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
+import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { cn } from "@/lib/utils";
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
@@ -11,17 +12,25 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
   );
 
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
-  const { projects, createProject } = useProjects();
+  const { projects, createProject, setProjectEmoji } = useProjects();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
+  const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!justCreatedId) return;
+    const timer = window.setTimeout(() => setJustCreatedId(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [justCreatedId]);
 
   const submit = async () => {
     const created = await createProject(name);
     setName("");
     setAdding(false);
     if (created) {
+      setJustCreatedId(created.id);
       navigate(`/folder/${created.id}`);
       onNavigate?.();
     }
