@@ -19,6 +19,8 @@ const NoteDetail = () => {
   const { note, loading, reload } = useNote(noteId);
   const { projects } = useProjects();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [related, setRelated] = useState<{ note_id: string; title: string | null; recorded_at: string }[] | null>(null);
+  const [loadingRelated, setLoadingRelated] = useState(false);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
