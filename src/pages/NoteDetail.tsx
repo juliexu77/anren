@@ -89,6 +89,28 @@ const NoteDetail = () => {
     toast.success(projectId ? "Filed away." : "Removed from folder.");
   };
 
+  /** Changing your own words makes the write-up stale, so Anren writes it again. */
+  const saveBody = async (next: string) => {
+    if (!note) return;
+    const trimmed = next.trim();
+    await patch({ body: next, status: trimmed ? "processing" : note.status });
+    if (!trimmed) return;
+
+    setRewriting(true);
+    setRelated(null);
+    const { error } = await supabase.functions.invoke("process-note", {
+      body: { noteId: note.id, regenerate: true },
+    });
+    setRewriting(false);
+    if (error) {
+      await patch({ status: "ready" });
+      toast.error("Saved your words, but the write-up didn't refresh.");
+      return;
+    }
+    reload();
+  };
+
+
   const remove = () => {
     if (!note) return;
     softDeleteNote(note, () => reload());
