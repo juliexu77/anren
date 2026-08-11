@@ -13,6 +13,13 @@ export function useProjects() {
 
   const load = useCallback(async () => {
     if (!user) return;
+    // Folders whose undo window closed while the app wasn't looking shouldn't
+    // sit half-deleted forever.
+    await supabase
+      .from("projects")
+      .delete()
+      .eq("user_id", user.id)
+      .lt("deleted_at", new Date(Date.now() - 60_000).toISOString());
     const { data } = await supabase
       .from("projects")
       .select(SELECT)
@@ -22,6 +29,7 @@ export function useProjects() {
     if (data) setProjects(data as Project[]);
     setLoading(false);
   }, [user]);
+
 
   useEffect(() => {
     load();
