@@ -14,416 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      address_book_contacts: {
+      note_passages: {
         Row: {
-          birthday: string | null
+          chunk_index: number
+          content: string
           created_at: string
-          email: string | null
-          entry_id: string
-          first_name: string
+          embedding: string | null
           id: string
-          is_primary: boolean
-          last_name: string
-          phone: string | null
-          updated_at: string
+          note_id: string
           user_id: string
         }
         Insert: {
-          birthday?: string | null
+          chunk_index: number
+          content: string
           created_at?: string
-          email?: string | null
-          entry_id: string
-          first_name?: string
+          embedding?: string | null
           id?: string
-          is_primary?: boolean
-          last_name?: string
-          phone?: string | null
-          updated_at?: string
+          note_id: string
           user_id: string
         }
         Update: {
-          birthday?: string | null
+          chunk_index?: number
+          content?: string
           created_at?: string
-          email?: string | null
-          entry_id?: string
-          first_name?: string
+          embedding?: string | null
           id?: string
-          is_primary?: boolean
-          last_name?: string
-          phone?: string | null
-          updated_at?: string
+          note_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "address_book_contacts_entry_id_fkey"
-            columns: ["entry_id"]
+            foreignKeyName: "note_passages_note_id_fkey"
+            columns: ["note_id"]
             isOneToOne: false
-            referencedRelation: "address_book_entries"
+            referencedRelation: "notes"
             referencedColumns: ["id"]
           },
         ]
       }
-      address_book_entries: {
+      notes: {
         Row: {
-          address_line_1: string
-          address_line_2: string
-          city: string
-          country: string
+          audio_path: string | null
           created_at: string
-          household_name: string
+          duration_seconds: number | null
+          error_message: string | null
           id: string
-          state: string
-          updated_at: string
-          user_id: string
-          zip: string
-        }
-        Insert: {
-          address_line_1?: string
-          address_line_2?: string
-          city?: string
-          country?: string
-          created_at?: string
-          household_name?: string
-          id?: string
-          state?: string
-          updated_at?: string
-          user_id: string
-          zip?: string
-        }
-        Update: {
-          address_line_1?: string
-          address_line_2?: string
-          city?: string
-          country?: string
-          created_at?: string
-          household_name?: string
-          id?: string
-          state?: string
-          updated_at?: string
-          user_id?: string
-          zip?: string
-        }
-        Relationships: []
-      }
-      cards: {
-        Row: {
-          body: string
-          category: string
-          created_at: string
-          due_at: string | null
-          google_event_id: string | null
-          group_id: string | null
-          id: string
-          image_url: string | null
-          routed_type: string | null
-          source: string
+          project_id: string | null
+          recorded_at: string
+          search_tsv: unknown
           status: string
-          summary: string
-          title: string
+          synthesis: string | null
+          title: string | null
+          transcript: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          body?: string
-          category?: string
+          audio_path?: string | null
           created_at?: string
-          due_at?: string | null
-          google_event_id?: string | null
-          group_id?: string | null
+          duration_seconds?: number | null
+          error_message?: string | null
           id?: string
-          image_url?: string | null
-          routed_type?: string | null
-          source?: string
-          status?: string
-          summary?: string
-          title?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          body?: string
-          category?: string
-          created_at?: string
-          due_at?: string | null
-          google_event_id?: string | null
-          group_id?: string | null
-          id?: string
-          image_url?: string | null
-          routed_type?: string | null
-          source?: string
-          status?: string
-          summary?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      daily_brief_dismissals: {
-        Row: {
-          created_at: string
-          dismissed_date: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          dismissed_date?: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          dismissed_date?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      daily_brief_settings: {
-        Row: {
-          calendars: string[]
-          created_at: string
-          delivery_time: string
-          enabled: boolean
-          id: string
-          timezone: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          calendars?: string[]
-          created_at?: string
-          delivery_time?: string
-          enabled?: boolean
-          id?: string
-          timezone?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          calendars?: string[]
-          created_at?: string
-          delivery_time?: string
-          enabled?: boolean
-          id?: string
-          timezone?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      device_tokens: {
-        Row: {
-          created_at: string
-          id: string
-          platform: string
-          token: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          platform?: string
-          token: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          platform?: string
-          token?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      health_signals: {
-        Row: {
-          created_at: string
-          external_id: string | null
-          id: string
-          provider: string
-          raw: Json | null
-          recorded_at: string
-          signal_type: string
-          user_id: string
-          value: Json
-        }
-        Insert: {
-          created_at?: string
-          external_id?: string | null
-          id?: string
-          provider: string
-          raw?: Json | null
-          recorded_at: string
-          signal_type: string
-          user_id: string
-          value?: Json
-        }
-        Update: {
-          created_at?: string
-          external_id?: string | null
-          id?: string
-          provider?: string
-          raw?: Json | null
+          project_id?: string | null
           recorded_at?: string
-          signal_type?: string
-          user_id?: string
-          value?: Json
-        }
-        Relationships: []
-      }
-      household_invites: {
-        Row: {
-          created_at: string
-          expires_at: string
-          household_id: string
-          id: string
-          token: string
-          used_by: string[]
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string
-          household_id: string
-          id?: string
-          token?: string
-          used_by?: string[]
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          household_id?: string
-          id?: string
-          token?: string
-          used_by?: string[]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "household_invites_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      household_members: {
-        Row: {
-          household_id: string
-          id: string
-          joined_at: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          household_id: string
-          id?: string
-          joined_at?: string
-          role?: string
+          search_tsv?: unknown
+          status?: string
+          synthesis?: string | null
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
-          household_id?: string
+          audio_path?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
           id?: string
-          joined_at?: string
-          role?: string
+          project_id?: string | null
+          recorded_at?: string
+          search_tsv?: unknown
+          status?: string
+          synthesis?: string | null
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "household_members_household_id_fkey"
-            columns: ["household_id"]
+            foreignKeyName: "notes_project_id_fkey"
+            columns: ["project_id"]
             isOneToOne: false
-            referencedRelation: "households"
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
-      }
-      households: {
-        Row: {
-          created_at: string
-          id: string
-          owner_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          owner_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          owner_id?: string
-        }
-        Relationships: []
-      }
-      life_reviews: {
-        Row: {
-          content: Json
-          created_at: string
-          id: string
-          model: string
-          updated_at: string
-          user_id: string
-          week_start: string
-        }
-        Insert: {
-          content?: Json
-          created_at?: string
-          id?: string
-          model?: string
-          updated_at?: string
-          user_id: string
-          week_start: string
-        }
-        Update: {
-          content?: Json
-          created_at?: string
-          id?: string
-          model?: string
-          updated_at?: string
-          user_id?: string
-          week_start?: string
-        }
-        Relationships: []
-      }
-      people: {
-        Row: {
-          created_at: string
-          draft_message: string
-          email: string | null
-          id: string
-          name: string
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          draft_message?: string
-          email?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          draft_message?: string
-          email?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -473,183 +159,97 @@ export type Database = {
         }
         Relationships: []
       }
-      reflection_summaries: {
+      projects: {
         Row: {
           created_at: string
-          dismissed: boolean
           id: string
-          period_start: string
-          period_type: string
-          recurring_patterns: string
-          texture: string
-          unresolved_threads: string
-          user_id: string
-          what_created_it: string
-          what_this_reveals: string
-        }
-        Insert: {
-          created_at?: string
-          dismissed?: boolean
-          id?: string
-          period_start: string
-          period_type?: string
-          recurring_patterns?: string
-          texture?: string
-          unresolved_threads?: string
-          user_id: string
-          what_created_it?: string
-          what_this_reveals?: string
-        }
-        Update: {
-          created_at?: string
-          dismissed?: boolean
-          id?: string
-          period_start?: string
-          period_type?: string
-          recurring_patterns?: string
-          texture?: string
-          unresolved_threads?: string
-          user_id?: string
-          what_created_it?: string
-          what_this_reveals?: string
-        }
-        Relationships: []
-      }
-      reflections: {
-        Row: {
-          created_at: string
-          energy_drainers: string[]
-          energy_givers: string[]
-          id: string
-          raw_transcript: string
-          reflection_date: string
-          summary: string
-          texture: string
-          texture_why: string
-          unresolved_threads: string[]
-          user_id: string
-          what_this_reveals: string
-        }
-        Insert: {
-          created_at?: string
-          energy_drainers?: string[]
-          energy_givers?: string[]
-          id?: string
-          raw_transcript?: string
-          reflection_date?: string
-          summary?: string
-          texture?: string
-          texture_why?: string
-          unresolved_threads?: string[]
-          user_id: string
-          what_this_reveals?: string
-        }
-        Update: {
-          created_at?: string
-          energy_drainers?: string[]
-          energy_givers?: string[]
-          id?: string
-          raw_transcript?: string
-          reflection_date?: string
-          summary?: string
-          texture?: string
-          texture_why?: string
-          unresolved_threads?: string[]
-          user_id?: string
-          what_this_reveals?: string
-        }
-        Relationships: []
-      }
-      user_connections: {
-        Row: {
-          access_token: string | null
-          created_at: string
-          id: string
-          last_sync_error: string | null
-          last_synced_at: string | null
-          provider: string
-          refresh_token: string | null
-          settings: Json
-          status: string
-          token_expires_at: string | null
+          name: string
+          position: number
           updated_at: string
           user_id: string
         }
         Insert: {
-          access_token?: string | null
           created_at?: string
           id?: string
-          last_sync_error?: string | null
-          last_synced_at?: string | null
-          provider: string
-          refresh_token?: string | null
-          settings?: Json
-          status?: string
-          token_expires_at?: string | null
+          name: string
+          position?: number
           updated_at?: string
           user_id: string
         }
         Update: {
-          access_token?: string | null
           created_at?: string
           id?: string
-          last_sync_error?: string | null
-          last_synced_at?: string | null
-          provider?: string
-          refresh_token?: string | null
-          settings?: Json
-          status?: string
-          token_expires_at?: string | null
+          name?: string
+          position?: number
           updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
-      weekly_syntheses: {
+      weekly_digests: {
         Row: {
           created_at: string
-          dismissed: boolean
-          domains: Json
           id: string
           narrative: string
-          stale_items: Json
-          total_cards_analyzed: number
+          notes_analyzed: number
+          project_id: string | null
+          themes: Json
+          updated_at: string
           user_id: string
           week_start: string
         }
         Insert: {
           created_at?: string
-          dismissed?: boolean
-          domains?: Json
           id?: string
-          narrative?: string
-          stale_items?: Json
-          total_cards_analyzed?: number
+          narrative: string
+          notes_analyzed?: number
+          project_id?: string | null
+          themes?: Json
+          updated_at?: string
           user_id: string
           week_start: string
         }
         Update: {
           created_at?: string
-          dismissed?: boolean
-          domains?: Json
           id?: string
           narrative?: string
-          stale_items?: Json
-          total_cards_analyzed?: number
+          notes_analyzed?: number
+          project_id?: string | null
+          themes?: Json
+          updated_at?: string
           user_id?: string
           week_start?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weekly_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      is_household_member: {
-        Args: { _owner_id: string; _user_id: string }
-        Returns: boolean
+      hybrid_search_notes: {
+        Args: {
+          filter_project?: string
+          match_count?: number
+          query_embedding: string
+          query_text: string
+        }
+        Returns: {
+          note_id: string
+          passage: string
+          score: number
+        }[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

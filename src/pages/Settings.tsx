@@ -1,0 +1,77 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjects } from "@/hooks/useProjects";
+import { Trash2 } from "lucide-react";
+
+const Settings = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { projects, deleteProject } = useProjects();
+  const [noteCount, setNoteCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("notes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .then(({ count }) => setNoteCount(count ?? 0));
+  }, [user]);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
+  return (
+    <div>
+      <header className="mb-8">
+        <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">Settings</h1>
+      </header>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Account</h2>
+        <p className="text-[0.94rem]">{user?.email}</p>
+        <p className="mt-1 text-[0.88rem] text-muted-foreground">
+          {noteCount === null ? "—" : `${noteCount} note${noteCount === 1 ? "" : "s"} kept`}
+        </p>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Folders</h2>
+        {!projects.length ? (
+          <p className="text-[0.9rem] text-muted-foreground">No folders yet.</p>
+        ) : (
+          <div className="flex flex-col">
+            {projects.map((p) => (
+              <div key={p.id} className="flex items-center justify-between py-3 border-b border-hairline last:border-b-0">
+                <span className="text-[0.94rem]">{p.name}</span>
+                <button
+                  onClick={() => deleteProject(p.id)}
+                  aria-label={`Delete ${p.name}`}
+                  className="p-1.5 text-muted-foreground/70 hover:text-foreground transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                </button>
+              </div>
+            ))}
+            <p className="mt-3 text-[0.82rem] leading-relaxed text-muted-foreground/80">
+              Deleting a folder keeps its notes — they simply return to the main list.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <button
+        onClick={signOut}
+        className="rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Sign out
+      </button>
+    </div>
+  );
+};
+
+export default Settings;
