@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chat, embed, chunkText, parseJsonBlock, jsonResponse } from '../_shared/ai.ts';
+import { chat, embed, chunkText, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
         role: 'user',
         content: typed ? `Written note:\n\n${transcript}` : `Voice memo transcript:\n\n${transcript}`,
       },
-    ], { temperature: 0.6 });
+    ], { temperature: 0.6, userId: user.id });
 
     const parsed = parseJsonBlock<Synthesis>(raw);
     const existingTitle = typeof note.title === 'string' ? note.title.trim() : '';

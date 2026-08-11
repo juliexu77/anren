@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
           },
           { role: 'user', content: `Folder name: ${rawName}` },
         ],
-        { temperature: 0.3 },
+        { temperature: 0.3, userId: user.id },
       );
 
       const match = reply.match(/\{[\s\S]*\}/);
