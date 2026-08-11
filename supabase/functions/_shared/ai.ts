@@ -1,10 +1,12 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const GATEWAY = 'https://ai.gateway.lovable.dev/v1';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 export const EMBEDDING_MODEL = 'google/gemini-embedding-001';
-export const CHAT_MODEL = 'google/gemini-2.5-flash';
+export const CHAT_MODEL = 'claude-sonnet-4-5';
 
 export function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -18,21 +20,36 @@ function requireKey(): string {
   return LOVABLE_API_KEY;
 }
 
-/** Chat completion against Lovable AI. Returns the assistant message text. */
+/** Chat completion against Claude. Returns the assistant message text. */
 export async function chat(
   messages: { role: string; content: string }[],
-  options: { model?: string; temperature?: number } = {},
+  options: { model?: string; temperature?: number; maxTokens?: number } = {},
 ): Promise<string> {
-  const response = await fetch(`${GATEWAY}/chat/completions`, {
+  if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not configured');
+
+  // Anthropic takes the system prompt as a top-level field, not a message.
+  const system = messages
+    .filter((m) => m.role === 'system')
+    .map((m) => m.content)
+    .join('\n\n');
+
+  const turns = messages
+    .filter((m) => m.role !== 'system')
+    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+
+  const response = await fetch(ANTHROPIC_URL, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${requireKey()}`,
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: options.model ?? CHAT_MODEL,
-      messages,
+      max_tokens: options.maxTokens ?? 4096,
+      ...(system ? { system } : {}),
       ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+      messages: turns.length ? turns : [{ role: 'user', content: system || 'Hello' }],
     }),
   });
 
@@ -42,8 +59,14 @@ export async function chat(
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content ?? '';
+  const parts = Array.isArray(data.content) ? data.content : [];
+  return parts
+    .filter((p: { type?: string }) => p?.type === 'text')
+    .map((p: { text?: string }) => p.text ?? '')
+    .join('')
+    .trim();
 }
+
 
 /** Embed a batch of strings. Returns one vector per input. */
 export async function embed(inputs: string[]): Promise<number[][]> {
