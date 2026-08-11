@@ -108,13 +108,15 @@ Once the shell exists I'll offer a few rendered directions for the feed and note
 
 ## Order of work
 
-1. Migration: drop old tables, create the new ones, extensions, bucket, RLS and grants
-2. Strip the old app to auth + shell; feed-first layout with the persistent record button
-3. Capture + upload + `process-note`, with the in-place fill-in moment
-4. Note detail: summary/transcript toggle, playback, ask
-5. Hybrid search
-6. Weekly "On my mind"
-7. Onboarding: record once, watch it become a memory
+1. Migration: drop old tables, create `projects` / `notes` / `note_embeddings` / `weekly_digests`, extensions, bucket, RLS and grants
+2. New visual system in the global CSS — warm palette, editorial type, tokens
+3. Strip the old app to auth + shell; Granola-shaped layout (project rail + feed) with the persistent record button
+4. Capture + upload + `process-note`, with the in-place fill-in moment
+5. Note detail: summary/transcript toggle, playback, project picker, ask
+6. Projects: create/rename/delete, filing, filtered feed
+7. Hybrid search, global and project-scoped
+8. Weekly "On my mind"
+9. Onboarding: record once, watch it become a memory
 
 ## What I need from you
 
