@@ -198,7 +198,6 @@ Deno.serve(async (req) => {
     if (typed) {
       transcript = (note.body ?? '').trim();
       if (!transcript) return jsonResponse({ error: 'Note has no text yet' }, 400);
-    } else {
     } else if (!note.audio_path) {
       // The audio is gone because the transcript already exists — reuse it.
       transcript = (note.transcript ?? '').trim();
