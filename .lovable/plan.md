@@ -37,9 +37,9 @@ So it will feel very familiar, minus the meeting scaffolding. The moment that ma
 6. **Ask this note.** Granola's per-note chat is one of its best moments. Anren gets a single-line "Ask about this" at the bottom of note detail — answers grounded in that transcript only.
 7. **Keyboard/gesture-fast, quiet visuals.** Text-forward, generous whitespace, no chrome competing with the writing. Our existing serif/sans system already fits this.
 
-Deliberately not copied: templates, sharing/permissions, calendar integration, attendee handling, teams.
+8. **Sidebar with projects/folders.** Granola's left rail lists folders above the notes list. Anren keeps that shape: a projects rail, and any note can be filed into a project (or left unfiled in the feed).
 
-Folders are worth keeping as a later addition — not for organization, but because a long chronological feed eventually needs a way to say "these are all about one thing." They would be simple named collections, private to the user, added after v1.
+Deliberately not copied: templates, sharing/permissions, calendar integration, attendee handling, teams — this is a single-user app throughout.
 
 ## What gets deleted
 
@@ -52,25 +52,46 @@ Everything currently in the app is a different product. Removing it all:
 
 The 74 existing cards and 5 reflections will be dropped. If you want them preserved as read-only memories, say so and I'll migrate them into the new notes table instead.
 
-Kept: the design system (Cormorant Garamond + Inter, sanctuary palette, no red), auth, the Capacitor iOS shell, and the microphone/wake-lock recording logic.
+Kept: auth, the Capacitor iOS shell, and the microphone/wake-lock recording logic. The visual system is being rebuilt (below) — the current sanctuary palette goes with the old product.
+
+## Visual direction: Granola's structure, not Granola's masculinity
+
+Granola looks like a tool made by men for men in enterprise sales: cool grays, tight blue accents, dense information, a slightly cold productivity edge. The layout logic is excellent and we keep it exactly. The surface gets rebuilt.
+
+What we take from Granola: the calm document look, generous whitespace, text-forward hierarchy, small quiet UI chrome, a left rail, subtle dividers instead of heavy cards, and restraint in color.
+
+What changes:
+
+- **Palette** — warm neutrals instead of cool gray: soft ivory and oat backgrounds, a deep muted plum/ink for text, and one warm accent (dusty rose or clay) used sparingly for the record state and active items. No corporate blue. No red anywhere.
+- **Typography** — a real editorial pairing rather than a UI sans everywhere: a warm serif for titles and note bodies, a clean humanist sans for interface labels. Titles get room to breathe; they read like a diary heading, not a row label.
+- **Shape and texture** — softer radii, hairline warm-toned dividers, gentle shadowless surfaces, a hint of paper warmth in the background rather than flat white.
+- **Density** — one notch looser than Granola. It should feel like reading, not scanning a CRM.
+- **Motion** — slow and soft: a breathing pulse while recording, a quiet shimmer as the synthesis lands, cross-fades instead of slides.
+
+Everything defined as semantic tokens in the global CSS so the whole app is themable in one place.
+
+Once the shell exists I'll offer a few rendered directions for the feed and note detail so you can pick the exact look rather than accept mine.
 
 ## What gets built
 
-**1. Feed (home)** — reverse-chronological, grouped by day ("Today", "Yesterday", then dates). Each entry: title in serif, two-sentence synthesis, time. Freshly captured entries fill in live. A persistent record button sits above the tab bar on every screen.
+**1. Feed (home)** — reverse-chronological, grouped by day ("Today", "Yesterday", then dates). Each entry: title in serif, two-sentence synthesis, time, and its project if it has one. Freshly captured entries fill in live. A persistent record button always within reach.
 
 **2. Capture** — tap to start, tap to stop. Elapsed time, soft pulse, live transcript, screen stays awake. Stopping returns you straight to the feed with the new entry already there.
 
-**3. Note detail** — title, synthesis, "Transcript" toggle, audio playback, and "Ask about this" at the bottom. Edit title, delete.
+**3. Note detail** — title, synthesis, "Transcript" toggle, audio playback, project picker, and "Ask about this" at the bottom. Edit title, delete.
 
-**4. Search** — one box. Keywords and questions both. Results show the entry plus the matching passage.
+**4. Projects** — a rail (sidebar on desktop, slide-over on mobile) listing your projects with counts. Create, rename, delete. Tapping one filters the feed to it. A note can belong to one project, assigned from note detail or via long-press in the feed. Unfiled notes still live in the main feed — filing is optional, never a required step.
 
-**5. On my mind** (built last) — a weekly pass naming the threads across recent entries. Appears only once there's enough to say something honest.
+**5. Search** — one box. Keywords and questions both, across everything or scoped to the current project. Results show the entry plus the matching passage.
+
+**6. On my mind** (built last) — a weekly pass naming the threads across recent entries, with the option to run it for a single project.
 
 ## Technical approach
 
 **Data**
 
-- `notes`: user_id, title, synthesis, transcript, audio_path, duration_seconds, recorded_at, status (`processing` / `ready` / `failed`)
+- `projects`: user_id, name, position — private per user
+- `notes`: user_id, project_id (nullable), title, synthesis, transcript, audio_path, duration_seconds, recorded_at, status (`processing` / `ready` / `failed`)
 - `note_embeddings`: note_id, chunk_index, content, embedding vector — transcripts are chunked so search points at passages, not whole notes
 - `weekly_digests`: user_id, week_start, narrative, themes
 - A generated `tsvector` column on `notes` for keyword search
@@ -87,13 +108,15 @@ Kept: the design system (Cormorant Garamond + Inter, sanctuary palette, no red),
 
 ## Order of work
 
-1. Migration: drop old tables, create the new ones, extensions, bucket, RLS and grants
-2. Strip the old app to auth + shell; feed-first layout with the persistent record button
-3. Capture + upload + `process-note`, with the in-place fill-in moment
-4. Note detail: summary/transcript toggle, playback, ask
-5. Hybrid search
-6. Weekly "On my mind"
-7. Onboarding: record once, watch it become a memory
+1. Migration: drop old tables, create `projects` / `notes` / `note_embeddings` / `weekly_digests`, extensions, bucket, RLS and grants
+2. New visual system in the global CSS — warm palette, editorial type, tokens
+3. Strip the old app to auth + shell; Granola-shaped layout (project rail + feed) with the persistent record button
+4. Capture + upload + `process-note`, with the in-place fill-in moment
+5. Note detail: summary/transcript toggle, playback, project picker, ask
+6. Projects: create/rename/delete, filing, filtered feed
+7. Hybrid search, global and project-scoped
+8. Weekly "On my mind"
+9. Onboarding: record once, watch it become a memory
 
 ## What I need from you
 
