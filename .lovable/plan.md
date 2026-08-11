@@ -90,7 +90,8 @@ Once the shell exists I'll offer a few rendered directions for the feed and note
 
 **Data**
 
-- `notes`: user_id, title, synthesis, transcript, audio_path, duration_seconds, recorded_at, status (`processing` / `ready` / `failed`)
+- `projects`: user_id, name, position — private per user
+- `notes`: user_id, project_id (nullable), title, synthesis, transcript, audio_path, duration_seconds, recorded_at, status (`processing` / `ready` / `failed`)
 - `note_embeddings`: note_id, chunk_index, content, embedding vector — transcripts are chunked so search points at passages, not whole notes
 - `weekly_digests`: user_id, week_start, narrative, themes
 - A generated `tsvector` column on `notes` for keyword search
