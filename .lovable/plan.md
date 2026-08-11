@@ -6,7 +6,7 @@ Folders get a small emoji chosen automatically from the name, editable any time,
 
 **Creating a folder.** You type a name and hit enter. The folder appears immediately with a soft placeholder mark, and a moment later the emoji settles in — "Coworking space" gets a key or a doorway, "Mom" gets something warm, "Book ideas" gets a book. No dialog, no picking.
 
-**The sparkle.** When a folder lands in the sidebar it fades and lifts in over about half a second, and two or three tiny points of light drift out from behind the emoji and dissolve. Clay-rose, hairline-thin, gone in under a second. It only plays for a folder that was just created — never on page load or navigation, so the sidebar stays still when you're just moving around.
+**Arriving into place.** No particles, no colored specks. The folder's own text does the work: the name appears slightly blurred, faintly transparent and a hair wider in letter-spacing, then resolves — blur clears, letters draw back together, opacity settles — over about 600ms. The emoji resolves the same way, a beat behind the name. It reads like the words condensing out of the paper rather than sliding in. Plays only for a folder you just created, never on page load or navigation.
 
 **Changing the emoji.** Click the emoji next to any folder in the sidebar and a small panel opens: a row of alternate suggestions for that name, a short list of common marks, and a field where you can type or paste any emoji you like. Pick one and it saves instantly. Same panel is reachable from the folder's own page header, next to the title.
 
@@ -14,7 +14,7 @@ Folders get a small emoji chosen automatically from the name, editable any time,
 
 ## Voice and restraint
 
-The animation reads as settling, not celebrating — no confetti, no bounce, no sound. If your system is set to reduce motion, the folder simply fades in and the sparkles don't play.
+The animation reads as settling, not celebrating — no confetti, no bounce, no colored flourish, no sound. If your system is set to reduce motion, the folder simply appears with no transition.
 
 ## Technical notes
 
@@ -36,8 +36,8 @@ The animation reads as settling, not celebrating — no confetti, no bounce, no 
 **Sidebar (`src/components/ProjectRail.tsx`)**
 - Replace the `·` span with the emoji (or a muted dot when null), wrapped in a button that opens the picker popover.
 - New `src/components/FolderEmojiPicker.tsx` — shadcn `Popover`, alternates row + common set + free-text input, all semantic tokens.
-- New `src/components/SparkleBurst.tsx` — 3 absolutely-positioned spans animated by new Tailwind keyframes, `pointer-events-none`, unmounted after ~900ms.
-- Two keyframes added to `tailwind.config.ts`: `sparkle` (scale/opacity/translate drift) and reuse of existing `fade-up` for the row itself. Wrapped in `motion-safe:` so reduced-motion users skip it.
+- One new keyframe in `tailwind.config.ts`: `resolve-in` — `filter: blur(6px)` → `blur(0)`, `opacity 0 → 1`, `letter-spacing 0.14em → 0`, ~600ms with an ease-out curve. Applied as `motion-safe:animate-resolve-in` to the name, and to the emoji with a short `animation-delay` so it lands a beat later.
+- No particle component and no color change — the effect is entirely blur/opacity/tracking on the existing text.
 
 **Folder page (`src/pages/Index.tsx`)**
 - Heading renders the emoji before the folder name, using the same picker.
