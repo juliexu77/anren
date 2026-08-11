@@ -37,6 +37,8 @@ const NoteDetail = () => {
   const [titleDraft, setTitleDraft] = useState("");
   const [synthesisDraft, setSynthesisDraft] = useState("");
   const [bodyDraft, setBodyDraft] = useState("");
+  const [rewriting, setRewriting] = useState(false);
+
   const [editingDate, setEditingDate] = useState(false);
 
   useEffect(() => {
