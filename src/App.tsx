@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { RecorderProvider } from "@/contexts/RecorderContext";
 import { AppShell } from "@/components/AppShell";
 import Index from "./pages/Index";
+import FolderReflection from "./pages/FolderReflection";
 import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
 import OnMyMind from "./pages/OnMyMind";
