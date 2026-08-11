@@ -64,12 +64,33 @@ const Settings = () => {
         )}
       </section>
 
+      <section className="mb-10">
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">About</h2>
+        <div className="flex flex-col">
+          {[
+            { to: "/privacy", label: "Privacy Policy" },
+            { to: "/terms", label: "Terms of Service" },
+            { to: "/support", label: "Support" },
+            { to: "/delete-account", label: "Delete account" },
+          ].map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="py-3 text-[0.94rem] text-muted-foreground hover:text-foreground border-b border-hairline last:border-b-0 transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <button
         onClick={signOut}
         className="rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground hover:text-foreground transition-colors"
       >
         Sign out
       </button>
+
     </div>
   );
 };
