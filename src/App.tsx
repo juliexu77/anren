@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { RecorderProvider } from "@/contexts/RecorderContext";
 import { AppShell } from "@/components/AppShell";
 import Index from "./pages/Index";
+import FolderReflection from "./pages/FolderReflection";
 import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
 import OnMyMind from "./pages/OnMyMind";
@@ -56,6 +57,7 @@ const App = () => (
 
           <Route path="/" element={<ProtectedShell><Index /></ProtectedShell>} />
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
+          <Route path="/folder/:projectId/reflection" element={<ProtectedShell><FolderReflection /></ProtectedShell>} />
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
           <Route path="/on-my-mind" element={<ProtectedShell><OnMyMind /></ProtectedShell>} />

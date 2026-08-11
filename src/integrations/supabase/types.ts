@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      folder_reflections: {
+        Row: {
+          created_at: string
+          id: string
+          notes_analyzed: number
+          observations: Json
+          project_id: string
+          reading: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes_analyzed?: number
+          observations?: Json
+          project_id: string
+          reading?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes_analyzed?: number
+          observations?: Json
+          project_id?: string
+          reading?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folder_reflections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_passages: {
         Row: {
           chunk_index: number
