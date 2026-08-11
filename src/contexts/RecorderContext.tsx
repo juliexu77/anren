@@ -9,7 +9,8 @@ import {
   saveSession,
   type RecordingSession,
 } from "@/lib/recordingStore";
-import { finishSession, uploadAudio } from "@/lib/recordingFinish";
+import { finishSession, partsPrefix, uploadPart } from "@/lib/recordingFinish";
+import { mergeAndResample } from "@/lib/wav";
 import { keepScreenAwake, type WakeLockHandle } from "@/lib/wakeLock";
 import { toast } from "sonner";
 
@@ -29,8 +30,8 @@ const RecorderContext = createContext<RecorderValue | undefined>(undefined);
 
 /** How often the samples in memory are written to the device. */
 const FLUSH_MS = 5000;
-/** How often the audio so far is pushed to the server as a safety net. */
-const SNAPSHOT_MS = 30000;
+/** The rate everything is stored and uploaded at. */
+const STORE_RATE = 16000;
 
 export function RecorderProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
