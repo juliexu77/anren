@@ -72,9 +72,10 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
     label: "Sprout",
     path: (
       <>
-        <path d="M12 20v-8" />
-        <path d="M12 12C9 12 7 10 7 7c3 0 5 2 5 5Z" />
-        <path d="M12 13c3 0 5-2 5-5-3 0-5 2-5 5Z" />
+        <path d="M12 21v-9" />
+        <path d="M12 13C8.5 13 6 10.5 6 7c3.5 0 6 2.5 6 6Z" />
+        <path d="M12 14.5c3.5 0 6-2.5 6-6-3.5 0-6 2.5-6 6Z" />
+        <path d="M6.5 21h11" />
       </>
     ),
   },
