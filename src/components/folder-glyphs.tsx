@@ -99,7 +99,7 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
   },
   moon: {
     label: "Moon",
-    path: <path d="M15 4a8 8 0 1 0 5 7 6 6 0 0 1-5-7Z" />,
+    path: <path d="M14.5 3.2a8.8 8.8 0 1 0 5.8 14.6A8.8 8.8 0 0 1 14.5 3.2Z" />,
   },
   ladder: {
     label: "Ladder",
