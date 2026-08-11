@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
+import { useAiAccess } from "@/hooks/useAiAccess";
 import { Trash2 } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { projects, deleteProject } = useProjects();
+  const { connected: aiConnected } = useAiAccess();
   const [noteCount, setNoteCount] = useState<number | null>(null);
 
   useEffect(() => {
