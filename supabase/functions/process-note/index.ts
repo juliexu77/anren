@@ -62,9 +62,23 @@ async function transcribeOne(audio: Blob): Promise<string> {
   return (data.text ?? '').trim();
 }
 
+/** A stretch of speech is worth two more tries before it's given up on. */
+async function transcribeWithRetries(audio: Blob): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await transcribeOne(audio);
+    } catch (error) {
+      console.error(`chunk attempt ${attempt + 1} failed:`, (error as Error).message);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  return null;
+}
+
 
 const WAV_HEADER = 44;
 const PART_RATE = 16000;
+const BYTES_PER_SECOND = PART_RATE * 2;
 
 /** Wrap raw 16-bit mono PCM in a WAV header so it can be transcribed. */
 function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
@@ -86,76 +100,166 @@ function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
   view.setUint16(34, 16, true);
   writeString(36, 'data');
   view.setUint32(40, pcm.length, true);
-  return new Blob([header, pcm], { type: 'audio/wav' });
+  return new Blob([header, pcm as unknown as BlobPart], { type: 'audio/wav' });
 }
 
 /** Ten minutes of 16 kHz mono — comfortably inside the transcriber's limits. */
-const CHUNK_BYTES = 10 * 60 * PART_RATE * 2;
+const CHUNK_BYTES = 10 * 60 * BYTES_PER_SECOND;
+/** How far either side of a boundary to look for a quiet moment. */
+const CUT_SEARCH = 4 * BYTES_PER_SECOND;
+/** A little of the previous chunk is repeated so nothing falls in the crack. */
+const OVERLAP = Math.floor(1.5 * BYTES_PER_SECOND);
+const WINDOW = Math.floor(0.1 * BYTES_PER_SECOND);
+const CONCURRENCY = 3;
 
 /**
- * However long someone talked, the whole thing gets written down: anything
- * beyond a single transcribable chunk is split and stitched back into one
- * transcript. There is no length a recording can be that Anren won't take.
+ * Cutting at an exact byte count lands mid-word almost every time. Look around
+ * the boundary for the quietest tenth of a second and cut there instead, so
+ * splits fall in the pauses between sentences.
  */
-async function transcribe(audio: Blob): Promise<string> {
-  if (audio.size <= CHUNK_BYTES) return transcribeOne(audio);
+function quietCut(pcm: Uint8Array, target: number): number {
+  const from = Math.max(WINDOW, target - CUT_SEARCH);
+  const to = Math.min(pcm.length - WINDOW, target + CUT_SEARCH);
+  if (to <= from) return target;
 
-  const bytes = new Uint8Array(await audio.arrayBuffer());
-  const pcm = bytes.subarray(WAV_HEADER);
-  const texts: string[] = [];
-  for (let offset = 0; offset < pcm.length; offset += CHUNK_BYTES) {
-    const slice = pcm.subarray(offset, Math.min(offset + CHUNK_BYTES, pcm.length));
-    if (slice.length < 2 * PART_RATE) continue; // under a second of tail
-    texts.push(await transcribeOne(wrapPcm(slice)));
+  const samples = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length >> 1);
+  let best = target;
+  let bestEnergy = Infinity;
+  for (let byte = from; byte < to; byte += WINDOW) {
+    const start = byte >> 1;
+    const end = Math.min(start + (WINDOW >> 1), samples.length);
+    let energy = 0;
+    for (let i = start; i < end; i++) energy += Math.abs(samples[i]);
+    energy /= Math.max(1, end - start);
+    if (energy < bestEnergy) {
+      bestEnergy = energy;
+      best = byte;
+    }
   }
-  return texts.filter(Boolean).join(' ').trim();
+  return best & ~1;
 }
 
+/** Where each chunk starts and ends, cut at quiet moments and slightly overlapped. */
+function chunkRanges(pcm: Uint8Array): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  let start = 0;
+  while (start < pcm.length) {
+    if (pcm.length - start <= CHUNK_BYTES) {
+      ranges.push([start, pcm.length]);
+      break;
+    }
+    const end = quietCut(pcm, start + CHUNK_BYTES);
+    ranges.push([start, end]);
+    start = Math.max(end - OVERLAP, start + WINDOW);
+  }
+  return ranges;
+}
 
+const words = (text: string) => text.split(/\s+/).filter(Boolean);
+
+/**
+ * Chunks overlap by design, so the same words can arrive twice. Find the
+ * longest run the two pieces share at the seam and keep it only once.
+ */
+function joinOverlap(left: string, right: string): string {
+  if (!left) return right;
+  if (!right) return left;
+  const tail = words(left).slice(-14);
+  const head = words(right);
+  const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  for (let n = Math.min(tail.length, head.length); n >= 2; n--) {
+    const a = tail.slice(-n).map(norm).join(' ');
+    const b = head.slice(0, n).map(norm).join(' ');
+    if (a && a === b) return `${left} ${head.slice(n).join(' ')}`.trim();
+  }
+  return `${left} ${right}`.trim();
+}
+
+const joinAll = (texts: Array<string | null>) =>
+  texts.reduce<string>((acc, text) => joinOverlap(acc, (text ?? '').trim()), '').trim();
+
+/**
+ * However long someone talked, the whole thing gets written down: the audio is
+ * split at quiet moments, transcribed a few pieces at a time, and stitched back
+ * into one transcript. Each finished piece is saved as it lands, so a failure
+ * partway through costs one piece rather than the whole recording.
+ */
+async function transcribePcm(
+  pcm: Uint8Array,
+  onProgress?: (partial: string) => Promise<void>,
+): Promise<string> {
+  const ranges = chunkRanges(pcm);
+  const texts: Array<string | null> = new Array(ranges.length).fill(null);
+
+  for (let i = 0; i < ranges.length; i += CONCURRENCY) {
+    const batch = ranges.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      batch.map(async ([start, end], offset) => {
+        if (end - start < BYTES_PER_SECOND) return; // under a second of tail
+        texts[i + offset] = await transcribeWithRetries(wrapPcm(pcm.subarray(start, end)));
+      }),
+    );
+    if (onProgress && ranges.length > 1) {
+      await onProgress(joinAll(texts.slice(0, i + batch.length))).catch(() => {});
+    }
+  }
+
+  return joinAll(texts);
+}
 
 /**
  * A recording that never got its whole-file upload lives on as the slices
- * pushed up while the person was still talking. Stitch them back together,
- * store the result as the note's audio, and clear the pieces away.
+ * pushed up while the person was still talking. Read them back in order,
+ * transcribing each ten-minute batch as it fills so the whole recording is
+ * never held in memory at once.
  */
 // deno-lint-ignore no-explicit-any
-async function stitchParts(admin: any, userId: string, noteId: string, prefix: string): Promise<Blob | null> {
+async function transcribeParts(
+  admin: any,
+  prefix: string,
+  onProgress?: (partial: string) => Promise<void>,
+): Promise<string> {
   const folder = prefix.replace(/\/$/, '');
-  const { data: files } = await admin.storage.from('voice-notes').list(folder, { limit: 1000 });
+  const { data: files } = await admin.storage.from('voice-notes').list(folder, { limit: 2000 });
   const parts = (files ?? [])
     .filter((f: { name: string }) => f.name.endsWith('.wav'))
     .map((f: { name: string }) => f.name)
     .sort();
-  if (!parts.length) return null;
+  if (!parts.length) return '';
 
-  const pieces: Uint8Array[] = [];
+  const texts: string[] = [];
+  let batch: Uint8Array[] = [];
+  let batchBytes = 0;
+
+  const flush = async () => {
+    if (!batchBytes) return;
+    const pcm = new Uint8Array(batchBytes);
+    let at = 0;
+    for (const piece of batch) {
+      pcm.set(piece, at);
+      at += piece.length;
+    }
+    batch = [];
+    batchBytes = 0;
+    texts.push(await transcribePcm(pcm));
+    if (onProgress) await onProgress(joinAll(texts)).catch(() => {});
+  };
+
   for (const name of parts) {
     const { data } = await admin.storage.from('voice-notes').download(`${folder}/${name}`);
     if (!data) continue;
     const bytes = new Uint8Array(await data.arrayBuffer());
-    if (bytes.length > WAV_HEADER) pieces.push(bytes.subarray(WAV_HEADER));
+    if (bytes.length <= WAV_HEADER) continue;
+    const pcm = bytes.subarray(WAV_HEADER);
+    batch.push(pcm);
+    batchBytes += pcm.length;
+    if (batchBytes >= CHUNK_BYTES) await flush();
   }
-  if (!pieces.length) return null;
+  await flush();
 
-  const total = pieces.reduce((n, p) => n + p.length, 0);
-  const pcm = new Uint8Array(total);
-  let offset = 0;
-  for (const piece of pieces) {
-    pcm.set(piece, offset);
-    offset += piece.length;
-  }
-
-  const blob = wrapPcm(pcm);
-  const path = `${userId}/${noteId}.wav`;
-  const { error } = await admin.storage
-    .from('voice-notes')
-    .upload(path, blob, { contentType: 'audio/wav', upsert: true });
-  if (!error) {
-    await admin.from('notes').update({ audio_path: path }).eq('id', noteId);
-    await admin.storage.from('voice-notes').remove(parts.map((n: string) => `${folder}/${n}`));
-  }
-  return blob;
+  return joinAll(texts);
 }
+
 
 /**
  * Once the words are written down, the recording has done its job. Keeping it
@@ -228,18 +332,26 @@ Deno.serve(async (req) => {
       transcript = (note.transcript ?? '').trim();
       if (!transcript) return jsonResponse({ error: 'Note has no audio yet' }, 400);
     } else {
-      let audio: Blob | null = null;
+      // Each finished stretch is written to the note as it lands, so a long
+      // recording shows its words arriving and a failure never costs the lot.
+      const saveProgress = async (partial: string) => {
+        if (partial) await admin.from('notes').update({ transcript: partial }).eq('id', noteId);
+      };
+
       if (note.audio_path.endsWith('/')) {
-        audio = await stitchParts(admin, note.user_id, noteId, note.audio_path);
+        transcript = await transcribeParts(admin, note.audio_path, saveProgress);
       } else {
         const { data } = await admin.storage.from('voice-notes').download(note.audio_path);
-        audio = data ?? null;
-        // Older path: the single file never landed, but the slices did.
-        if (!audio) audio = await stitchParts(admin, note.user_id, noteId, `${note.user_id}/${noteId}/`);
+        if (data) {
+          const bytes = new Uint8Array(await data.arrayBuffer());
+          transcript = await transcribePcm(bytes.subarray(WAV_HEADER), saveProgress);
+        } else {
+          // Older path: the single file never landed, but the slices did.
+          transcript = await transcribeParts(admin, `${note.user_id}/${noteId}/`, saveProgress);
+        }
       }
-      if (!audio) throw new Error('Audio not found');
 
-      transcript = await transcribe(audio);
+
       if (!transcript) {
         await admin
           .from('notes')
