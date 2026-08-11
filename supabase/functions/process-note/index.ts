@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
             synthesis: "This recording didn't carry any speech Anren could hear.",
           })
           .eq('id', noteId);
+        await discardAudio(admin, note.user_id, noteId, note.audio_path);
         return jsonResponse({ ok: true, transcript: '' });
       }
     }
