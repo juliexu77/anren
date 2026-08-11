@@ -199,8 +199,11 @@ Deno.serve(async (req) => {
       transcript = (note.body ?? '').trim();
       if (!transcript) return jsonResponse({ error: 'Note has no text yet' }, 400);
     } else {
-      if (!note.audio_path) return jsonResponse({ error: 'Note has no audio yet' }, 400);
-
+    } else if (!note.audio_path) {
+      // The audio is gone because the transcript already exists — reuse it.
+      transcript = (note.transcript ?? '').trim();
+      if (!transcript) return jsonResponse({ error: 'Note has no audio yet' }, 400);
+    } else {
       let audio: Blob | null = null;
       if (note.audio_path.endsWith('/')) {
         audio = await stitchParts(admin, note.user_id, noteId, note.audio_path);
