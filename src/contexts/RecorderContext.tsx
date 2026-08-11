@@ -46,7 +46,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const timerRef = useRef<number | null>(null);
   const flushTimerRef = useRef<number | null>(null);
   const stopLiveRef = useRef<(() => void) | null>(null);
-  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
+  const wakeLockRef = useRef<WakeLockHandle | null>(null);
   const sessionRef = useRef<RecordingSession | null>(null);
   const segmentIndexRef = useRef(0);
   const elapsedRef = useRef(0);
