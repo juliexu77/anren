@@ -55,12 +55,7 @@ const Index = () => {
           {notes.length ? `${notes.length} note${notes.length === 1 ? "" : "s"}` : "Nothing here yet"}
         </p>
         {projectId && notes.length >= 2 && (
-          <Link
-            to={`/folder/${projectId}/reflection`}
-            className="mt-2 inline-block text-[0.85rem] text-muted-foreground underline decoration-hairline underline-offset-4 transition-colors hover:text-foreground"
-          >
-            What am I noticing?
-          </Link>
+          <FolderReflection projectId={projectId} notes={notes} />
         )}
       </header>
 
