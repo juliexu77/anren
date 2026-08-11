@@ -135,7 +135,10 @@ Deno.serve(async (req) => {
 
     const parsed = parseJsonBlock<Synthesis>(raw);
     const existingTitle = typeof note.title === 'string' ? note.title.trim() : '';
-    const title = existingTitle || parsed?.title?.trim() || transcript.split(/[.?!]/)[0].slice(0, 70);
+    // On a regeneration the source text changed, so the old title is stale too.
+    const title = (regenerate ? '' : existingTitle) || parsed?.title?.trim()
+      || transcript.split(/[.?!]/)[0].slice(0, 70);
+
     const synthesis = parsed?.synthesis?.trim() || transcript.slice(0, 400);
 
     await admin
