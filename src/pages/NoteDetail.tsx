@@ -117,11 +117,12 @@ const NoteDetail = () => {
   };
 
 
-  const remove = () => {
+  const remove = async () => {
     if (!note) return;
-    softDeleteNote(note, () => reload());
+    await softDeleteNote(note, () => reload());
     navigate("/");
   };
+
 
   const ask = async () => {
     if (!note || !question.trim()) return;
