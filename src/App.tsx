@@ -57,7 +57,7 @@ const App = () => (
 
           <Route path="/" element={<ProtectedShell><Index /></ProtectedShell>} />
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
-          <Route path="/folder/:projectId/reflection" element={<ProtectedShell><FolderReflection /></ProtectedShell>} />
+          
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
           <Route path="/on-my-mind" element={<ProtectedShell><OnMyMind /></ProtectedShell>} />
