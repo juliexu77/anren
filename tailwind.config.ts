@@ -97,10 +97,51 @@ export default {
           from: { opacity: "0", transform: "translateY(6px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
-        "resolve-in": {
-          "0%": { opacity: "0", filter: "blur(6px)", letterSpacing: "0.14em" },
-          "60%": { opacity: "0.85", filter: "blur(1.5px)", letterSpacing: "0.04em" },
-          "100%": { opacity: "1", filter: "blur(0)", letterSpacing: "0" },
+        "stipple-in": {
+          "0%": {
+            opacity: "0",
+            maskImage:
+              "radial-gradient(circle, #000 6%, transparent 7%), radial-gradient(circle, #000 4%, transparent 5%)",
+            WebkitMaskImage:
+              "radial-gradient(circle, #000 6%, transparent 7%), radial-gradient(circle, #000 4%, transparent 5%)",
+            maskSize: "7px 7px, 5px 5px",
+            WebkitMaskSize: "7px 7px, 5px 5px",
+            maskPosition: "0 0, 2px 1px",
+            WebkitMaskPosition: "0 0, 2px 1px",
+          },
+          "30%": {
+            opacity: "0.55",
+            maskImage:
+              "radial-gradient(circle, #000 22%, transparent 23%), radial-gradient(circle, #000 16%, transparent 17%)",
+            WebkitMaskImage:
+              "radial-gradient(circle, #000 22%, transparent 23%), radial-gradient(circle, #000 16%, transparent 17%)",
+            maskSize: "5px 5px, 4px 4px",
+            WebkitMaskSize: "5px 5px, 4px 4px",
+            maskPosition: "0 0, 2px 1px",
+            WebkitMaskPosition: "0 0, 2px 1px",
+          },
+          "65%": {
+            opacity: "0.85",
+            maskImage:
+              "radial-gradient(circle, #000 44%, transparent 46%), radial-gradient(circle, #000 38%, transparent 40%)",
+            WebkitMaskImage:
+              "radial-gradient(circle, #000 44%, transparent 46%), radial-gradient(circle, #000 38%, transparent 40%)",
+            maskSize: "3px 3px, 2px 2px",
+            WebkitMaskSize: "3px 3px, 2px 2px",
+            maskPosition: "0 0, 1px 1px",
+            WebkitMaskPosition: "0 0, 1px 1px",
+          },
+          "100%": {
+            opacity: "1",
+            maskImage:
+              "radial-gradient(circle, #000 72%, #000 74%), radial-gradient(circle, #000 72%, #000 74%)",
+            WebkitMaskImage:
+              "radial-gradient(circle, #000 72%, #000 74%), radial-gradient(circle, #000 72%, #000 74%)",
+            maskSize: "1px 1px, 1px 1px",
+            WebkitMaskSize: "1px 1px, 1px 1px",
+            maskPosition: "0 0, 0 0",
+            WebkitMaskPosition: "0 0, 0 0",
+          },
         },
       },
       animation: {
@@ -109,8 +150,9 @@ export default {
         breathe: "breathe 3.4s ease-in-out infinite",
         ripple: "ripple 2.6s ease-out infinite",
         "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "resolve-in": "resolve-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "stipple-in": "stipple-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
+
     },
   },
   plugins: [require("tailwindcss-animate")],
