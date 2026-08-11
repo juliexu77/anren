@@ -209,9 +209,14 @@ const NoteDetail = () => {
       {note.status === "processing" && (
         <div className="mt-6 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          {note.source === "typed" ? "Reading this over — it'll fill in." : "Transcribing and summarising — this stays open, it'll fill in."}
+          {rewriting
+            ? "You changed the words — reading it over again."
+            : note.source === "typed"
+              ? "Reading this over — it'll fill in."
+              : "Transcribing and summarising — this stays open, it'll fill in."}
         </div>
       )}
+
 
       {note.status === "failed" && (
         <p className="mt-6 text-[0.9rem] text-muted-foreground">
