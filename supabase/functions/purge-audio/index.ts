@@ -19,8 +19,15 @@ Deno.serve(async (req) => {
 
   const token = req.headers.get('Authorization')?.replace('Bearer ', '') ?? '';
   const { data: auth } = await supabase.auth.getUser(token);
-  const user = auth?.user;
-  if (!user) {
+  let userId = auth?.user?.id ?? null;
+
+  // Admin path: a service-role call may name the account to clean up.
+  if (!userId && token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+    const body = await req.json().catch(() => ({}));
+    userId = typeof body.user_id === 'string' ? body.user_id : null;
+  }
+
+  if (!userId) {
     return new Response(JSON.stringify({ error: 'Not signed in' }), {
       status: 401,
       headers: { ...cors, 'Content-Type': 'application/json' },
@@ -30,7 +37,8 @@ Deno.serve(async (req) => {
   const { data: notes } = await supabase
     .from('notes')
     .select('id, audio_path')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
+    .not('audio_path', 'is', null)
     .not('audio_path', 'is', null)
     .not('transcript', 'is', null);
 
