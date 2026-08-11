@@ -70,7 +70,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     sourceRef.current = null;
     streamRef.current = null;
     ctxRef.current = null;
-    wakeLockRef.current?.release().catch(() => undefined);
+    wakeLockRef.current?.release();
     wakeLockRef.current = null;
     setLevel(0);
   }, []);
