@@ -49,8 +49,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/~oauth/callback" element={<LovableOAuthCallback />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/support" element={<Support />} />
           <Route path="/delete-account" element={<ProtectedShell><DeleteAccount /></ProtectedShell>} />
+
 
           <Route path="/" element={<ProtectedShell><Index /></ProtectedShell>} />
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
