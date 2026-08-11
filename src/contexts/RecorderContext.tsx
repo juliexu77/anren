@@ -160,15 +160,38 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         projectId: projectId ?? null,
         userId: user.id,
         startedAt: Date.now(),
-        sampleRate: ctx.sampleRate,
+        sampleRate: STORE_RATE,
         elapsed: 0,
         liveText: "",
         segmentCount: 0,
         state: "recording",
         uploaded: false,
+        uploadedParts: 0,
       };
       sessionRef.current = session;
       await saveSession(session);
+
+      // The note exists from the first word, so nothing is orphaned later.
+      void supabase
+        .from("notes")
+        .insert({
+          user_id: user.id,
+          project_id: projectId ?? null,
+          duration_seconds: 0,
+          recorded_at: new Date(session.startedAt).toISOString(),
+          status: "processing",
+        })
+        .select("id")
+        .single()
+        .then(async ({ data, error }) => {
+          if (error || !data) {
+            console.error("Couldn't create the note row up front:", error?.message);
+            return;
+          }
+          if (sessionRef.current?.sessionId !== session.sessionId) return;
+          sessionRef.current.noteId = data.id as string;
+          await saveSession({ ...sessionRef.current });
+        });
 
       node.onaudioprocess = (e) => {
         const input = e.inputBuffer.getChannelData(0);
@@ -195,11 +218,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       }, 1000);
 
       flushTimerRef.current = window.setInterval(() => {
-        void flush().then(() => {
-          if (Date.now() - lastSnapshotRef.current >= SNAPSHOT_MS) {
-            lastSnapshotRef.current = Date.now();
-            void snapshot();
-          }
+        void flush().then((written) => {
+          if (written) void pushPart(written.index, written.samples);
         });
       }, FLUSH_MS);
 
@@ -209,24 +229,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         setLiveText(text);
       });
       setStatus("recording");
-
-      // The note exists from the first word, so nothing is orphaned later.
-      const { data } = await supabase
-        .from("notes")
-        .insert({
-          user_id: user.id,
-          project_id: projectId ?? null,
-          duration_seconds: 0,
-          status: "processing",
-        })
-        .select("id")
-        .single();
-      if (data && sessionRef.current?.sessionId === session.sessionId) {
-        sessionRef.current.noteId = data.id as string;
-        await saveSession({ ...sessionRef.current });
-      }
     },
-    [status, user, flush, snapshot],
+    [status, user, flush, pushPart],
   );
 
   const cancel = useCallback(() => {
