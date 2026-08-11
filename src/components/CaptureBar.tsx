@@ -28,6 +28,38 @@ export function CaptureBar() {
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
       <ComposeSheet open={writing} onOpenChange={setWriting} projectId={folderId} />
       <div className="mx-auto w-full max-w-[720px] px-5 md:px-10 pb-6 md:pl-[calc(248px+2.5rem)] md:max-w-[968px]">
+        {recovered && !recording && (
+          <div className="pointer-events-auto mb-3 rounded-[18px] border border-hairline bg-paper/95 backdrop-blur-xl p-4 animate-fade-up">
+            <p className="text-[0.92rem] leading-[1.6] text-foreground">
+              You were part-way through something — keep it?
+            </p>
+            {recovered.liveText && (
+              <p className="mt-1.5 text-[0.85rem] leading-[1.6] text-muted-foreground line-clamp-2">
+                {recovered.liveText}
+              </p>
+            )}
+            <div className="mt-3 flex items-center gap-4">
+              <button
+                onClick={async () => {
+                  const noteId = await keep();
+                  if (noteId) navigate(`/note/${noteId}`);
+                }}
+                disabled={busy}
+                className="text-[0.85rem] text-primary hover:opacity-80 transition-opacity disabled:opacity-50"
+              >
+                {busy ? "Keeping…" : "Keep it"}
+              </button>
+              <button
+                onClick={() => void discard()}
+                disabled={busy}
+                className="text-[0.85rem] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        )}
+
         <div
           className={cn(
             "pointer-events-auto rounded-[22px] border border-hairline bg-paper/95 backdrop-blur-xl transition-all duration-500",
