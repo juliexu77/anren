@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -42,7 +42,7 @@ const Settings = () => {
       <section className="mb-10">
         <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Folders</h2>
         {!projects.length ? (
-          <p className="text-[0.9rem] text-muted-foreground">no folders yet.</p>
+          <p className="text-[0.9rem] text-muted-foreground">No folders yet.</p>
         ) : (
           <div className="flex flex-col">
             {projects.map((p) => (
@@ -50,7 +50,7 @@ const Settings = () => {
                 <span className="text-[0.94rem]">{p.name}</span>
                 <button
                   onClick={() => deleteProject(p.id)}
-                  aria-label={`delete ${p.name}`}
+                  aria-label={`Delete ${p.name}`}
                   className="p-1.5 text-muted-foreground/70 hover:text-foreground transition-colors"
                 >
                   <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -58,18 +58,39 @@ const Settings = () => {
               </div>
             ))}
             <p className="mt-3 text-[0.82rem] leading-relaxed text-muted-foreground/80">
-              deleting a folder keeps its notes — they simply return to the main list.
+              Deleting a folder keeps its notes — they simply return to the main list.
             </p>
           </div>
         )}
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">About</h2>
+        <div className="flex flex-col">
+          {[
+            { to: "/privacy", label: "Privacy Policy" },
+            { to: "/terms", label: "Terms of Service" },
+            { to: "/support", label: "Support" },
+            { to: "/delete-account", label: "Delete account" },
+          ].map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="py-3 text-[0.94rem] text-muted-foreground hover:text-foreground border-b border-hairline last:border-b-0 transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
       </section>
 
       <button
         onClick={signOut}
         className="rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground hover:text-foreground transition-colors"
       >
-        sign out
+        Sign out
       </button>
+
     </div>
   );
 };

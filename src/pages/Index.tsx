@@ -40,17 +40,17 @@ const Index = () => {
       <header className="mb-8">
         <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">{heading}</h1>
         <p className="mt-1.5 text-[0.9rem] text-muted-foreground">
-          {notes.length ? `${notes.length} note${notes.length === 1 ? "" : "s"}` : "nothing here yet"}
+          {notes.length ? `${notes.length} note${notes.length === 1 ? "" : "s"}` : "Nothing here yet"}
         </p>
       </header>
 
       {loading ? (
-        <p className="text-[0.9rem] text-muted-foreground">gathering your notes…</p>
+        <p className="text-[0.9rem] text-muted-foreground">Gathering your notes…</p>
       ) : !notes.length ? (
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
-          <p className="font-editorial text-[1.2rem] leading-snug">start by saying something out loud.</p>
+          <p className="font-editorial text-[1.2rem] leading-snug">Start by saying something out loud.</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
-            tap the microphone below and ramble. anren will title it, sum it up, and keep it here for you.
+            Tap the microphone below and ramble. Anren will title it, sum it up, and keep it here for you.
           </p>
         </div>
       ) : (

@@ -33,7 +33,7 @@ export function CaptureBar() {
           {recording && (
             <div className="mb-4 max-h-32 overflow-y-auto">
               <p className="text-[0.92rem] leading-[1.7] text-muted-foreground">
-                {liveText || "listening…"}
+                {liveText || "Listening…"}
               </p>
             </div>
           )}
@@ -42,7 +42,7 @@ export function CaptureBar() {
             <button
               onClick={handleClick}
               disabled={status === "saving"}
-              aria-label={recording ? "stop recording" : "start recording"}
+              aria-label={recording ? "Stop recording" : "Start recording"}
               className={cn(
                 "relative flex items-center justify-center w-12 h-12 rounded-full shrink-0 transition-colors",
                 recording ? "bg-primary text-primary-foreground" : "bg-primary/90 text-primary-foreground hover:bg-primary",
@@ -64,12 +64,12 @@ export function CaptureBar() {
 
             <div className="min-w-0 flex-1">
               {status === "saving" ? (
-                <p className="text-[0.92rem] text-muted-foreground">saving your note…</p>
+                <p className="text-[0.92rem] text-muted-foreground">Saving your note…</p>
               ) : recording ? (
                 <p className="text-[0.92rem] tabular-nums text-foreground">{formatDuration(elapsed)}</p>
               ) : (
                 <p className="text-[0.92rem] text-muted-foreground">
-                  talk it through. anren listens and writes it up.
+                  Talk it through. Anren listens and writes it up.
                 </p>
               )}
             </div>
