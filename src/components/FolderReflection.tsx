@@ -23,7 +23,7 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [reflection, setReflection] = useState<Reflection | null>(null);
-  const [fetched, setFetched] = useState(false);
+  const fetched = useRef(false);
   const [working, setWorking] = useState(false);
 
   const titleById = useMemo(
