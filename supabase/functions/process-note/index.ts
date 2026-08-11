@@ -62,6 +62,78 @@ async function transcribe(audio: Blob): Promise<string> {
   return (data.text ?? '').trim();
 }
 
+const WAV_HEADER = 44;
+const PART_RATE = 16000;
+
+/** Wrap raw 16-bit mono PCM in a WAV header so it can be transcribed. */
+function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
+  const header = new ArrayBuffer(WAV_HEADER);
+  const view = new DataView(header);
+  const writeString = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + pcm.length, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true);
+  view.setUint32(28, rate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, pcm.length, true);
+  return new Blob([header, pcm], { type: 'audio/wav' });
+}
+
+/**
+ * A recording that never got its whole-file upload lives on as the slices
+ * pushed up while the person was still talking. Stitch them back together,
+ * store the result as the note's audio, and clear the pieces away.
+ */
+// deno-lint-ignore no-explicit-any
+async function stitchParts(admin: any, userId: string, noteId: string, prefix: string): Promise<Blob | null> {
+  const folder = prefix.replace(/\/$/, '');
+  const { data: files } = await admin.storage.from('voice-notes').list(folder, { limit: 1000 });
+  const parts = (files ?? [])
+    .filter((f: { name: string }) => f.name.endsWith('.wav'))
+    .map((f: { name: string }) => f.name)
+    .sort();
+  if (!parts.length) return null;
+
+  const pieces: Uint8Array[] = [];
+  for (const name of parts) {
+    const { data } = await admin.storage.from('voice-notes').download(`${folder}/${name}`);
+    if (!data) continue;
+    const bytes = new Uint8Array(await data.arrayBuffer());
+    if (bytes.length > WAV_HEADER) pieces.push(bytes.subarray(WAV_HEADER));
+  }
+  if (!pieces.length) return null;
+
+  const total = pieces.reduce((n, p) => n + p.length, 0);
+  const pcm = new Uint8Array(total);
+  let offset = 0;
+  for (const piece of pieces) {
+    pcm.set(piece, offset);
+    offset += piece.length;
+  }
+
+  const blob = wrapPcm(pcm);
+  const path = `${userId}/${noteId}.wav`;
+  const { error } = await admin.storage
+    .from('voice-notes')
+    .upload(path, blob, { contentType: 'audio/wav', upsert: true });
+  if (!error) {
+    await admin.from('notes').update({ audio_path: path }).eq('id', noteId);
+    await admin.storage.from('voice-notes').remove(parts.map((n: string) => `${folder}/${n}`));
+  }
+  return blob;
+}
+
+
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -111,10 +183,16 @@ Deno.serve(async (req) => {
     } else {
       if (!note.audio_path) return jsonResponse({ error: 'Note has no audio yet' }, 400);
 
-      const { data: audio, error: downloadError } = await admin.storage
-        .from('voice-notes')
-        .download(note.audio_path);
-      if (downloadError || !audio) throw downloadError ?? new Error('Audio not found');
+      let audio: Blob | null = null;
+      if (note.audio_path.endsWith('/')) {
+        audio = await stitchParts(admin, note.user_id, noteId, note.audio_path);
+      } else {
+        const { data } = await admin.storage.from('voice-notes').download(note.audio_path);
+        audio = data ?? null;
+        // Older path: the single file never landed, but the slices did.
+        if (!audio) audio = await stitchParts(admin, note.user_id, noteId, `${note.user_id}/${noteId}/`);
+      }
+      if (!audio) throw new Error('Audio not found');
 
       transcript = await transcribe(audio);
       if (!transcript) {

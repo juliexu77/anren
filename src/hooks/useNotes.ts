@@ -58,14 +58,11 @@ export function useNotes(projectId?: string | null) {
 
     const { data, error } = await query;
     if (!error && data) {
-      // A note being spoken right now exists but has no audio yet — it stays
-      // out of the feed until there's something to read.
-      setNotes(
-        data
-          .map(mapNote)
-          .filter((n) => !(n.source === "voice" && !n.audioPath && n.status === "processing")),
-      );
+      // Everything spoken shows up, including a note still on its way up — a
+      // note you spoke should never quietly vanish from the archive.
+      setNotes(data.map(mapNote));
     }
+
 
     setLoading(false);
   }, [user, projectId]);

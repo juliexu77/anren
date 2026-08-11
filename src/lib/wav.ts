@@ -71,3 +71,15 @@ export function formatDuration(seconds: number): string {
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+
+/**
+ * Merge raw mic chunks and drop them to the rate we actually store at, so the
+ * durable copy on the device stays small during long recordings.
+ */
+export function mergeAndResample(
+  chunks: Float32Array[],
+  fromRate: number,
+  toRate = 16000,
+): Float32Array {
+  return downsample(concat(chunks), fromRate, toRate);
+}
