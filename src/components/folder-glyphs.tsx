@@ -13,8 +13,9 @@ export const FOLDER_GLYPHS: Record<string, { label: string; path: React.ReactNod
     label: "Kite",
     path: (
       <>
-        <path d="M12 3 4 11l8 8 8-8-8-8Z" />
-        <path d="M12 19c0 2-1.5 2.5-3 2" />
+        <path d="M12 3 5 10l7 7 7-7-7-7Z" />
+        <path d="M5 10h14M12 3v14" />
+        <path d="M12 17c0 2.5-1.5 3-3 4" />
       </>
     ),
   },
