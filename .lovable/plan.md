@@ -37,7 +37,9 @@ So it will feel very familiar, minus the meeting scaffolding. The moment that ma
 6. **Ask this note.** Granola's per-note chat is one of its best moments. Anren gets a single-line "Ask about this" at the bottom of note detail — answers grounded in that transcript only.
 7. **Keyboard/gesture-fast, quiet visuals.** Text-forward, generous whitespace, no chrome competing with the writing. Our existing serif/sans system already fits this.
 
-Deliberately not copied: folders, templates, sharing/permissions, calendar integration, attendee handling, teams.
+Deliberately not copied: templates, sharing/permissions, calendar integration, attendee handling, teams.
+
+Folders are worth keeping as a later addition — not for organization, but because a long chronological feed eventually needs a way to say "these are all about one thing." They would be simple named collections, private to the user, added after v1.
 
 ## What gets deleted
 
