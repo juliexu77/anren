@@ -66,19 +66,30 @@ export async function saveSession(session: RecordingSession): Promise<void> {
   }
 }
 
+/**
+ * Samples go to the device as 16-bit PCM rather than 32-bit floats — a quarter
+ * of the space, so a long recording can't run the device out of room and start
+ * silently dropping pieces of itself.
+ */
 export async function appendSegment(sessionId: string, index: number, samples: Float32Array): Promise<void> {
+  const pcm = new Int16Array(samples.length);
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
   try {
     await tx(SEGMENTS, "readwrite", (s) =>
-      s.put({ sessionId, index, samples: samples.buffer.slice(0) as ArrayBuffer }),
+      s.put({ sessionId, index, format: "i16", samples: pcm.buffer as ArrayBuffer }),
     );
-  } catch {
-    /* ignore — a dropped segment is better than a broken recording */
+  } catch (error) {
+    // Losing a slice is how a long thought goes missing — say so out loud.
+    console.error("Couldn't write a recording slice to this device:", (error as Error)?.message);
   }
 }
 
 export async function readSegments(sessionId: string): Promise<Float32Array[]> {
   try {
-    const rows = await tx<{ sessionId: string; index: number; samples: ArrayBuffer }[]>(
+    const rows = await tx<{ sessionId: string; index: number; format?: string; samples: ArrayBuffer }[]>(
       SEGMENTS,
       "readonly",
       (s) => s.getAll(),
@@ -86,11 +97,18 @@ export async function readSegments(sessionId: string): Promise<Float32Array[]> {
     return rows
       .filter((row) => row.sessionId === sessionId)
       .sort((a, b) => a.index - b.index)
-      .map((row) => new Float32Array(row.samples));
+      .map((row) => {
+        if (row.format !== "i16") return new Float32Array(row.samples);
+        const pcm = new Int16Array(row.samples);
+        const out = new Float32Array(pcm.length);
+        for (let i = 0; i < pcm.length; i++) out[i] = pcm[i] / 0x8000;
+        return out;
+      });
   } catch {
     return [];
   }
 }
+
 
 /** The one unfinished session, if there is one worth offering back. */
 export async function findUnfinishedSession(userId: string): Promise<RecordingSession | null> {

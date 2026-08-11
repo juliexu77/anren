@@ -39,7 +39,7 @@ interface Synthesis {
   synthesis: string;
 }
 
-async function transcribe(audio: Blob): Promise<string> {
+async function transcribeOne(audio: Blob): Promise<string> {
   const openAiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openAiKey) throw new Error('OPENAI_API_KEY is not configured');
 
@@ -61,6 +61,7 @@ async function transcribe(audio: Blob): Promise<string> {
   const data = await response.json();
   return (data.text ?? '').trim();
 }
+
 
 const WAV_HEADER = 44;
 const PART_RATE = 16000;
@@ -87,6 +88,30 @@ function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
   view.setUint32(40, pcm.length, true);
   return new Blob([header, pcm], { type: 'audio/wav' });
 }
+
+/** Ten minutes of 16 kHz mono — comfortably inside the transcriber's limits. */
+const CHUNK_BYTES = 10 * 60 * PART_RATE * 2;
+
+/**
+ * However long someone talked, the whole thing gets written down: anything
+ * beyond a single transcribable chunk is split and stitched back into one
+ * transcript. There is no length a recording can be that Anren won't take.
+ */
+async function transcribe(audio: Blob): Promise<string> {
+  if (audio.size <= CHUNK_BYTES) return transcribeOne(audio);
+
+  const bytes = new Uint8Array(await audio.arrayBuffer());
+  const pcm = bytes.subarray(WAV_HEADER);
+  const texts: string[] = [];
+  for (let offset = 0; offset < pcm.length; offset += CHUNK_BYTES) {
+    const slice = pcm.subarray(offset, Math.min(offset + CHUNK_BYTES, pcm.length));
+    if (slice.length < 2 * PART_RATE) continue; // under a second of tail
+    texts.push(await transcribeOne(wrapPcm(slice)));
+  }
+  return texts.filter(Boolean).join(' ').trim();
+}
+
+
 
 /**
  * A recording that never got its whole-file upload lives on as the slices
