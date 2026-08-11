@@ -22,7 +22,9 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
 
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
   const { projects, createProject, renameProject, deleteProject, setProjectEmoji } = useProjects();
+  const { notes } = useNotes();
   const [adding, setAdding] = useState(false);
+
   const [name, setName] = useState("");
   const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
