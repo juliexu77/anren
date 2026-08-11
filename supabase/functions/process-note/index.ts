@@ -271,6 +271,13 @@ Deno.serve(async (req) => {
       .update({ transcript, title, synthesis, status: 'ready', error_message: null })
       .eq('id', noteId);
 
+    // The words are safe now, so the recording itself isn't kept.
+    if (!typed && note.audio_path) {
+      await discardAudio(admin, note.user_id, noteId, note.audio_path);
+    }
+
+
+
     // Index passages for semantic search — best effort, never blocks the note.
     try {
       const passages = chunkText(`${title}\n\n${synthesis}\n\n${transcript}`);
