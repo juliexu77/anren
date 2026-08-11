@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <aside className="relative w-[80%] max-w-[300px] h-full bg-paper border-r border-hairline animate-fade-up">
               <button
                 onClick={() => setRailOpen(false)}
-                aria-label="Close menu"
+                aria-label="close menu"
                 className="absolute top-4 right-4 p-1 text-muted-foreground"
               >
                 <X className="w-4 h-4" strokeWidth={1.5} />

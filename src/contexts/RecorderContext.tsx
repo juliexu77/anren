@@ -88,7 +88,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        toast.error("Anren needs microphone access to listen.");
+        toast.error("anren needs microphone access to listen.");
         return;
       }
 
