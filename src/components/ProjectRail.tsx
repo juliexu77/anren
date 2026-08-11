@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Sparkles, LayoutList, Plus, Settings, Check } from "lucide-react";
+import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
@@ -12,10 +19,12 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
   );
 
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
-  const { projects, createProject, setProjectEmoji } = useProjects();
+  const { projects, createProject, renameProject, deleteProject, setProjectEmoji } = useProjects();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +43,17 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       navigate(`/folder/${created.id}`);
       onNavigate?.();
     }
+  };
+
+  const commitRename = (id: string) => {
+    if (renameValue.trim()) renameProject(id, renameValue);
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
+  const removeFolder = (id: string) => {
+    deleteProject(id);
+    if (location.pathname === `/folder/${id}`) navigate("/");
   };
 
   return (
@@ -74,39 +94,83 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
         </div>
 
         <div className="flex flex-col gap-0.5">
-          {projects.map((p) => (
-            <NavLink
-              key={p.id}
-              to={`/folder/${p.id}`}
-              onClick={onNavigate}
-              className={cn(
-                navItemClass({ isActive: location.pathname === `/folder/${p.id}` }),
-                "truncate",
-              )}
-            >
-              <span
-                className={cn(
-                  "inline-flex shrink-0",
-                  p.id === justCreatedId && "motion-safe:animate-resolve-in [animation-delay:180ms]",
-                )}
-              >
-                <FolderEmojiPicker
-                  name={p.name}
-                  emoji={p.emoji}
-                  onSelect={(emoji) => setProjectEmoji(p.id, emoji)}
+          {projects.map((p) =>
+            renamingId === p.id ? (
+              <div key={p.id} className="flex items-center gap-2 px-3 py-1.5">
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitRename(p.id);
+                    if (e.key === "Escape") setRenamingId(null);
+                  }}
+                  onBlur={() => commitRename(p.id)}
+                  className="flex-1 bg-transparent text-[0.9rem] outline-none"
                 />
-              </span>
-              <span
-                className={cn(
-                  "truncate",
-                  p.id === justCreatedId && "motion-safe:animate-resolve-in",
-                )}
-              >
-                {p.name}
-              </span>
-            </NavLink>
-          ))}
+                <button
+                  onClick={() => commitRename(p.id)}
+                  aria-label="Save folder name"
+                  className="text-muted-foreground"
+                >
+                  <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
+              </div>
+            ) : (
+              <div key={p.id} className="group relative">
+                <NavLink
+                  to={`/folder/${p.id}`}
+                  onClick={onNavigate}
+                  className={cn(
+                    navItemClass({ isActive: location.pathname === `/folder/${p.id}` }),
+                    "truncate pr-8",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-flex shrink-0",
+                      p.id === justCreatedId && "motion-safe:animate-resolve-in [animation-delay:180ms]",
+                    )}
+                  >
+                    <FolderEmojiPicker
+                      name={p.name}
+                      emoji={p.emoji}
+                      onSelect={(emoji) => setProjectEmoji(p.id, emoji)}
+                    />
+                  </span>
+                  <span
+                    className={cn(
+                      "truncate",
+                      p.id === justCreatedId && "motion-safe:animate-resolve-in",
+                    )}
+                  >
+                    {p.name}
+                  </span>
+                </NavLink>
 
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label={`Options for ${p.name}`}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground/60 opacity-0 transition-opacity hover:text-foreground hover:bg-paper-sunk focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+                  >
+                    <MoreHorizontal className="w-[15px] h-[15px]" strokeWidth={1.5} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setRenameValue(p.name);
+                        setRenamingId(p.id);
+                      }}
+                    >
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => removeFolder(p.id)}>Delete folder</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ),
+          )}
 
           {adding && (
             <div className="flex items-center gap-2 px-3 py-1.5">

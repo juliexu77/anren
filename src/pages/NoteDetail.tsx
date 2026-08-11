@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Trash2, FolderClosed, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2, FolderClosed, Sparkles, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNote } from "@/hooks/useNotes";
+import { useNote, softDeleteNote } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { formatDuration } from "@/lib/wav";
 import { toast } from "sonner";
@@ -13,10 +13,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+function toLocalInput(iso: string) {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(
+    date.getMinutes(),
+  )}`;
+}
+
 const NoteDetail = () => {
   const { noteId } = useParams();
   const navigate = useNavigate();
-  const { note, loading, reload } = useNote(noteId);
+  const { note, loading, reload, patch } = useNote(noteId);
   const { projects } = useProjects();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [related, setRelated] = useState<{ note_id: string; title: string | null; recorded_at: string }[] | null>(null);
@@ -24,6 +32,19 @@ const NoteDetail = () => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
+
+  // Draft fields — seeded from the note, saved on blur.
+  const [titleDraft, setTitleDraft] = useState("");
+  const [synthesisDraft, setSynthesisDraft] = useState("");
+  const [bodyDraft, setBodyDraft] = useState("");
+  const [editingDate, setEditingDate] = useState(false);
+
+  useEffect(() => {
+    if (!note) return;
+    setTitleDraft(note.title ?? "");
+    setSynthesisDraft(note.synthesis ?? "");
+    setBodyDraft(note.body ?? "");
+  }, [note?.id, note?.title, note?.synthesis, note?.body]);
 
   useEffect(() => {
     if (!note?.audioPath) return;
@@ -62,15 +83,13 @@ const NoteDetail = () => {
 
   const moveToFolder = async (projectId: string | null) => {
     if (!note) return;
-    await supabase.from("notes").update({ project_id: projectId }).eq("id", note.id);
-    reload();
+    await patch({ projectId });
     toast.success(projectId ? "Filed away." : "Removed from folder.");
   };
 
-  const remove = async () => {
+  const remove = () => {
     if (!note) return;
-    if (note.audioPath) await supabase.storage.from("voice-notes").remove([note.audioPath]);
-    await supabase.from("notes").delete().eq("id", note.id);
+    softDeleteNote(note, () => reload());
     navigate("/");
   };
 
@@ -141,25 +160,56 @@ const NoteDetail = () => {
         </div>
       </div>
 
-      <p className="text-[0.72rem] uppercase tracking-[0.16em] text-muted-foreground/70">
-        {new Date(note.recordedAt).toLocaleString([], {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })}
-        {note.durationSeconds ? ` · ${formatDuration(note.durationSeconds)}` : ""}
-      </p>
+      {editingDate ? (
+        <input
+          type="datetime-local"
+          autoFocus
+          defaultValue={toLocalInput(note.recordedAt)}
+          onBlur={(e) => {
+            const next = new Date(e.target.value);
+            setEditingDate(false);
+            if (!Number.isNaN(next.getTime()) && next.toISOString() !== note.recordedAt) {
+              void patch({ recordedAt: next.toISOString() });
+            }
+          }}
+          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+          className="rounded-full border border-hairline bg-paper px-3 py-1.5 text-[0.8rem] outline-none focus:border-primary/40"
+        />
+      ) : (
+        <button
+          onClick={() => setEditingDate(true)}
+          title="Change the date"
+          className="group flex items-center gap-1.5 text-[0.72rem] uppercase tracking-[0.16em] text-muted-foreground/70 hover:text-foreground transition-colors"
+        >
+          {new Date(note.recordedAt).toLocaleString([], {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+          {note.durationSeconds ? ` · ${formatDuration(note.durationSeconds)}` : ""}
+          {note.source === "typed" && <PenLine className="w-3 h-3" strokeWidth={1.5} />}
+        </button>
+      )}
 
-      <h1 className="mt-3 font-editorial text-[1.95rem] leading-[1.22] tracking-[-0.015em]">
-        {note.title ?? (note.status === "processing" ? "Writing this up…" : "Untitled note")}
-      </h1>
+      <input
+        value={titleDraft}
+        onChange={(e) => setTitleDraft(e.target.value)}
+        onBlur={() => {
+          const next = titleDraft.trim();
+          if (next !== (note.title ?? "")) void patch({ title: next || null });
+        }}
+        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+        placeholder={note.status === "processing" ? "Writing this up…" : "Untitled note"}
+        aria-label="Note title"
+        className="mt-3 w-full bg-transparent font-editorial text-[1.95rem] leading-[1.22] tracking-[-0.015em] outline-none placeholder:text-muted-foreground/60 rounded-lg -mx-2 px-2 focus:bg-paper-sunk/40 transition-colors"
+      />
 
       {note.status === "processing" && (
         <div className="mt-6 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          Transcribing and summarising — this stays open, it'll fill in.
+          {note.source === "typed" ? "Reading this over — it'll fill in." : "Transcribing and summarising — this stays open, it'll fill in."}
         </div>
       )}
 
@@ -169,11 +219,18 @@ const NoteDetail = () => {
         </p>
       )}
 
-      {note.synthesis && (
+      {note.synthesis !== null && (
         <div className="mt-7 rounded-[20px] border border-hairline bg-paper/70 px-6 py-6">
-          <p className="whitespace-pre-line font-editorial text-[1.05rem] leading-[1.7]">
-            {note.synthesis}
-          </p>
+          <textarea
+            value={synthesisDraft}
+            onChange={(e) => setSynthesisDraft(e.target.value)}
+            onBlur={() => {
+              if (synthesisDraft !== (note.synthesis ?? "")) void patch({ synthesis: synthesisDraft });
+            }}
+            rows={Math.max(3, synthesisDraft.split("\n").length + 2)}
+            aria-label="Write-up"
+            className="w-full resize-none bg-transparent font-editorial text-[1.05rem] leading-[1.7] outline-none"
+          />
         </div>
       )}
 
@@ -213,16 +270,32 @@ const NoteDetail = () => {
         </section>
       )}
 
-      {note.transcript && (
+      {note.source === "typed" ? (
         <section className="mt-10">
-          <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Transcript</h2>
-          <p className="mt-3 whitespace-pre-line text-[0.95rem] leading-[1.8] text-muted-foreground">
-            {note.transcript}
-          </p>
+          <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Your words</h2>
+          <textarea
+            value={bodyDraft}
+            onChange={(e) => setBodyDraft(e.target.value)}
+            onBlur={() => {
+              if (bodyDraft !== (note.body ?? "")) void patch({ body: bodyDraft });
+            }}
+            rows={Math.max(4, bodyDraft.split("\n").length + 2)}
+            aria-label="Note body"
+            className="mt-3 w-full resize-none rounded-[16px] bg-transparent px-0 text-[0.95rem] leading-[1.8] text-muted-foreground outline-none focus:text-foreground transition-colors"
+          />
         </section>
+      ) : (
+        note.transcript && (
+          <section className="mt-10">
+            <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Transcript</h2>
+            <p className="mt-3 whitespace-pre-line text-[0.95rem] leading-[1.8] text-muted-foreground">
+              {note.transcript}
+            </p>
+          </section>
+        )
       )}
 
-      {note.transcript && (
+      {(note.transcript || note.body) && (
         <section className="mt-12">
           <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
             Ask about this note

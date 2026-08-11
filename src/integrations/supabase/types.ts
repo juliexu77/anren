@@ -55,13 +55,16 @@ export type Database = {
       notes: {
         Row: {
           audio_path: string | null
+          body: string | null
           created_at: string
+          deleted_at: string | null
           duration_seconds: number | null
           error_message: string | null
           id: string
           project_id: string | null
           recorded_at: string
           search_tsv: unknown
+          source: string
           status: string
           synthesis: string | null
           title: string | null
@@ -71,13 +74,16 @@ export type Database = {
         }
         Insert: {
           audio_path?: string | null
+          body?: string | null
           created_at?: string
+          deleted_at?: string | null
           duration_seconds?: number | null
           error_message?: string | null
           id?: string
           project_id?: string | null
           recorded_at?: string
           search_tsv?: unknown
+          source?: string
           status?: string
           synthesis?: string | null
           title?: string | null
@@ -87,13 +93,16 @@ export type Database = {
         }
         Update: {
           audio_path?: string | null
+          body?: string | null
           created_at?: string
+          deleted_at?: string | null
           duration_seconds?: number | null
           error_message?: string | null
           id?: string
           project_id?: string | null
           recorded_at?: string
           search_tsv?: unknown
+          source?: string
           status?: string
           synthesis?: string | null
           title?: string | null
@@ -162,6 +171,7 @@ export type Database = {
       projects: {
         Row: {
           created_at: string
+          deleted_at: string | null
           emoji: string | null
           id: string
           name: string
@@ -171,6 +181,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           emoji?: string | null
           id?: string
           name: string
@@ -180,6 +191,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           emoji?: string | null
           id?: string
           name?: string

@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
     const { data: notes, error: notesError } = await supabase
       .from('notes')
       .select('id, title, synthesis, recorded_at')
-      .in('id', rows.map((r) => r.note_id));
+      .in('id', rows.map((r) => r.note_id))
+      .is('deleted_at', null);
     if (notesError) throw notesError;
 
     const byId = new Map((notes ?? []).map((n) => [n.id, n]));

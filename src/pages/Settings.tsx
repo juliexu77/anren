@@ -17,6 +17,7 @@ const Settings = () => {
       .from("notes")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
+      .is("deleted_at", null)
       .then(({ count }) => setNoteCount(count ?? 0));
   }, [user]);
 

@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
       .from('notes')
       .select('title, synthesis, transcript, recorded_at')
       .eq('status', 'ready')
+      .is('deleted_at', null)
       .gte('recorded_at', `${weekStart}T00:00:00Z`)
       .order('recorded_at', { ascending: true });
     if (error) throw error;

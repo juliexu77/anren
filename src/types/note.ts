@@ -1,4 +1,5 @@
 export type NoteStatus = "processing" | "ready" | "failed";
+export type NoteSource = "voice" | "typed";
 
 export interface Note {
   id: string;
@@ -6,6 +7,8 @@ export interface Note {
   title: string | null;
   synthesis: string | null;
   transcript: string | null;
+  body: string | null;
+  source: NoteSource;
   audioPath: string | null;
   durationSeconds: number | null;
   recordedAt: string;
@@ -29,6 +32,8 @@ export function mapNote(row: any): Note {
     title: row.title ?? null,
     synthesis: row.synthesis ?? null,
     transcript: row.transcript ?? null,
+    body: row.body ?? null,
+    source: (row.source as NoteSource) ?? "voice",
     audioPath: row.audio_path ?? null,
     durationSeconds: row.duration_seconds ?? null,
     recordedAt: row.recorded_at,

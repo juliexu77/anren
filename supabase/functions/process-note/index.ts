@@ -19,6 +19,21 @@ Rules:
 - Warm, plain, unhurried. No corporate or productivity language. No emojis.
 - If the recording is too short or unclear, say so plainly in the synthesis.`;
 
+const TYPED_SYSTEM_PROMPT = `You turn something a person wrote or pasted into their own archive into a short written record they will read later.
+
+Return strict JSON:
+{
+  "title": "one line, max 9 words, in their own voice, naming the actual thought — never 'Note' or a date",
+  "synthesis": "2-4 sentences describing what they were working out, any decision or intention, and anything they said they'd do. Plain prose, no bullet points, no headings."
+}
+
+Rules:
+- Write about them in second person ("You were weighing…"), settled and descriptive — not interpretive, not hedged.
+- These are their written words, not speech. Never say "you said", "in this recording", or "you mentioned out loud".
+- Keep their words and specifics; never invent detail that wasn't there.
+- Warm, plain, unhurried. No corporate or productivity language. No emojis.
+- If the text is very short, keep the synthesis just as short rather than padding it.`;
+
 interface Synthesis {
   title: string;
   synthesis: string;
@@ -74,40 +89,53 @@ Deno.serve(async (req) => {
 
     const { data: note, error: noteError } = await admin
       .from('notes')
-      .select('id, user_id, audio_path')
+      .select('id, user_id, audio_path, source, body, title')
       .eq('id', noteId)
       .maybeSingle();
 
     if (noteError) throw noteError;
     if (!note || note.user_id !== user.id) return jsonResponse({ error: 'Note not found' }, 404);
-    if (!note.audio_path) return jsonResponse({ error: 'Note has no audio yet' }, 400);
 
-    const { data: audio, error: downloadError } = await admin.storage
-      .from('voice-notes')
-      .download(note.audio_path);
-    if (downloadError || !audio) throw downloadError ?? new Error('Audio not found');
+    const typed = note.source === 'typed';
+    let transcript: string;
 
-    const transcript = await transcribe(audio);
-    if (!transcript) {
-      await admin
-        .from('notes')
-        .update({
-          status: 'ready',
-          transcript: '',
-          title: 'Nothing came through',
-          synthesis: "This recording didn't carry any speech Anren could hear.",
-        })
-        .eq('id', noteId);
-      return jsonResponse({ ok: true, transcript: '' });
+    if (typed) {
+      transcript = (note.body ?? '').trim();
+      if (!transcript) return jsonResponse({ error: 'Note has no text yet' }, 400);
+    } else {
+      if (!note.audio_path) return jsonResponse({ error: 'Note has no audio yet' }, 400);
+
+      const { data: audio, error: downloadError } = await admin.storage
+        .from('voice-notes')
+        .download(note.audio_path);
+      if (downloadError || !audio) throw downloadError ?? new Error('Audio not found');
+
+      transcript = await transcribe(audio);
+      if (!transcript) {
+        await admin
+          .from('notes')
+          .update({
+            status: 'ready',
+            transcript: '',
+            title: 'Nothing came through',
+            synthesis: "This recording didn't carry any speech Anren could hear.",
+          })
+          .eq('id', noteId);
+        return jsonResponse({ ok: true, transcript: '' });
+      }
     }
 
     const raw = await chat([
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Voice memo transcript:\n\n${transcript}` },
+      { role: 'system', content: typed ? TYPED_SYSTEM_PROMPT : SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: typed ? `Written note:\n\n${transcript}` : `Voice memo transcript:\n\n${transcript}`,
+      },
     ], { temperature: 0.6 });
 
     const parsed = parseJsonBlock<Synthesis>(raw);
-    const title = parsed?.title?.trim() || transcript.split(/[.?!]/)[0].slice(0, 70);
+    const existingTitle = typeof note.title === 'string' ? note.title.trim() : '';
+    const title = existingTitle || parsed?.title?.trim() || transcript.split(/[.?!]/)[0].slice(0, 70);
     const synthesis = parsed?.synthesis?.trim() || transcript.slice(0, 400);
 
     await admin

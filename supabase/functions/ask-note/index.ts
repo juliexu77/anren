@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
       .from('notes')
       .select('title, synthesis, transcript, recorded_at')
       .eq('id', noteId)
+      .is('deleted_at', null)
       .maybeSingle();
     if (error) throw error;
     if (!note) return jsonResponse({ error: 'Note not found' }, 404);
