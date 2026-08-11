@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 
 export function CaptureBar() {
   const { status, elapsed, liveText, level, start, stop } = useRecorder();
+  const { session: recovered, busy, keep, discard } = useRecordingRecovery();
   const navigate = useNavigate();
+
   const params = useParams();
   const folderId = params.projectId ?? null;
   const [writing, setWriting] = useState(false);
