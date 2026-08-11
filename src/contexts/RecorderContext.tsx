@@ -291,16 +291,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       sessionRef.current.state = "recording";
       const ctx = ctxRef.current;
       if (ctx?.state === "suspended") await ctx.resume().catch(() => undefined);
-      try {
-        const nav = navigator as Navigator & {
-          wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
-        };
-        if (nav.wakeLock && !wakeLockRef.current) {
-          wakeLockRef.current = await nav.wakeLock.request("screen");
-        }
-      } catch {
-        /* wake lock unavailable */
-      }
+      if (!wakeLockRef.current) wakeLockRef.current = keepScreenAwake();
     };
 
     const onVisibilityChange = () => {
