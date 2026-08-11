@@ -183,6 +183,36 @@ const NoteDetail = () => {
         </audio>
       )}
 
+      {(related?.length || loadingRelated) && (
+        <section className="mt-10">
+          <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Related</h2>
+          {loadingRelated ? (
+            <div className="mt-3 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Finding earlier notes…
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-col">
+              {related?.map((r) => (
+                <Link
+                  key={r.note_id}
+                  to={`/note/${r.note_id}`}
+                  className="group flex items-baseline justify-between gap-3 py-3 border-b border-hairline last:border-b-0"
+                >
+                  <span className="note-title text-[0.95rem]">{r.title ?? "Untitled note"}</span>
+                  <span className="shrink-0 text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">
+                    {new Date(r.recorded_at).toLocaleDateString([], {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {note.transcript && (
         <section className="mt-10">
           <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Transcript</h2>
