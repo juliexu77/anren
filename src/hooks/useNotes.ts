@@ -31,8 +31,17 @@ export function noteUpdatePayload(updates: NoteEdits) {
  */
 export async function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () => void) {
   hideNote(note.id);
-  await supabase.from("notes").update({ deleted_at: new Date().toISOString() }).eq("id", note.id);
+  const { error } = await supabase
+    .from("notes")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", note.id);
+  if (error) {
+    unhideNote(note.id);
+    toast("Couldn't delete that just now.");
+    return false;
+  }
   notesChanged();
+
 
   undoableDelete({
     message: "Note deleted",
