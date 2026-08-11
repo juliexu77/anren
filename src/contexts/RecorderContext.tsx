@@ -169,8 +169,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       sessionRef.current = session;
       await saveSession(session);
 
-      // The note exists from the first word, so nothing is orphaned later.
-      void supabase
+      // The note exists from the first word, so every slice recorded after this
+      // has somewhere to go and nothing can be orphaned later.
+      const { data: created, error: createError } = await supabase
         .from("notes")
         .insert({
           user_id: user.id,
@@ -180,16 +181,14 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
           status: "processing",
         })
         .select("id")
-        .single()
-        .then(async ({ data, error }) => {
-          if (error || !data) {
-            console.error("Couldn't create the note row up front:", error?.message);
-            return;
-          }
-          if (sessionRef.current?.sessionId !== session.sessionId) return;
-          sessionRef.current.noteId = data.id as string;
-          await saveSession({ ...sessionRef.current });
-        });
+        .single();
+      if (createError || !created) {
+        console.error("Couldn't create the note row up front:", createError?.message);
+      } else {
+        session.noteId = created.id as string;
+        await saveSession({ ...session });
+      }
+
 
       node.onaudioprocess = (e) => {
         const input = e.inputBuffer.getChannelData(0);
