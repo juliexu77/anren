@@ -89,6 +89,30 @@ function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
   return new Blob([header, pcm], { type: 'audio/wav' });
 }
 
+/** Ten minutes of 16 kHz mono — comfortably inside the transcriber's limits. */
+const CHUNK_BYTES = 10 * 60 * PART_RATE * 2;
+
+/**
+ * However long someone talked, the whole thing gets written down: anything
+ * beyond a single transcribable chunk is split and stitched back into one
+ * transcript. There is no length a recording can be that Anren won't take.
+ */
+async function transcribe(audio: Blob): Promise<string> {
+  if (audio.size <= CHUNK_BYTES) return transcribeOne(audio);
+
+  const bytes = new Uint8Array(await audio.arrayBuffer());
+  const pcm = bytes.subarray(WAV_HEADER);
+  const texts: string[] = [];
+  for (let offset = 0; offset < pcm.length; offset += CHUNK_BYTES) {
+    const slice = pcm.subarray(offset, Math.min(offset + CHUNK_BYTES, pcm.length));
+    if (slice.length < 2 * PART_RATE) continue; // under a second of tail
+    texts.push(await transcribeOne(wrapPcm(slice)));
+  }
+  return texts.filter(Boolean).join(' ').trim();
+}
+
+
+
 /**
  * A recording that never got its whole-file upload lives on as the slices
  * pushed up while the person was still talking. Stitch them back together,
