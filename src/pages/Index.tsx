@@ -30,7 +30,7 @@ function groupByDay(notes: Note[]) {
 
 const Index = () => {
   const { projectId } = useParams();
-  const { notes, loading } = useNotes(projectId ?? null);
+  const { notes, loading, updateNote, deleteNote } = useNotes(projectId ?? null);
   const { projects, setProjectEmoji } = useProjects();
 
   const project = projectId ? projects.find((p) => p.id === projectId) : undefined;
@@ -63,7 +63,8 @@ const Index = () => {
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">Start by saying something out loud.</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
-            Tap the microphone below and ramble. Anren will title it, sum it up, and keep it here for you.
+            Tap the microphone below and ramble — or write it down instead. Anren will title it, sum it up, and keep
+            it here for you.
           </p>
         </div>
       ) : (
@@ -75,7 +76,13 @@ const Index = () => {
               </h2>
               <div>
                 {group.notes.map((note) => (
-                  <NoteRow key={note.id} note={note} />
+                  <NoteRow
+                    key={note.id}
+                    note={note}
+                    projects={projects}
+                    onFile={(id, folder) => updateNote(id, { projectId: folder })}
+                    onDelete={deleteNote}
+                  />
                 ))}
               </div>
             </section>
