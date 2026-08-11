@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 import { useAuth } from "@/hooks/useAuth";
 import { undoableDelete } from "@/lib/undo";
 import type { Project } from "@/types/note";
@@ -71,14 +73,36 @@ export function useProjects() {
   const renameProject = useCallback(async (id: string, name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name: trimmed } : p)));
-    await supabase.from("projects").update({ name: trimmed }).eq("id", id);
+    let previous: string | undefined;
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        previous = p.name;
+        return { ...p, name: trimmed };
+      }),
+    );
+    const { error } = await supabase.from("projects").update({ name: trimmed }).eq("id", id);
+    if (error) {
+      if (previous !== undefined) {
+        setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name: previous! } : p)));
+      }
+      toast("That rename didn't save.");
+    }
   }, []);
 
   const deleteProject = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      const before = projects;
       setProjects((prev) => prev.filter((p) => p.id !== id));
-      void supabase.from("projects").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase
+        .from("projects")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) {
+        setProjects(before);
+        toast("Couldn't delete that folder just now.");
+        return;
+      }
 
       undoableDelete({
         message: "Folder deleted · its notes stayed",
@@ -93,8 +117,9 @@ export function useProjects() {
         },
       });
     },
-    [load],
+    [load, projects],
   );
+
 
   return {
     projects,
