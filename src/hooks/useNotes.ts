@@ -4,7 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { undoableDelete } from "@/lib/undo";
 import { mapNote, type Note } from "@/types/note";
 
-type NoteEdits = Partial<Pick<Note, "title" | "synthesis" | "projectId" | "body" | "recordedAt">>;
+type NoteEdits = Partial<
+  Pick<Note, "title" | "synthesis" | "projectId" | "body" | "recordedAt" | "status">
+>;
+
 
 export function noteUpdatePayload(updates: NoteEdits) {
   const payload: Record<string, unknown> = {};
@@ -13,6 +16,8 @@ export function noteUpdatePayload(updates: NoteEdits) {
   if (updates.projectId !== undefined) payload.project_id = updates.projectId;
   if (updates.body !== undefined) payload.body = updates.body;
   if (updates.recordedAt !== undefined) payload.recorded_at = updates.recordedAt;
+  if (updates.status !== undefined) payload.status = updates.status;
+
   return payload;
 }
 

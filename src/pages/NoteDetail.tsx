@@ -37,6 +37,8 @@ const NoteDetail = () => {
   const [titleDraft, setTitleDraft] = useState("");
   const [synthesisDraft, setSynthesisDraft] = useState("");
   const [bodyDraft, setBodyDraft] = useState("");
+  const [rewriting, setRewriting] = useState(false);
+
   const [editingDate, setEditingDate] = useState(false);
 
   useEffect(() => {
@@ -86,6 +88,28 @@ const NoteDetail = () => {
     await patch({ projectId });
     toast.success(projectId ? "Filed away." : "Removed from folder.");
   };
+
+  /** Changing your own words makes the write-up stale, so Anren writes it again. */
+  const saveBody = async (next: string) => {
+    if (!note) return;
+    const trimmed = next.trim();
+    await patch({ body: next, status: trimmed ? "processing" : note.status });
+    if (!trimmed) return;
+
+    setRewriting(true);
+    setRelated(null);
+    const { error } = await supabase.functions.invoke("process-note", {
+      body: { noteId: note.id, regenerate: true },
+    });
+    setRewriting(false);
+    if (error) {
+      await patch({ status: "ready" });
+      toast.error("Saved your words, but the write-up didn't refresh.");
+      return;
+    }
+    reload();
+  };
+
 
   const remove = () => {
     if (!note) return;
@@ -209,9 +233,14 @@ const NoteDetail = () => {
       {note.status === "processing" && (
         <div className="mt-6 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          {note.source === "typed" ? "Reading this over — it'll fill in." : "Transcribing and summarising — this stays open, it'll fill in."}
+          {rewriting
+            ? "You changed the words — reading it over again."
+            : note.source === "typed"
+              ? "Reading this over — it'll fill in."
+              : "Transcribing and summarising — this stays open, it'll fill in."}
         </div>
       )}
+
 
       {note.status === "failed" && (
         <p className="mt-6 text-[0.9rem] text-muted-foreground">
@@ -277,8 +306,9 @@ const NoteDetail = () => {
             value={bodyDraft}
             onChange={(e) => setBodyDraft(e.target.value)}
             onBlur={() => {
-              if (bodyDraft !== (note.body ?? "")) void patch({ body: bodyDraft });
+              if (bodyDraft !== (note.body ?? "")) void saveBody(bodyDraft);
             }}
+
             rows={Math.max(4, bodyDraft.split("\n").length + 2)}
             aria-label="Note body"
             className="mt-3 w-full resize-none rounded-[16px] bg-transparent px-0 text-[0.95rem] leading-[1.8] text-muted-foreground outline-none focus:text-foreground transition-colors"
