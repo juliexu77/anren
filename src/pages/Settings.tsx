@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
+import { useAiAccess } from "@/hooks/useAiAccess";
 import { Trash2 } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { projects, deleteProject } = useProjects();
+  const { connected: aiConnected } = useAiAccess();
   const [noteCount, setNoteCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -63,6 +65,22 @@ const Settings = () => {
             </p>
           </div>
         )}
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Intelligence</h2>
+        <Link
+          to="/settings/claude"
+          className="flex items-center justify-between py-3 text-[0.94rem] border-b border-hairline transition-colors hover:text-foreground"
+        >
+          <span>Claude</span>
+          <span className="text-[0.85rem] text-muted-foreground">
+            {aiConnected === null ? "" : aiConnected ? "connected" : "not connected"}
+          </span>
+        </Link>
+        <p className="mt-3 text-[0.82rem] leading-relaxed text-muted-foreground/80">
+          Recording and transcribing are always free. The write-ups are written by Claude.
+        </p>
       </section>
 
       <section className="mb-10">

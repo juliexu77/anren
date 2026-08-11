@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { encodeWav } from "@/lib/wav";
+import { startLiveSpeech } from "@/lib/speech";
 import { toast } from "sonner";
 
 type RecorderStatus = "idle" | "recording" | "saving";
@@ -18,8 +19,6 @@ interface RecorderValue {
 
 const RecorderContext = createContext<RecorderValue | undefined>(undefined);
 
-const LIVE_WINDOW_MS = 7000;
-
 export function RecorderProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [status, setStatus] = useState<RecorderStatus>("idle");
@@ -32,17 +31,16 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const nodeRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const chunksRef = useRef<Float32Array[]>([]);
-  const liveCursorRef = useRef(0);
   const timerRef = useRef<number | null>(null);
-  const liveTimerRef = useRef<number | null>(null);
+  const stopLiveRef = useRef<(() => void) | null>(null);
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const projectRef = useRef<string | null>(null);
 
   const teardown = useCallback(() => {
     if (timerRef.current) window.clearInterval(timerRef.current);
-    if (liveTimerRef.current) window.clearInterval(liveTimerRef.current);
     timerRef.current = null;
-    liveTimerRef.current = null;
+    stopLiveRef.current?.();
+    stopLiveRef.current = null;
     nodeRef.current?.disconnect();
     sourceRef.current?.disconnect();
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -57,28 +55,6 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => teardown, [teardown]);
-
-  const transcribeWindow = useCallback(async () => {
-    const all = chunksRef.current;
-    const sampleRate = ctxRef.current?.sampleRate ?? 48000;
-    const slice = all.slice(liveCursorRef.current);
-    if (!slice.length) return;
-    liveCursorRef.current = all.length;
-
-    const blob = encodeWav(slice, sampleRate);
-    if (blob.size < 4096) return;
-
-    try {
-      const form = new FormData();
-      form.append("file", blob, "window.wav");
-      const { data, error } = await supabase.functions.invoke("transcribe-audio", { body: form });
-      if (error) return;
-      const text = (data as { text?: string })?.text?.trim();
-      if (text) setLiveText((prev) => (prev ? `${prev} ${text}` : text));
-    } catch {
-      /* live preview is best-effort */
-    }
-  }, []);
 
   const start = useCallback(
     async (projectId?: string | null) => {
@@ -96,7 +72,6 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       const source = ctx.createMediaStreamSource(stream);
       const node = ctx.createScriptProcessor(4096, 1, 1);
       chunksRef.current = [];
-      liveCursorRef.current = 0;
       setLiveText("");
       setElapsed(0);
 
@@ -125,10 +100,11 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       }
 
       timerRef.current = window.setInterval(() => setElapsed((s) => s + 1), 1000);
-      liveTimerRef.current = window.setInterval(transcribeWindow, LIVE_WINDOW_MS);
+      // On-device recognition for the words on screen — free, and instant.
+      stopLiveRef.current = startLiveSpeech(setLiveText);
       setStatus("recording");
     },
-    [status, transcribeWindow],
+    [status],
   );
 
   const cancel = useCallback(() => {

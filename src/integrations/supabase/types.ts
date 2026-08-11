@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          created_at: string
+          micro_cents_used: number
+          updated_at: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          micro_cents_used?: number
+          updated_at?: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          micro_cents_used?: number
+          updated_at?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       folder_reflections: {
         Row: {
           created_at: string
@@ -163,6 +187,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_exempt: boolean
           avatar_url: string | null
           birthdays_enabled: boolean | null
           created_at: string
@@ -178,6 +203,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_exempt?: boolean
           avatar_url?: string | null
           birthdays_enabled?: boolean | null
           created_at?: string
@@ -193,6 +219,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_exempt?: boolean
           avatar_url?: string | null
           birthdays_enabled?: boolean | null
           created_at?: string
@@ -237,6 +264,27 @@ export type Database = {
           id?: string
           name?: string
           position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_ai_keys: {
+        Row: {
+          created_at: string
+          encrypted_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_key?: string
           updated_at?: string
           user_id?: string
         }
@@ -291,6 +339,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_own_ai_key: { Args: never; Returns: boolean }
       hybrid_search_notes: {
         Args: {
           filter_project?: string

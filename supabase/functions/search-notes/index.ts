@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chat, embed, jsonResponse } from '../_shared/ai.ts';
+import { chat, embed, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
 const ANSWER_PROMPT = `You help someone reflect on what their own voice notes seem to suggest about a question they're holding. Using only the excerpts provided, answer in 2-4 sentences of warm, plain prose, second person, tentative voice ("You seem to…", "This may point to…"). Quote their own phrasing where it helps. If the excerpts don't answer it, say plainly that they haven't said much about it yet. No bullet points, no headings, no emojis.`;
 
@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
     }
 
     let answer: string | null = null;
+    let needsKey = false;
     try {
       const context = results
         .slice(0, 6)
@@ -78,13 +79,16 @@ Deno.serve(async (req) => {
       answer = await chat([
         { role: 'system', content: ANSWER_PROMPT },
         { role: 'user', content: `Question: ${query}\n\nExcerpts from their notes:\n\n${context}` },
-      ], { temperature: 0.5 });
+      ], { temperature: 0.5, userId: user.id });
     } catch (error) {
-      console.error('answer generation failed:', (error as Error).message);
+      // Retrieval still stands on its own — the answer is the optional layer.
+      if (error instanceof QuotaError) needsKey = true;
+      else console.error('answer generation failed:', (error as Error).message);
     }
 
-    return jsonResponse({ results, answer });
+    return jsonResponse({ results, answer, needsKey });
   } catch (error) {
+    if (error instanceof QuotaError) return needsOwnKeyResponse();
     console.error('search-notes error:', (error as Error).message);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

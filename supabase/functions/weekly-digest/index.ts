@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chat, parseJsonBlock, jsonResponse } from '../_shared/ai.ts';
+import { chat, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
 const PROMPT = `You read back a week of someone's private voice notes and offer a tentative reflection, as if holding up a mirror rather than writing a report.
 
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     const raw = await chat([
       { role: 'system', content: PROMPT },
       { role: 'user', content: `Notes from this week:\n\n${context}` },
-    ], { temperature: 0.7 });
+    ], { temperature: 0.7, userId: user.id });
 
     const parsed = parseJsonBlock<Digest>(raw);
     if (!parsed?.narrative) throw new Error('Could not compose the digest');
@@ -102,6 +102,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, id: saved.id, notesAnalyzed: notes.length });
   } catch (error) {
+    if (error instanceof QuotaError) return needsOwnKeyResponse();
     console.error('weekly-digest error:', (error as Error).message);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chat, jsonResponse } from '../_shared/ai.ts';
+import { chat, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
 const PROMPT = `You answer questions about one of a person's own voice notes, using only that note's transcript. Reply in 2-4 sentences of warm, plain prose, second person ("You said…"). If the note doesn't cover it, say so plainly. No bullet points, no headings, no emojis.`;
 
@@ -41,10 +41,11 @@ Deno.serve(async (req) => {
         role: 'user',
         content: `Note recorded ${new Date(note.recorded_at).toDateString()}\nTitle: ${note.title ?? 'Untitled'}\nSummary: ${note.synthesis ?? ''}\n\nTranscript:\n${note.transcript ?? ''}\n\nQuestion: ${question}`,
       },
-    ], { temperature: 0.5 });
+    ], { temperature: 0.5, userId: user.id });
 
     return jsonResponse({ answer });
   } catch (error) {
+    if (error instanceof QuotaError) return needsOwnKeyResponse();
     console.error('ask-note error:', (error as Error).message);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

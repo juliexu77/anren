@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chat, embed, chunkText, parseJsonBlock, jsonResponse } from '../_shared/ai.ts';
+import { chat, embed, chunkText, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
@@ -127,13 +127,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    const raw = await chat([
-      { role: 'system', content: typed ? TYPED_SYSTEM_PROMPT : SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: typed ? `Written note:\n\n${transcript}` : `Voice memo transcript:\n\n${transcript}`,
-      },
-    ], { temperature: 0.6 });
+    let raw: string;
+    try {
+      raw = await chat([
+        { role: 'system', content: typed ? TYPED_SYSTEM_PROMPT : SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: typed ? `Written note:\n\n${transcript}` : `Voice memo transcript:\n\n${transcript}`,
+        },
+      ], { temperature: 0.6, userId: user.id });
+    } catch (error) {
+      // The words are safe either way — only the write-up needs a key.
+      if (error instanceof QuotaError) {
+        await admin
+          .from('notes')
+          .update({
+            transcript,
+            status: 'needs_key',
+            error_message: null,
+            title: (typeof note.title === 'string' && note.title.trim())
+              || transcript.split(/[.?!]/)[0].slice(0, 70),
+          })
+          .eq('id', noteId);
+        return needsOwnKeyResponse();
+      }
+      throw error;
+    }
 
     const parsed = parseJsonBlock<Synthesis>(raw);
     const existingTitle = typeof note.title === 'string' ? note.title.trim() : '';

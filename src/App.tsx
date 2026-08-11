@@ -13,6 +13,7 @@ import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
 import OnMyMind from "./pages/OnMyMind";
 import Settings from "./pages/Settings";
+import ClaudeKey from "./pages/ClaudeKey";
 import Auth from "./pages/Auth";
 import LovableOAuthCallback from "./pages/LovableOAuthCallback";
 import Privacy from "./pages/Privacy";
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
           <Route path="/on-my-mind" element={<ProtectedShell><OnMyMind /></ProtectedShell>} />
           <Route path="/settings" element={<ProtectedShell><Settings /></ProtectedShell>} />
+          <Route path="/settings/claude" element={<ProtectedShell><ClaudeKey /></ProtectedShell>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

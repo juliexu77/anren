@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { isNeedsKeyError, NEEDS_KEY_MESSAGE } from "@/lib/aiAccess";
 import type { Note } from "@/types/note";
 
 interface Observation {
@@ -38,7 +39,7 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
     });
     if (error) {
       setWorking(false);
-      toast.error("Couldn't read across these just now.");
+      toast(isNeedsKeyError(error) ? NEEDS_KEY_MESSAGE : "Couldn't read across these just now.");
       return;
     }
     const { data } = await supabase

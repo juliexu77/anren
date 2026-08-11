@@ -1,6 +1,6 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chat, parseJsonBlock, jsonResponse } from '../_shared/ai.ts';
+import { chat, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
 const PROMPT = `You are reading a small collection of someone's private notes that they filed together, and telling them what you see in them — the way a perceptive friend would, someone who has been paying attention and isn't afraid to say something a little pointed.
 
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     const raw = await chat([
       { role: 'system', content: PROMPT },
       { role: 'user', content: `Notes filed in this folder:\n\n${context}` },
-    ], { temperature: 0.7 });
+    ], { temperature: 0.7, userId: user.id });
 
     const parsed = parseJsonBlock<Reflection>(raw);
     if (!parsed?.observations?.length) throw new Error('Could not gather anything from these notes');
@@ -123,6 +123,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, id: saved.id, notesAnalyzed: notes.length });
   } catch (error) {
+    if (error instanceof QuotaError) return needsOwnKeyResponse();
     console.error('folder-reflection error:', (error as Error).message);
     return jsonResponse({ error: (error as Error).message }, 500);
   }
