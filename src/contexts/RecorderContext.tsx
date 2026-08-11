@@ -10,6 +10,7 @@ import {
   type RecordingSession,
 } from "@/lib/recordingStore";
 import { finishSession, uploadAudio } from "@/lib/recordingFinish";
+import { keepScreenAwake, type WakeLockHandle } from "@/lib/wakeLock";
 import { toast } from "sonner";
 
 type RecorderStatus = "idle" | "recording" | "saving";
