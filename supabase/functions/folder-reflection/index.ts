@@ -94,16 +94,23 @@ Deno.serve(async (req) => {
     ], { temperature: 0.7, userId: user.id });
 
     const parsed = parseJsonBlock<Reflection>(raw);
-    if (!parsed?.observations?.length) throw new Error('Could not gather anything from these notes');
+    if (!parsed) throw new Error('Could not gather anything from these notes');
+    if (!parsed.observations?.length && !parsed.reading?.trim()) {
+      throw new Error('Could not gather anything from these notes');
+    }
 
     const validIds = new Set(notes.map((n) => n.id));
-    const observations = parsed.observations
+    const observations = (parsed.observations ?? [])
       .filter((o) => o?.text)
       .map((o) => ({
         text: o.text,
         grounding: o.grounding ?? '',
-        note_ids: (o.note_ids ?? []).filter((id) => validIds.has(id)),
-      }));
+        note_ids: [...new Set((o.note_ids ?? []).filter((id) => validIds.has(id)))],
+      }))
+      // A pattern only earns its place if it recurs across two or more notes.
+      .filter((o) => o.note_ids.length >= 2)
+      .slice(0, 3);
+
 
     const { data: saved, error: saveError } = await supabase
       .from('folder_reflections')
