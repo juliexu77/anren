@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Trash2, FolderClosed, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNote } from "@/hooks/useNotes";
