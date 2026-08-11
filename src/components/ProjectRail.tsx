@@ -4,6 +4,8 @@ import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal } f
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
+import { NoteRailItem } from "@/components/NoteRailItem";
+
 
 import {
   DropdownMenu,
@@ -22,7 +24,7 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
 
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
   const { projects, createProject, renameProject, deleteProject, setProjectEmoji } = useProjects();
-  const { notes } = useNotes();
+  const { notes, updateNote, deleteNote } = useNotes();
   const [adding, setAdding] = useState(false);
 
   const [name, setName] = useState("");
@@ -213,23 +215,24 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
             </span>
             <div className="flex flex-col gap-0.5">
               {notes.slice(0, 10).map((n) => (
-                <NavLink
+                <NoteRailItem
                   key={n.id}
-                  to={`/note/${n.id}`}
-                  onClick={onNavigate}
-                  className={cn(
-                    navItemClass({ isActive: location.pathname === `/note/${n.id}` }),
-                    "block truncate text-[0.85rem]",
-                  )}
-                >
-                  <span className="truncate">
-                    {n.title ?? (n.status === "processing" ? "Writing this up…" : "Untitled note")}
-                  </span>
-                </NavLink>
+                  note={n}
+                  projects={projects}
+                  onNavigate={onNavigate}
+                  className={navItemClass({ isActive: false })}
+                  onRename={(title) => updateNote(n.id, { title })}
+                  onMove={(projectId) => updateNote(n.id, { projectId })}
+                  onDelete={() => {
+                    deleteNote(n.id);
+                    if (location.pathname === `/note/${n.id}`) navigate("/");
+                  }}
+                />
               ))}
             </div>
           </div>
         )}
+
       </div>
 
 

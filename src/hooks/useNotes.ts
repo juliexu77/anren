@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 import { useAuth } from "@/hooks/useAuth";
 import { undoableDelete } from "@/lib/undo";
+import { hiddenNoteIds, hideNote, notesChanged, onNotesChanged, unhideNote } from "@/lib/noteEvents";
 import { mapNote, type Note } from "@/types/note";
+
 
 type NoteEdits = Partial<
   Pick<Note, "title" | "synthesis" | "projectId" | "body" | "recordedAt" | "status">
@@ -21,14 +25,29 @@ export function noteUpdatePayload(updates: NoteEdits) {
   return payload;
 }
 
-/** Hides the note now; the caller's undo window decides if it stays gone. */
-export function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () => void) {
-  void supabase.from("notes").update({ deleted_at: new Date().toISOString() }).eq("id", note.id);
+/**
+ * Hides the note everywhere at once, then waits for the row to be marked gone
+ * so any screen that reloads next can't read it as still alive.
+ */
+export async function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () => void) {
+  hideNote(note.id);
+  const { error } = await supabase
+    .from("notes")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", note.id);
+  if (error) {
+    unhideNote(note.id);
+    toast("Couldn't delete that just now.");
+    return false;
+  }
+  notesChanged();
+
 
   undoableDelete({
     message: "Note deleted",
     onUndo: async () => {
       await supabase.from("notes").update({ deleted_at: null }).eq("id", note.id);
+      unhideNote(note.id);
       onUndo();
     },
     onFinalize: async () => {
@@ -36,9 +55,23 @@ export function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () 
         await supabase.storage.from("voice-notes").remove([note.audioPath]);
       }
       await supabase.from("notes").delete().eq("id", note.id);
+      hiddenNoteIds.delete(note.id);
     },
   });
+
+  return true;
 }
+
+
+/**
+ * Clears out notes whose undo window closed while the app wasn't looking — a
+ * reload mid-window used to leave them soft-deleted forever.
+ */
+async function sweepAbandonedDeletes(userId: string) {
+  const cutoff = new Date(Date.now() - 60_000).toISOString();
+  await supabase.from("notes").delete().eq("user_id", userId).lt("deleted_at", cutoff);
+}
+
 
 export function useNotes(projectId?: string | null) {
   const { user } = useAuth();
@@ -59,8 +92,9 @@ export function useNotes(projectId?: string | null) {
     const { data, error } = await query;
     if (!error && data) {
       // Everything spoken shows up, including a note still on its way up — a
-      // note you spoke should never quietly vanish from the archive.
-      setNotes(data.map(mapNote));
+      // note you spoke should never quietly vanish from the archive. Notes in
+      // their undo window stay hidden until the window closes.
+      setNotes(data.map(mapNote).filter((n) => !hiddenNoteIds.has(n.id)));
     }
 
 
@@ -72,11 +106,22 @@ export function useNotes(projectId?: string | null) {
     load();
   }, [load]);
 
+  // A delete or an undo anywhere in the app reaches every list on screen.
+  useEffect(() => onNotesChanged(() => {
+    setNotes((prev) => prev.filter((n) => !hiddenNoteIds.has(n.id)));
+    void load();
+  }), [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    void sweepAbandonedDeletes(user.id);
+  }, [user]);
+
   // Live fill-in: a note appears immediately, then its title/synthesis land.
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`notes-${user.id}`)
+      .channel(`notes-${user.id}-${projectId ?? "all"}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notes", filter: `user_id=eq.${user.id}` },
@@ -86,12 +131,25 @@ export function useNotes(projectId?: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, load]);
+  }, [user, projectId, load]);
 
-  const updateNote = useCallback(async (id: string, updates: NoteEdits) => {
-    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...updates } : n)));
-    await supabase.from("notes").update(noteUpdatePayload(updates)).eq("id", id);
-  }, []);
+
+  const updateNote = useCallback(
+    async (id: string, updates: NoteEdits) => {
+      const before = notes.find((n) => n.id === id);
+      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...updates } : n)));
+      const { error } = await supabase.from("notes").update(noteUpdatePayload(updates)).eq("id", id);
+      if (error) {
+        // Put it back the way it was rather than showing a change that never landed.
+        if (before) setNotes((prev) => prev.map((n) => (n.id === id ? before : n)));
+        toast("That change didn't save. Try again in a moment.");
+        return false;
+      }
+      return true;
+    },
+    [notes],
+  );
+
 
   const deleteNote = useCallback(
     (id: string) => {
@@ -131,7 +189,7 @@ export function useNote(noteId: string | undefined) {
   useEffect(() => {
     if (!noteId) return;
     const channel = supabase
-      .channel(`note-${noteId}`)
+      .channel(`note-${noteId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "notes", filter: `id=eq.${noteId}` },
@@ -145,12 +203,23 @@ export function useNote(noteId: string | undefined) {
 
   const patch = useCallback(
     async (updates: NoteEdits) => {
-      if (!note) return;
+      if (!note) return false;
+      const before = note;
       setNote({ ...note, ...updates });
-      await supabase.from("notes").update(noteUpdatePayload(updates)).eq("id", note.id);
+      const { error } = await supabase
+        .from("notes")
+        .update(noteUpdatePayload(updates))
+        .eq("id", note.id);
+      if (error) {
+        setNote(before);
+        toast("That change didn't save. Try again in a moment.");
+        return false;
+      }
+      return true;
     },
     [note],
   );
+
 
   return { note, loading, reload: load, patch };
 }
