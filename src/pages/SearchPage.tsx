@@ -30,7 +30,7 @@ const SearchPage = () => {
     });
     setLoading(false);
     if (error) {
-      toast.error("Search didn't come back. Try again?");
+      toast.error("search didn't come back. try again?");
       return;
     }
     const payload = data as { results?: SearchHit[]; answer?: string | null };
@@ -46,7 +46,7 @@ const SearchPage = () => {
     });
     setExplaining(false);
     if (error) {
-      toast.error("Couldn't gather that just now.");
+      toast.error("couldn't gather that just now.");
       return;
     }
     const payload = data as { answer?: string | null };
@@ -59,7 +59,7 @@ const SearchPage = () => {
       <header className="mb-7">
         <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">Search</h1>
         <p className="mt-1.5 text-[0.9rem] leading-relaxed text-muted-foreground">
-          Exact words or a whole thought — ask it however it comes out.
+          exact words or a whole thought — ask it however it comes out.
         </p>
       </header>
 
@@ -71,7 +71,7 @@ const SearchPage = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && run()}
-            placeholder="What have I said about wanting community?"
+            placeholder="what have I said about wanting community?"
             className="flex-1 bg-transparent text-[0.94rem] outline-none placeholder:text-muted-foreground/55"
           />
           {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/70" />}
@@ -81,7 +81,7 @@ const SearchPage = () => {
       {hits && (
         <div className="mt-8">
           {!hits.length ? (
-            <p className="text-[0.9rem] text-muted-foreground">Nothing matched that yet.</p>
+            <p className="text-[0.9rem] text-muted-foreground">nothing matched that yet.</p>
           ) : (
             <div className="flex flex-col">
               {hits.map((hit) => (
@@ -90,7 +90,7 @@ const SearchPage = () => {
                   to={`/note/${hit.note_id}`}
                   className="block py-5 border-b border-hairline last:border-b-0"
                 >
-                  <h3 className="note-title">{hit.title ?? "Untitled note"}</h3>
+                  <h3 className="note-title">{hit.title ?? "untitled note"}</h3>
                   <p className="mt-2 text-[0.92rem] leading-[1.65] text-muted-foreground line-clamp-3">
                     {hit.snippet ?? hit.synthesis}
                   </p>
@@ -121,7 +121,7 @@ const SearchPage = () => {
               ) : (
                 <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
               )}
-              See what these have in common
+              see what these have in common
             </button>
           ) : (
             <button
@@ -129,7 +129,7 @@ const SearchPage = () => {
               className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronUp className="w-3.5 h-3.5" strokeWidth={1.5} />
-              Hide the reflection
+              hide the reflection
             </button>
           )}
 
@@ -138,7 +138,7 @@ const SearchPage = () => {
               {explaining && !answer ? (
                 <div className="flex items-center gap-2 text-[0.9rem] text-muted-foreground">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Pulling the threads together…
+                  pulling the threads together…
                 </div>
               ) : (
                 <p className="whitespace-pre-line font-editorial text-[1.02rem] leading-[1.7]">{answer}</p>
