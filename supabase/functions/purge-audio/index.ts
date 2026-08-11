@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       for (const f of files ?? []) paths.push(`${path}${f.name}`);
     } else {
       paths.push(path);
-      const folder = `${user.id}/${note.id}`;
+      const folder = `${userId}/${note.id}`;
       const { data: files } = await supabase.storage.from('voice-notes').list(folder);
       for (const f of files ?? []) paths.push(`${folder}/${f.name}`);
     }
