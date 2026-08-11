@@ -21,14 +21,20 @@ export function noteUpdatePayload(updates: NoteEdits) {
   return payload;
 }
 
-/** Hides the note now; the caller's undo window decides if it stays gone. */
-export function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () => void) {
-  void supabase.from("notes").update({ deleted_at: new Date().toISOString() }).eq("id", note.id);
+/**
+ * Hides the note everywhere at once, then waits for the row to be marked gone
+ * so any screen that reloads next can't read it as still alive.
+ */
+export async function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () => void) {
+  hideNote(note.id);
+  await supabase.from("notes").update({ deleted_at: new Date().toISOString() }).eq("id", note.id);
+  notesChanged();
 
   undoableDelete({
     message: "Note deleted",
     onUndo: async () => {
       await supabase.from("notes").update({ deleted_at: null }).eq("id", note.id);
+      unhideNote(note.id);
       onUndo();
     },
     onFinalize: async () => {
@@ -36,9 +42,20 @@ export function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUndo: () 
         await supabase.storage.from("voice-notes").remove([note.audioPath]);
       }
       await supabase.from("notes").delete().eq("id", note.id);
+      hiddenNoteIds.delete(note.id);
     },
   });
 }
+
+/**
+ * Clears out notes whose undo window closed while the app wasn't looking — a
+ * reload mid-window used to leave them soft-deleted forever.
+ */
+async function sweepAbandonedDeletes(userId: string) {
+  const cutoff = new Date(Date.now() - 60_000).toISOString();
+  await supabase.from("notes").delete().eq("user_id", userId).lt("deleted_at", cutoff);
+}
+
 
 export function useNotes(projectId?: string | null) {
   const { user } = useAuth();
