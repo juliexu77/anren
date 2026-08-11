@@ -110,18 +110,26 @@ export async function finishSession(
 
   let path = await uploadAudio(session.userId, noteId, segments, session.sampleRate);
 
-  if (!path && session.uploadedParts) {
-    // Whole-file upload didn't make it — the slices from during the recording do.
-    path = partsPrefix(session.userId, noteId);
+  if (!path) {
+    // Whole-file upload didn't make it — the slices pushed up during the
+    // recording do, so hand the write-up the folder instead.
+    const prefix = partsPrefix(session.userId, noteId);
+    const { data: parts } = await supabase.storage
+      .from("voice-notes")
+      .list(prefix.replace(/\/$/, ""), { limit: 1 });
+    if ((parts ?? []).length) path = prefix;
   }
 
   if (!path) {
+    // Nothing is lost: the audio is still on this device and the next launch
+    // offers it back, so this stays in progress rather than failing outright.
     await supabase
       .from("notes")
-      .update({ status: "failed", error_message: "Anren couldn't keep the audio for this one." })
+      .update({ duration_seconds: session.elapsed })
       .eq("id", noteId);
     return { noteId, saved: false };
   }
+
 
   await supabase
     .from("notes")
