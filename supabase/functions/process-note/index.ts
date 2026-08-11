@@ -183,10 +183,16 @@ Deno.serve(async (req) => {
     } else {
       if (!note.audio_path) return jsonResponse({ error: 'Note has no audio yet' }, 400);
 
-      const { data: audio, error: downloadError } = await admin.storage
-        .from('voice-notes')
-        .download(note.audio_path);
-      if (downloadError || !audio) throw downloadError ?? new Error('Audio not found');
+      let audio: Blob | null = null;
+      if (note.audio_path.endsWith('/')) {
+        audio = await stitchParts(admin, note.user_id, noteId, note.audio_path);
+      } else {
+        const { data } = await admin.storage.from('voice-notes').download(note.audio_path);
+        audio = data ?? null;
+        // Older path: the single file never landed, but the slices did.
+        if (!audio) audio = await stitchParts(admin, note.user_id, noteId, `${note.user_id}/${noteId}/`);
+      }
+      if (!audio) throw new Error('Audio not found');
 
       transcript = await transcribe(audio);
       if (!transcript) {
