@@ -58,7 +58,10 @@ export async function softDeleteNote(note: Pick<Note, "id" | "audioPath">, onUnd
       hiddenNoteIds.delete(note.id);
     },
   });
+
+  return true;
 }
+
 
 /**
  * Clears out notes whose undo window closed while the app wasn't looking — a
