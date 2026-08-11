@@ -283,11 +283,13 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    const noteId = await finishSession(session, segments);
-    if (!noteId) toast.error("Couldn't save that note.");
+    const { noteId, saved } = await finishSession(session, segments);
+    if (!saved) {
+      toast.error("Anren couldn't get that one up yet — it's still on this device.");
+    }
 
-    // Only let go of the local copy once the server has confirmed audio.
-    if (noteId) await clearSession(session.sessionId);
+    // Only let go of the local copy once the server has the audio.
+    if (saved) await clearSession(session.sessionId);
     sessionRef.current = null;
     setStatus("idle");
     setElapsed(0);

@@ -132,6 +132,24 @@ async function stitchParts(admin: any, userId: string, noteId: string, prefix: s
   return blob;
 }
 
+/**
+ * Once the words are written down, the recording has done its job. Keeping it
+ * would only mean storing your voice for no reason, so it goes.
+ */
+async function discardAudio(admin: any, userId: string, noteId: string, path: string) {
+  try {
+    const folder = `${userId}/${noteId}`;
+    const { data: files } = await admin.storage.from('voice-notes').list(folder, { limit: 1000 });
+    const targets = (files ?? []).map((f: { name: string }) => `${folder}/${f.name}`);
+    if (!path.endsWith('/')) targets.push(path);
+    if (targets.length) await admin.storage.from('voice-notes').remove(targets);
+    await admin.from('notes').update({ audio_path: null }).eq('id', noteId);
+  } catch (error) {
+    console.error('audio cleanup failed:', (error as Error).message);
+  }
+}
+
+
 
 
 
@@ -167,7 +185,7 @@ Deno.serve(async (req) => {
 
     const { data: note, error: noteError } = await admin
       .from('notes')
-      .select('id, user_id, audio_path, source, body, title')
+      .select('id, user_id, audio_path, source, body, title, transcript')
       .eq('id', noteId)
       .maybeSingle();
 
@@ -180,9 +198,11 @@ Deno.serve(async (req) => {
     if (typed) {
       transcript = (note.body ?? '').trim();
       if (!transcript) return jsonResponse({ error: 'Note has no text yet' }, 400);
+    } else if (!note.audio_path) {
+      // The audio is gone because the transcript already exists — reuse it.
+      transcript = (note.transcript ?? '').trim();
+      if (!transcript) return jsonResponse({ error: 'Note has no audio yet' }, 400);
     } else {
-      if (!note.audio_path) return jsonResponse({ error: 'Note has no audio yet' }, 400);
-
       let audio: Blob | null = null;
       if (note.audio_path.endsWith('/')) {
         audio = await stitchParts(admin, note.user_id, noteId, note.audio_path);
@@ -205,6 +225,7 @@ Deno.serve(async (req) => {
             synthesis: "This recording didn't carry any speech Anren could hear.",
           })
           .eq('id', noteId);
+        await discardAudio(admin, note.user_id, noteId, note.audio_path);
         return jsonResponse({ ok: true, transcript: '' });
       }
     }
@@ -248,6 +269,13 @@ Deno.serve(async (req) => {
       .from('notes')
       .update({ transcript, title, synthesis, status: 'ready', error_message: null })
       .eq('id', noteId);
+
+    // The words are safe now, so the recording itself isn't kept.
+    if (!typed && note.audio_path) {
+      await discardAudio(admin, note.user_id, noteId, note.audio_path);
+    }
+
+
 
     // Index passages for semantic search — best effort, never blocks the note.
     try {
