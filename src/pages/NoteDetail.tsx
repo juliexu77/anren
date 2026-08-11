@@ -86,9 +86,10 @@ const NoteDetail = () => {
 
   const moveToFolder = async (projectId: string | null) => {
     if (!note) return;
-    await patch({ projectId });
-    toast.success(projectId ? "Filed away." : "Removed from folder.");
+    const saved = await patch({ projectId });
+    if (saved) toast.success(projectId ? "Filed away." : "Removed from folder.");
   };
+
 
   /** Changing your own words makes the write-up stale, so Anren writes it again. */
   const saveBody = async (next: string) => {
