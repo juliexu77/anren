@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { NoteRow } from "@/components/NoteRow";
+import { FolderReflection } from "@/components/FolderReflection";
 import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
