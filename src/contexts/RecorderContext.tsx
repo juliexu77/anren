@@ -174,14 +174,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       sourceRef.current = source;
       nodeRef.current = node;
 
-      try {
-        const nav = navigator as Navigator & {
-          wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
-        };
-        if (nav.wakeLock) wakeLockRef.current = await nav.wakeLock.request("screen");
-      } catch {
-        /* wake lock unavailable */
-      }
+      // Keep the phone from locking mid-thought (wake lock, video fallback).
+      wakeLockRef.current?.release();
+      wakeLockRef.current = keepScreenAwake();
 
       timerRef.current = window.setInterval(() => {
         elapsedRef.current += 1;
