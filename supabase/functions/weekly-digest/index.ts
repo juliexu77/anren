@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, parseJsonBlock, jsonResponse } from '../_shared/ai.ts';
 
-const PROMPT = `You read back a week of someone's private voice notes and tell them what's been on their mind.
+const PROMPT = `You read back a week of someone's private voice notes and offer a tentative reflection, as if holding up a mirror rather than writing a report.
 
 Return strict JSON:
 {
@@ -10,11 +10,12 @@ Return strict JSON:
   "themes": [{ "title": "short phrase in their own language", "detail": "1-2 sentences" }]
 }
 
-Rules:
+Voice rules:
+- Second person, but tentative: use hedged verbs like "seem to", "appear to", "keep returning to", "may be", "might be".
+- Describe patterns without diagnosing them. Never say what someone "is" or "feels"; say what the notes suggest.
 - Only reference things actually present in the notes. Never invent a day, person, or event, and only name a weekday if a note is from that day.
 - Notice what recurs, what shifted, what they keep circling back to, and what they left unfinished.
-- Warm, observant, unhurried — like a friend who listened closely. Second person throughout.
-- No advice unless they asked for it in a note. No scores, metrics, productivity language, or emojis.
+- Warm, observant, unhurried. No advice unless they asked for it in a note. No scores, metrics, productivity language, or emojis.
 - 2-4 themes. If the week is thin, say that plainly and keep it short.`;
 
 interface Digest {

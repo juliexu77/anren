@@ -248,6 +248,18 @@ export type Database = {
           score: number
         }[]
       }
+      match_passages: {
+        Args: {
+          exclude_note_id?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          note_id: string
+          similarity: number
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

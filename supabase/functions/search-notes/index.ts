@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, embed, jsonResponse } from '../_shared/ai.ts';
 
-const ANSWER_PROMPT = `You help someone search their own voice notes. Using only the note excerpts provided, answer their question in 2-4 sentences of warm, plain prose, in second person ("You've said…"). Quote their own phrasing where it helps. If the excerpts don't answer it, say plainly that they haven't said much about it yet. No bullet points, no headings, no emojis.`;
+const ANSWER_PROMPT = `You help someone reflect on what their own voice notes seem to suggest about a question they're holding. Using only the excerpts provided, answer in 2-4 sentences of warm, plain prose, second person, tentative voice ("You seem to…", "This may point to…"). Quote their own phrasing where it helps. If the excerpts don't answer it, say plainly that they haven't said much about it yet. No bullet points, no headings, no emojis.`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const query = typeof body.query === 'string' ? body.query.trim() : '';
     const projectId = typeof body.projectId === 'string' ? body.projectId : null;
+    const explain = body.explain === true;
     if (!query || query.length > 500) return jsonResponse({ error: 'A search query is required' }, 400);
 
     let queryEmbedding: string | null = null;
@@ -62,6 +63,10 @@ Deno.serve(async (req) => {
           recorded_at: note.recorded_at,
         };
       });
+
+    if (!explain) {
+      return jsonResponse({ results, answer: null });
+    }
 
     let answer: string | null = null;
     try {
