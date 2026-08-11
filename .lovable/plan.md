@@ -52,19 +52,39 @@ Everything currently in the app is a different product. Removing it all:
 
 The 74 existing cards and 5 reflections will be dropped. If you want them preserved as read-only memories, say so and I'll migrate them into the new notes table instead.
 
-Kept: the design system (Cormorant Garamond + Inter, sanctuary palette, no red), auth, the Capacitor iOS shell, and the microphone/wake-lock recording logic.
+Kept: auth, the Capacitor iOS shell, and the microphone/wake-lock recording logic. The visual system is being rebuilt (below) — the current sanctuary palette goes with the old product.
+
+## Visual direction: Granola's structure, not Granola's masculinity
+
+Granola looks like a tool made by men for men in enterprise sales: cool grays, tight blue accents, dense information, a slightly cold productivity edge. The layout logic is excellent and we keep it exactly. The surface gets rebuilt.
+
+What we take from Granola: the calm document look, generous whitespace, text-forward hierarchy, small quiet UI chrome, a left rail, subtle dividers instead of heavy cards, and restraint in color.
+
+What changes:
+
+- **Palette** — warm neutrals instead of cool gray: soft ivory and oat backgrounds, a deep muted plum/ink for text, and one warm accent (dusty rose or clay) used sparingly for the record state and active items. No corporate blue. No red anywhere.
+- **Typography** — a real editorial pairing rather than a UI sans everywhere: a warm serif for titles and note bodies, a clean humanist sans for interface labels. Titles get room to breathe; they read like a diary heading, not a row label.
+- **Shape and texture** — softer radii, hairline warm-toned dividers, gentle shadowless surfaces, a hint of paper warmth in the background rather than flat white.
+- **Density** — one notch looser than Granola. It should feel like reading, not scanning a CRM.
+- **Motion** — slow and soft: a breathing pulse while recording, a quiet shimmer as the synthesis lands, cross-fades instead of slides.
+
+Everything defined as semantic tokens in the global CSS so the whole app is themable in one place.
+
+Once the shell exists I'll offer a few rendered directions for the feed and note detail so you can pick the exact look rather than accept mine.
 
 ## What gets built
 
-**1. Feed (home)** — reverse-chronological, grouped by day ("Today", "Yesterday", then dates). Each entry: title in serif, two-sentence synthesis, time. Freshly captured entries fill in live. A persistent record button sits above the tab bar on every screen.
+**1. Feed (home)** — reverse-chronological, grouped by day ("Today", "Yesterday", then dates). Each entry: title in serif, two-sentence synthesis, time, and its project if it has one. Freshly captured entries fill in live. A persistent record button always within reach.
 
 **2. Capture** — tap to start, tap to stop. Elapsed time, soft pulse, live transcript, screen stays awake. Stopping returns you straight to the feed with the new entry already there.
 
-**3. Note detail** — title, synthesis, "Transcript" toggle, audio playback, and "Ask about this" at the bottom. Edit title, delete.
+**3. Note detail** — title, synthesis, "Transcript" toggle, audio playback, project picker, and "Ask about this" at the bottom. Edit title, delete.
 
-**4. Search** — one box. Keywords and questions both. Results show the entry plus the matching passage.
+**4. Projects** — a rail (sidebar on desktop, slide-over on mobile) listing your projects with counts. Create, rename, delete. Tapping one filters the feed to it. A note can belong to one project, assigned from note detail or via long-press in the feed. Unfiled notes still live in the main feed — filing is optional, never a required step.
 
-**5. On my mind** (built last) — a weekly pass naming the threads across recent entries. Appears only once there's enough to say something honest.
+**5. Search** — one box. Keywords and questions both, across everything or scoped to the current project. Results show the entry plus the matching passage.
+
+**6. On my mind** (built last) — a weekly pass naming the threads across recent entries, with the option to run it for a single project.
 
 ## Technical approach
 
