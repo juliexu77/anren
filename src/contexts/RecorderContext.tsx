@@ -53,7 +53,6 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const segmentIndexRef = useRef(0);
   const elapsedRef = useRef(0);
   const liveTextRef = useRef("");
-  const lastSnapshotRef = useRef(0);
   const flushingRef = useRef(false);
 
   const teardownAudio = useCallback(() => {
@@ -150,7 +149,6 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       segmentIndexRef.current = 0;
       elapsedRef.current = 0;
       liveTextRef.current = "";
-      lastSnapshotRef.current = Date.now();
       setLiveText("");
       setElapsed(0);
 
