@@ -70,6 +70,7 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-weight: 400;
+    font-variant-caps: small-caps;
     background-image: radial-gradient(
       120% 80% at 50% 0%,
       hsl(34 44% 98%) 0%,
@@ -77,6 +78,15 @@
       hsl(32 32% 95%) 100%
     );
     background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-editorial,
+  .note-title,
+  .note-title-lg,
+  .label-quiet,
+  .normal-caps {
+    font-variant-caps: normal;
   }
 }
 
