@@ -14,7 +14,6 @@ interface Digest {
   weekStart: string;
   narrative: string;
   themes: Theme[];
-  notesAnalyzed: number;
 }
 
 function startOfWeek(date = new Date()) {
@@ -47,7 +46,6 @@ const OnMyMind = () => {
             weekStart: data.week_start,
             narrative: data.narrative,
             themes: Array.isArray(data.themes) ? (data.themes as unknown as Theme[]) : [],
-            notesAnalyzed: data.notes_analyzed,
           }
         : null,
     );
@@ -63,7 +61,7 @@ const OnMyMind = () => {
     const { error } = await supabase.functions.invoke("weekly-digest", { body: {} });
     setGenerating(false);
     if (error) {
-      toast.error("Couldn't pull the week together just now.");
+      toast.error("Couldn't look back just now.");
       return;
     }
     load();
@@ -87,7 +85,7 @@ const OnMyMind = () => {
           className="flex items-center gap-2 rounded-full border border-hairline bg-paper px-4 py-2 text-[0.82rem] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
         >
           {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />}
-          {digest ? "Refresh" : "Pull it together"}
+          {digest ? "Look back" : "Look back"}
         </button>
       </header>
 
@@ -97,7 +95,7 @@ const OnMyMind = () => {
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">Nothing pulled together yet.</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
-            Once you've left a few notes this week, Anren can read them back and tell you what keeps coming up.
+            Once you've left a few notes this week, anren can read them back and suggest what keeps coming up.
           </p>
         </div>
       ) : (
@@ -121,10 +119,6 @@ const OnMyMind = () => {
               </div>
             </section>
           )}
-
-          <p className="text-[0.72rem] uppercase tracking-[0.14em] text-muted-foreground/60">
-            {digest.notesAnalyzed} note{digest.notesAnalyzed === 1 ? "" : "s"} read
-          </p>
         </div>
       )}
     </div>

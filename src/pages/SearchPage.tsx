@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Search as SearchIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Search as SearchIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,11 +17,14 @@ const SearchPage = () => {
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [answer, setAnswer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [explaining, setExplaining] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const run = async () => {
     if (!query.trim()) return;
     setLoading(true);
     setAnswer(null);
+    setShowAnswer(false);
     const { data, error } = await supabase.functions.invoke("search-notes", {
       body: { query: query.trim() },
     });
@@ -33,6 +36,22 @@ const SearchPage = () => {
     const payload = data as { results?: SearchHit[]; answer?: string | null };
     setHits(payload.results ?? []);
     setAnswer(payload.answer ?? null);
+  };
+
+  const explain = async () => {
+    if (!query.trim() || !hits?.length) return;
+    setExplaining(true);
+    const { data, error } = await supabase.functions.invoke("search-notes", {
+      body: { query: query.trim(), explain: true },
+    });
+    setExplaining(false);
+    if (error) {
+      toast.error("Couldn't gather that just now.");
+      return;
+    }
+    const payload = data as { answer?: string | null };
+    setAnswer(payload.answer ?? null);
+    setShowAnswer(true);
   };
 
   return (
@@ -59,12 +78,6 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {answer && (
-        <div className="mt-7 rounded-[20px] border border-hairline bg-paper/70 px-6 py-6">
-          <p className="whitespace-pre-line font-editorial text-[1.02rem] leading-[1.7]">{answer}</p>
-        </div>
-      )}
-
       {hits && (
         <div className="mt-8">
           {!hits.length ? (
@@ -90,6 +103,46 @@ const SearchPage = () => {
                   </p>
                 </Link>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {hits && hits.length > 0 && (
+        <div className="mt-8">
+          {!showAnswer && !answer ? (
+            <button
+              onClick={explain}
+              disabled={explaining}
+              className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
+            >
+              {explaining ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
+              )}
+              See what these have in common
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowAnswer(false)}
+              className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronUp className="w-3.5 h-3.5" strokeWidth={1.5} />
+              Hide the reflection
+            </button>
+          )}
+
+          {(showAnswer || answer) && (
+            <div className="mt-5 rounded-[20px] border border-hairline bg-paper/70 px-6 py-6">
+              {explaining && !answer ? (
+                <div className="flex items-center gap-2 text-[0.9rem] text-muted-foreground">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Pulling the threads together…
+                </div>
+              ) : (
+                <p className="whitespace-pre-line font-editorial text-[1.02rem] leading-[1.7]">{answer}</p>
+              )}
             </div>
           )}
         </div>
