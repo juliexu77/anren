@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLongPress } from "@/hooks/useLongPress";
 import { cn } from "@/lib/utils";
-import type { Note } from "@/types/note";
-import type { Project } from "@/hooks/useProjects";
+import type { Note, Project } from "@/types/note";
+
 
 interface Props {
   note: Note;
