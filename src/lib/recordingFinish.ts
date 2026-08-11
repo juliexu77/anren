@@ -11,15 +11,27 @@ function partPath(userId: string, noteId: string, index: number): string {
   return `${partsPrefix(userId, noteId)}part${String(index).padStart(4, "0")}.wav`;
 }
 
-async function upload(path: string, blob: Blob, attempts = 3): Promise<boolean> {
+/** Did the file actually land, whatever the upload call claimed? */
+async function objectExists(path: string): Promise<boolean> {
+  const slash = path.lastIndexOf("/");
+  const folder = path.slice(0, slash);
+  const name = path.slice(slash + 1);
+  const { data } = await supabase.storage.from("voice-notes").list(folder, { search: name, limit: 1 });
+  return (data ?? []).some((f) => f.name === name);
+}
+
+async function upload(path: string, blob: Blob, attempts = 4): Promise<boolean> {
   for (let attempt = 0; attempt < attempts; attempt++) {
     const { error } = await supabase.storage
       .from("voice-notes")
       .upload(path, blob, { contentType: "audio/wav", upsert: true });
     if (!error) return true;
-    await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    // A long upload can finish server-side while the response is lost — never
+    // call a recording gone without looking for it first.
+    if (await objectExists(path)) return true;
+    await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
   }
-  return false;
+  return objectExists(path);
 }
 
 /**
@@ -50,6 +62,7 @@ export async function uploadAudio(
   const path = `${userId}/${noteId}.wav`;
   return (await upload(path, blob)) ? path : null;
 }
+
 
 /** Make sure a note row exists for this session, creating one if needed. */
 export async function ensureNote(session: RecordingSession): Promise<string | null> {
