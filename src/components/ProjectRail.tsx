@@ -84,10 +84,29 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                 "truncate",
               )}
             >
-              <span className="w-[17px] text-center text-muted-foreground/60">·</span>
-              <span className="truncate">{p.name}</span>
+              <span
+                className={cn(
+                  "inline-flex shrink-0",
+                  p.id === justCreatedId && "motion-safe:animate-resolve-in [animation-delay:180ms]",
+                )}
+              >
+                <FolderEmojiPicker
+                  name={p.name}
+                  emoji={p.emoji}
+                  onSelect={(emoji) => setProjectEmoji(p.id, emoji)}
+                />
+              </span>
+              <span
+                className={cn(
+                  "truncate",
+                  p.id === justCreatedId && "motion-safe:animate-resolve-in",
+                )}
+              >
+                {p.name}
+              </span>
             </NavLink>
           ))}
+
 
           {adding && (
             <div className="flex items-center gap-2 px-3 py-1.5">
