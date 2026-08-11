@@ -1,626 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Mom Brain — Warm Sanctuary Design System */
-/* Inspired by restrained luxury, natural materials, intentional slowness */
-
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
-
 @layer base {
   :root {
-    /* Font stacks — Cormorant Garamond (refined serif) + Inter (clean sans) */
-    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-    --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-    --font-num: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    
-    /* Spacing scale (8pt grid) */
-    --s-1: 4px;
-    --s-2: 8px;
-    --s-3: 12px;
-    --s-4: 16px;
-    --s-5: 24px;
-    --s-6: 32px;
-    --s-7: 40px;
-    
-    /* ═══════════════════════════════════════════════════════════
-       WARM SANCTUARY — Stone, tea, bamboo, cream, wood
-       ═══════════════════════════════════════════════════════════ */
-    
-    /* Background: Warm cream to soft stone */
-    --bg: 18 35% 32%;
-    --bg-bottom: 20 30% 26%;
-    --surface: 18 22% 26%;
-    --surface-muted: 20 18% 24%;
-    --text: 40 30% 95%;
-    --text-secondary: 38 20% 80%;
-    --text-muted: 35 15% 65%;
-    --divider: 20 15% 25%;
-    
-    /* Card warmth */
-    --card-ombre-1: 38 25% 92%;
-    --card-ombre-2: 36 22% 90%;
-    --card-ombre-3: 34 20% 88%;
-    --card-ombre-4: 32 18% 86%;
-    
-    /* Accent: Warm terracotta + bamboo green */
-    --accent-1: 38 45% 70%;
-    --accent-2: 150 25% 55%;
-    
-    /* Gold accent */
-    --gold: 38 50% 50%;
-    --gold-glow: 38 45% 45%;
-    
-    /* Atmospheric warmth */
-    --radial-glow: 30 30% 85%;
-    
-    /* Fog — derived from surface for NightSkyBackground */
-    --fog: 18 22% 40%;
-    
-    /* Card elevation — soft paper/linen feel */
-    --card-bg: 18 25% 22%;
-    --card-border: 20 18% 28%;
-    --card-shadow: rgba(25, 20, 15, 0.06);
-    --card-shadow-hover: rgba(25, 20, 15, 0.12);
-    --card-radius: 8px;
-    
-    /* Glass / depth tokens — derive from theme vars for universal compatibility */
-    --glass-border: hsl(var(--text) / 0.06);
-    --glass-overlay-start: hsl(var(--text) / 0.04);
-    --glass-overlay-end: hsl(var(--text) / 0.01);
-    --glass-shadow: hsl(0 0% 0% / 0.12);
-    --glass-highlight: hsl(var(--text) / 0.06);
-    --sanctuary-surface: hsl(var(--card-bg) / 0.85);
-    --sanctuary-surface-hover: hsl(var(--card-bg) / 0.95);
-    --depth-shadow: 0 2px 8px hsl(0 0% 0% / 0.12), 0 1px 3px hsl(0 0% 0% / 0.08);
-    --depth-shadow-hover: 0 4px 16px hsl(0 0% 0% / 0.16), 0 2px 4px hsl(0 0% 0% / 0.1);
-    --inner-highlight: inset 0 1px 0 hsl(var(--text) / 0.06);
+    /* Warm paper ground */
+    --background: 38 44% 97%;
+    --foreground: 300 14% 17%;
 
-    /* Transitions */
-    --transition-smooth: all 200ms ease-in-out;
-    
-    /* ═══════════════════════════════════════════════════════════
-       TAILWIND COMPATIBILITY
-       ═══════════════════════════════════════════════════════════ */
-    
-    --background: var(--bg);
-    --foreground: var(--text);
-    --card: var(--surface);
-    --card-foreground: var(--text);
-    --popover: 40 30% 97%;
-    --popover-foreground: var(--text);
-    --primary: 18 45% 45%;
-    --primary-foreground: 40 30% 97%;
-    --secondary: 150 25% 40%;
-    --secondary-foreground: 40 30% 97%;
-    --muted: var(--surface-muted);
-    --muted-foreground: var(--text-muted);
-    --accent: var(--accent-1);
-    --accent-foreground: 40 30% 97%;
-    --destructive: 0 60% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: var(--divider);
-    --input: var(--surface-muted);
-    --ring: var(--accent-1);
-    --radius: 8px;
-    
-    /* Icon opacity */
-    --icon-opacity: 0.75;
-    
-    /* Sidebar */
-    --sidebar-background: var(--bg);
-    --sidebar-foreground: var(--text);
-    --sidebar-primary: var(--accent-1);
-    --sidebar-primary-foreground: 40 30% 97%;
-    --sidebar-accent: var(--surface-muted);
-    --sidebar-accent-foreground: var(--text);
-    --sidebar-border: var(--divider);
-    --sidebar-ring: var(--accent-1);
+    --paper: 36 40% 99%;
+    --paper-sunk: 34 30% 95%;
+
+    --card: 36 40% 99%;
+    --card-foreground: 300 14% 17%;
+
+    --popover: 36 40% 99%;
+    --popover-foreground: 300 14% 17%;
+
+    /* Clay rose accent */
+    --primary: 8 42% 57%;
+    --primary-foreground: 36 50% 98%;
+    --primary-soft: 8 45% 92%;
+
+    --secondary: 32 28% 93%;
+    --secondary-foreground: 300 12% 25%;
+
+    --muted: 34 26% 94%;
+    --muted-foreground: 300 6% 46%;
+
+    --accent: 20 34% 92%;
+    --accent-foreground: 300 14% 20%;
+
+    /* Kept for shadcn compatibility — intentionally not red */
+    --destructive: 300 10% 40%;
+    --destructive-foreground: 36 50% 98%;
+
+    --border: 30 22% 88%;
+    --input: 30 22% 88%;
+    --ring: 8 42% 57%;
+
+    --radius: 0.875rem;
+
+    --hairline: 30 20% 89%;
+    --whisper: 300 5% 58%;
+
+    --shadow-lift: 0 1px 2px hsl(20 20% 40% / 0.04), 0 8px 24px -12px hsl(20 20% 40% / 0.10);
+
+    --sidebar-background: 36 34% 96%;
+    --sidebar-foreground: 300 14% 22%;
+    --sidebar-primary: 8 42% 57%;
+    --sidebar-primary-foreground: 36 50% 98%;
+    --sidebar-accent: 20 34% 91%;
+    --sidebar-accent-foreground: 300 14% 20%;
+    --sidebar-border: 30 20% 88%;
+    --sidebar-ring: 8 42% 57%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   html {
-    overflow-x: hidden;
-    width: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    @apply text-foreground font-sans;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-    overflow-x: hidden;
-    width: 100%;
-    background: hsl(var(--bg));
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-weight: 400;
+    background-image: radial-gradient(
+      120% 80% at 50% 0%,
+      hsl(34 44% 98%) 0%,
+      hsl(38 44% 97%) 55%,
+      hsl(32 32% 95%) 100%
+    );
     background-attachment: fixed;
-    font-weight: 400;
-    line-height: 1.6;
-    color: hsl(var(--text));
-    -webkit-font-smoothing: antialiased;
   }
-
-  /* Typography — Cormorant Garamond + Inter */
-  h1, h2, h3 {
-    @apply font-display;
-    letter-spacing: 0.02em;
-    line-height: 1.2;
-    font-weight: 500;
-    color: hsl(var(--text));
-  }
-  
-  h4, h5, h6 {
-    @apply font-sans;
-    letter-spacing: 0;
-    font-weight: 500;
-    color: hsl(var(--text));
-  }
-  
-  p, span {
-    @apply font-sans;
-    letter-spacing: 0;
-    font-weight: 400;
-    color: hsl(var(--text-secondary));
-  }
-  
-  label, button {
-    @apply font-sans;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-  
-  svg {
-    opacity: var(--icon-opacity, 0.75);
-  }
-  
-  button svg, a svg, [role="button"] svg {
-    opacity: 1;
-  }
-
-  #root {
-    overflow-x: hidden;
-    width: 100%;
-  }
-
-  .number, .value, .time {
-    font-family: var(--font-num);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-
-  /* Component base styles — Natural Paper/Linen */
-  .card,
-  .glass-card {
-    background: hsl(var(--card-bg, 40 30% 97%)) !important;
-    border: 1px solid hsl(var(--card-border, 35 20% 85%)) !important;
-    box-shadow: 0 1px 3px var(--card-shadow, rgba(25,20,15,0.06)),
-                0 4px 12px var(--card-shadow, rgba(25,20,15,0.04)) !important;
-    border-radius: var(--card-radius);
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    position: relative;
-  }
-
-  .card::before,
-  .glass-card::before {
-    display: none;
-  }
-
-  /* Transparent inputs — warm style */
-  input:not([type="checkbox"]):not([type="radio"]),
-  textarea {
-    background: hsl(var(--surface)) !important;
-    border: 1px solid hsl(var(--divider));
-    color: hsl(var(--text));
-  }
-
-  input:focus:not([type="checkbox"]):not([type="radio"]),
-  textarea:focus {
-    background: hsl(var(--surface-muted)) !important;
-    border-color: hsl(var(--accent-1) / 0.4);
-    outline: none;
-    box-shadow: 0 0 0 3px hsl(var(--accent-1) / 0.1);
-  }
-
-  /* Primary buttons — warm solid */
-  .bg-primary,
-  button.bg-primary {
-    background: hsl(var(--accent-1)) !important;
-    color: hsl(var(--accent-foreground)) !important;
-    font-weight: 500;
-    box-shadow: 0 1px 3px rgba(25,20,15,0.15);
-  }
-
-  .bg-primary:hover {
-    filter: brightness(1.05);
-  }
-
-  /* Transparent tabs */
-  [role="tablist"] {
-    background: hsl(var(--surface)) !important;
-    border: 1px solid hsl(var(--divider));
-  }
-
-  [role="tab"][data-state="active"] {
-    background: hsl(var(--card-bg, 40 30% 97%)) !important;
-    border: 1px solid hsl(var(--divider));
-    box-shadow: 0 1px 2px var(--card-shadow);
-  }
-
-  /* Value highlighting */
-  .value--highlight {
-    color: hsl(var(--accent-1));
-    font-weight: 600;
-  }
-
-  /* Dividers */
-  .hr {
-    height: 1px;
-    background: hsl(var(--divider));
-  }
-}
-
-@layer utilities {
-  /* === HEADINGS === */
-  .text-h1 {
-    font-family: var(--font-serif);
-    font-size: 32px;
-    line-height: 36px;
-    font-weight: 600;
-  }
-  
-  .text-h2 {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    line-height: 28px;
-    font-weight: 600;
-  }
-  
-  .text-h3 {
-    font-family: var(--font-serif);
-    font-size: 20px;
-    line-height: 24px;
-    font-weight: 500;
-  }
-  
-  /* === BODY TEXT === */
-  .text-body {
-    font-size: 16px;
-    line-height: 26px;
-    font-weight: 400;
-  }
-  
-  .text-body-sm {
-    font-size: 15px;
-    line-height: 24px;
-    font-weight: 400;
-  }
-  
-  .text-body-reading {
-    font-family: var(--font-serif);
-    font-size: 17px;
-    line-height: 1.75;
-    font-weight: 400;
-  }
-  
-  /* === CAPTIONS & LABELS === */
-  .text-caption {
-    font-size: 14px;
-    line-height: 20px;
-    font-weight: 400;
-  }
-  
-  .text-caption-sm {
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 400;
-  }
-  
-  .text-label {
-    font-size: 12px;
-    line-height: 16px;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-  }
-  
-  .text-label-sm {
-    font-size: 11px;
-    line-height: 14px;
-    font-weight: 500;
-  }
-  
-  /* === MICRO TEXT === */
-  .text-micro {
-    font-size: 10px;
-    line-height: 14px;
-    font-weight: 500;
-  }
-  
-  .text-micro-caps {
-    font-size: 10px;
-    line-height: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-  }
-  
-  .text-mini {
-    font-size: 11px;
-    line-height: 15px;
-    font-weight: 400;
-  }
-  
-  .text-mini-caps {
-    font-size: 11px;
-    line-height: 15px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  
-  /* === SECTION HEADERS === */
-  .text-section-header {
-    font-size: 10px;
-    line-height: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: hsl(var(--text-muted));
-  }
-  
-  .text-section-header-lg {
-    font-size: 11px;
-    line-height: 15px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  
-  /* === DISPLAY CAPS — Refined serif, lighter weight === */
-  .text-display-caps {
-    font-family: var(--font-serif);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-weight: 500;
-    line-height: 1.1;
-  }
-  
-  .text-display-caps-xl {
-    font-family: var(--font-serif);
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-weight: 600;
-    line-height: 1.0;
-    font-size: 2.5rem;
-  }
-  
-  .text-display-caps-lg {
-    font-family: var(--font-serif);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-weight: 600;
-    line-height: 1.1;
-    font-size: 1.5rem;
-  }
-  
-  .text-display-caps-sm {
-    font-family: var(--font-serif);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 500;
-    line-height: 1.2;
-    font-size: 0.875rem;
-  }
-  
-  .text-display-caps-xs {
-    font-family: var(--font-serif);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 500;
-    line-height: 1.2;
-    font-size: 0.75rem;
-  }
-  
-  /* === NAV & BUTTON TEXT === */
-  .text-nav {
-    font-size: 10px;
-    line-height: 14px;
-    font-weight: 400;
-  }
-  
-  .text-nav-active {
-    font-size: 10px;
-    line-height: 14px;
-    font-weight: 500;
-  }
-  
-  .text-button {
-    font-size: 14px;
-    line-height: 20px;
-    font-weight: 500;
-  }
-  
-  .text-button-sm {
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 500;
-  }
-  
-  /* === LIST ITEMS === */
-  .text-list-title {
-    font-size: 15px;
-    line-height: 20px;
-    font-weight: 500;
-  }
-  
-  .text-list-subtitle {
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 400;
-  }
-  
-  .text-list-meta {
-    font-size: 11px;
-    line-height: 15px;
-    font-weight: 400;
-  }
-  
-  /* === NUMERIC TEXT === */
-  .text-numeric {
-    font-family: var(--font-num);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-  
-  .text-numeric-lg {
-    font-family: var(--font-num);
-    font-size: 24px;
-    line-height: 28px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-  
-  /* === READING TEXT === */
-  .text-reading {
-    font-family: var(--font-serif);
-    font-size: 17px;
-    line-height: 1.75;
-    font-weight: 400;
-  }
-  
-  .text-reading-lg {
-    font-family: var(--font-serif);
-    font-size: 19px;
-    line-height: 1.8;
-    font-weight: 400;
-  }
-  
-  /* === SHEET/MODAL TITLES === */
-  .text-sheet-title {
-    font-size: 10px;
-    line-height: 14px;
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    color: hsl(var(--text-muted));
-  }
-  
-  .text-modal-title {
-    font-family: var(--font-serif);
-    font-size: 20px;
-    line-height: 24px;
-    font-weight: 500;
-  }
-  
-  /* === BADGE/TAG TEXT === */
-  .text-badge {
-    font-size: 11px;
-    line-height: 14px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-  
-  .text-tag {
-    font-size: 10px;
-    line-height: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  /* Utilities */
-  .gentle-fade {
-    transition: var(--transition-smooth);
-  }
-  
-  .reassuring-text {
-    @apply text-muted-foreground;
-    font-weight: 400;
-  }
-  
-  .confidence-badge {
-    @apply rounded-full px-3 py-2 text-label font-medium;
-    background: hsl(var(--accent-1));
-    color: hsl(var(--accent-foreground));
-  }
-
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
 @layer components {
-  .category-pill {
-    @apply px-3 py-1.5 rounded-full text-xs font-medium transition-all;
+  /* ---- Editorial type ---- */
+  .font-editorial {
+    font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+    font-optical-sizing: auto;
   }
 
-  .fab-button {
-    @apply w-14 h-14 rounded-full shadow-lg flex items-center justify-center;
-    background: hsl(var(--accent-1));
-    color: hsl(var(--accent-foreground));
-    box-shadow: 0 4px 12px rgba(25, 20, 15, 0.15),
-                0 1px 3px rgba(25, 20, 15, 0.1);
+  .note-title {
+    @apply font-editorial text-[1.28rem] leading-[1.32] tracking-[-0.01em] text-foreground;
+    font-weight: 400;
   }
 
-  /* Sanctuary card — glass container with depth */
-  .sanctuary-card {
-    @apply rounded-xl overflow-hidden;
-    background: var(--sanctuary-surface);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--depth-shadow), var(--inner-highlight);
+  .note-title-lg {
+    @apply font-editorial text-[1.9rem] leading-[1.2] tracking-[-0.015em] text-foreground;
+    font-weight: 400;
   }
 
-  /* Sanctuary button — action button with surface styling */
-  .sanctuary-btn {
-    @apply rounded-xl transition-all active:scale-[0.97];
-    background: var(--sanctuary-surface);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--depth-shadow), var(--inner-highlight);
-    color: hsl(var(--text));
+  .note-synthesis {
+    @apply text-[0.9375rem] leading-[1.62] text-muted-foreground;
+    font-weight: 400;
   }
 
-  /* Accent button — primary CTA */
-  .accent-btn {
-    @apply rounded-lg font-medium transition-colors;
-    background: hsl(var(--accent-1));
-    color: hsl(var(--accent-foreground));
-  }
-  .accent-btn:disabled {
-    @apply opacity-30;
+  .prose-reading {
+    @apply font-editorial text-[1.0625rem] leading-[1.78] text-foreground/90;
+    font-weight: 300;
   }
 
-  /* Item row — repeated list row with divider */
-  .item-row {
-    @apply flex items-center gap-2 px-3 py-2 transition-colors;
-    border-bottom: 1px solid hsl(var(--divider) / 0.08);
+  .label-quiet {
+    @apply text-[0.6875rem] uppercase tracking-[0.16em] text-whisper;
+    font-weight: 500;
   }
 
-  /* Orientation card — glass gradient container */
-  .orientation-card {
-    @apply rounded-xl px-4 py-3;
-    background: linear-gradient(180deg, var(--glass-overlay-start), var(--glass-overlay-end));
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--depth-shadow), var(--inner-highlight);
+  .meta-quiet {
+    @apply text-[0.8125rem] text-whisper;
+  }
+
+  /* ---- Surfaces ---- */
+  .hairline {
+    @apply border-b border-hairline;
+  }
+
+  .surface {
+    @apply bg-paper border border-hairline rounded-lg;
+  }
+
+  .rail-item {
+    @apply w-full text-left px-3 py-2 rounded-md text-[0.875rem] text-secondary-foreground/80
+           transition-colors duration-200 hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .rail-item-active {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  /* ---- Buttons ---- */
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-[0.875rem]
+           text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-clay {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.875rem]
+           bg-primary text-primary-foreground transition-all duration-300 hover:opacity-90;
+    box-shadow: var(--shadow-lift);
+  }
+
+  /* ---- Motion ---- */
+  .shimmer-text {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted-foreground) / 0.28) 0%,
+      hsl(var(--muted-foreground) / 0.52) 50%,
+      hsl(var(--muted-foreground) / 0.28) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 2.4s ease-in-out infinite;
+  }
+
+  .fade-up {
+    animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
-/* Subtle fade-in animation */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
+@keyframes shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out both;
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; }
 }
 
-
-@media all and (display-mode: standalone) {
-  .standalone-header-boost { padding-top: max(3rem, calc(env(safe-area-inset-top) + 1.5rem)) !important; padding-bottom: 1rem !important; }
-  .standalone-content-boost { padding-top: 1.5rem; padding-bottom: 2rem; }
+@keyframes ripple {
+  0% { transform: scale(0.9); opacity: 0.5; }
+  100% { transform: scale(1.9); opacity: 0; }
 }
