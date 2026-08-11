@@ -129,7 +129,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                   <span
                     className={cn(
                       "inline-flex shrink-0",
-                      p.id === justCreatedId && "motion-safe:animate-resolve-in [animation-delay:180ms]",
+                      p.id === justCreatedId && "motion-safe:animate-stipple-in [animation-delay:180ms]",
                     )}
                   >
                     <FolderEmojiPicker
@@ -141,7 +141,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                   <span
                     className={cn(
                       "truncate",
-                      p.id === justCreatedId && "motion-safe:animate-resolve-in",
+                      p.id === justCreatedId && "motion-safe:animate-stipple-in",
                     )}
                   >
                     {p.name}
