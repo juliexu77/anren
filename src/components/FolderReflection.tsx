@@ -60,9 +60,8 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
 
   // Load any cached reflection the first time the panel is opened.
   useEffect(() => {
-    if (!open || fetched || !user) return;
-    let active = true;
-    setFetched(true);
+    if (!open || fetched.current || !user) return;
+    fetched.current = true;
     (async () => {
       const { data } = await supabase
         .from("folder_reflections")
@@ -70,7 +69,6 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
         .eq("user_id", user.id)
         .eq("project_id", projectId)
         .maybeSingle();
-      if (!active) return;
       if (data) {
         setReflection({
           observations: Array.isArray(data.observations)
@@ -83,10 +81,8 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
         generate();
       }
     })();
-    return () => {
-      active = false;
-    };
-  }, [open, fetched, user, projectId, generate]);
+  }, [open, user, projectId, generate]);
+
 
   const newSince = reflection ? notes.length - reflection.notesAnalyzed : 0;
 
