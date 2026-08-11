@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-
-const COMMON = [
-  "📁", "🏡", "🫂", "💼", "💰", "🌿", "🏃", "💡",
-  "📖", "✈️", "🍳", "🎧", "🎨", "🎓", "🧭", "🪴",
-  "☕", "🌙", "🔑", "🧩", "🕰️", "🗺️", "🌊", "🔖",
-];
+import {
+  FOLDER_GLYPHS,
+  FOLDER_GLYPH_KEYS,
+  FolderGlyph,
+  FolderMark,
+  GLYPH_PREFIX,
+  isGlyphValue,
+} from "@/components/folder-glyphs";
 
 export function FolderEmojiPicker({
   name,
@@ -23,11 +25,11 @@ export function FolderEmojiPicker({
   size?: "sm" | "lg";
 }) {
   const [open, setOpen] = useState(false);
-  const [alternates, setAlternates] = useState<string[]>([]);
+  const [suggested, setSuggested] = useState<string[]>([]);
   const [custom, setCustom] = useState("");
 
   useEffect(() => {
-    if (!open || alternates.length) return;
+    if (!open || suggested.length) return;
     let cancelled = false;
     supabase.functions
       .invoke("suggest-folder-emoji", { body: { name } })
@@ -36,76 +38,91 @@ export function FolderEmojiPicker({
         const list: string[] = [];
         if (data?.emoji) list.push(String(data.emoji));
         if (Array.isArray(data?.alternates)) list.push(...data.alternates.map(String));
-        setAlternates([...new Set(list)].slice(0, 4));
+        setSuggested([...new Set(list.filter(isGlyphValue))].slice(0, 4));
       })
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [open, name, alternates.length]);
+  }, [open, name, suggested.length]);
 
-  const pick = (value: string) => {
-    const trimmed = value.trim();
+  const pickGlyph = (key: string) => {
+    onSelect(`${GLYPH_PREFIX}${key}`);
+    setCustom("");
+    setOpen(false);
+  };
+
+  const pickCustom = () => {
+    const trimmed = custom.trim();
     if (!trimmed) return;
     onSelect([...trimmed][0] ?? trimmed);
     setCustom("");
     setOpen(false);
   };
 
+  const iconSize = size === "lg" ? 24 : 17;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={`Change icon for ${name}`}
+          aria-label={`Change mark for ${name}`}
           onClick={(e) => {
+            // The mark can sit inside a folder link — stop navigation, toggle by hand.
             e.preventDefault();
             e.stopPropagation();
+            setOpen((v) => !v);
           }}
           className={cn(
-            "shrink-0 leading-none text-center transition-opacity hover:opacity-70",
-            size === "lg" ? "text-[1.5rem] w-8" : "text-[0.95rem] w-[17px]",
-            !emoji && "text-muted-foreground/60",
+            "shrink-0 inline-flex items-center justify-center leading-none transition-colors",
+            "text-primary/80 hover:text-primary",
+            size === "lg" ? "w-7 h-7" : "w-[19px] h-[19px]",
             className,
           )}
         >
-          {emoji ?? "·"}
+          <FolderMark value={emoji} size={iconSize} className="text-current" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-3">
-        {alternates.length > 0 && (
+        {suggested.length > 0 && (
           <div className="mb-3">
             <p className="mb-1.5 text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground/70">
               Suggested
             </p>
             <div className="flex gap-1">
-              {alternates.map((a) => (
-                <button
-                  key={a}
-                  onClick={() => pick(a)}
-                  className="h-8 w-8 rounded-md text-[1.05rem] leading-none hover:bg-paper-sunk transition-colors"
-                >
-                  {a}
-                </button>
-              ))}
+              {suggested.map((value) => {
+                const key = value.slice(GLYPH_PREFIX.length);
+                return (
+                  <button
+                    key={value}
+                    onClick={() => pickGlyph(key)}
+                    aria-label={FOLDER_GLYPHS[key]?.label ?? key}
+                    className="h-8 w-8 inline-flex items-center justify-center rounded-md text-primary/85 hover:bg-paper-sunk hover:text-primary transition-colors"
+                  >
+                    <FolderGlyph glyph={key} size={19} className="text-current" />
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
         <p className="mb-1.5 text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground/70">
-          Choose
+          Choose a mark
         </p>
-        <div className="grid grid-cols-8 gap-0.5">
-          {COMMON.map((c) => (
+        <div className="grid grid-cols-7 gap-0.5">
+          {FOLDER_GLYPH_KEYS.map((key) => (
             <button
-              key={c}
-              onClick={() => pick(c)}
+              key={key}
+              onClick={() => pickGlyph(key)}
+              aria-label={FOLDER_GLYPHS[key].label}
               className={cn(
-                "h-7 w-7 rounded-md text-[0.95rem] leading-none hover:bg-paper-sunk transition-colors",
-                c === emoji && "bg-paper-sunk",
+                "h-8 w-8 inline-flex items-center justify-center rounded-md text-primary/75 hover:bg-paper-sunk hover:text-primary transition-colors",
+                emoji === `${GLYPH_PREFIX}${key}` && "bg-paper-sunk text-primary",
               )}
             >
-              {c}
+              <FolderGlyph glyph={key} size={18} className="text-current" />
             </button>
           ))}
         </div>
@@ -114,7 +131,7 @@ export function FolderEmojiPicker({
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") pick(custom);
+            if (e.key === "Enter") pickCustom();
           }}
           placeholder="Or paste any emoji"
           className="mt-3 w-full border-b border-hairline bg-transparent pb-1.5 text-[0.85rem] outline-none placeholder:text-muted-foreground/50"
