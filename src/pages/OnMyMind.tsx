@@ -61,7 +61,7 @@ const OnMyMind = () => {
     const { error } = await supabase.functions.invoke("weekly-digest", { body: {} });
     setGenerating(false);
     if (error) {
-      toast.error("couldn't look back just now.");
+      toast.error("Couldn't look back just now.");
       return;
     }
     load();
@@ -77,7 +77,7 @@ const OnMyMind = () => {
       <header className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">On my mind</h1>
-          <p className="mt-1.5 text-[0.9rem] text-muted-foreground">week of {weekLabel}</p>
+          <p className="mt-1.5 text-[0.9rem] text-muted-foreground">Week of {weekLabel}</p>
         </div>
         <button
           onClick={generate}
@@ -85,17 +85,17 @@ const OnMyMind = () => {
           className="flex items-center gap-2 rounded-full border border-hairline bg-paper px-4 py-2 text-[0.82rem] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
         >
           {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />}
-          look back
+          {digest ? "Look back" : "Look back"}
         </button>
       </header>
 
       {loading ? (
-        <p className="text-[0.9rem] text-muted-foreground">looking back over the week…</p>
+        <p className="text-[0.9rem] text-muted-foreground">Looking back over the week…</p>
       ) : !digest ? (
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
-          <p className="font-editorial text-[1.2rem] leading-snug">nothing pulled together yet.</p>
+          <p className="font-editorial text-[1.2rem] leading-snug">Nothing pulled together yet.</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
-            once you've left a few notes this week, anren can read them back and suggest what keeps coming up.
+            Once you've left a few notes this week, anren can read them back and suggest what keeps coming up.
           </p>
         </div>
       ) : (

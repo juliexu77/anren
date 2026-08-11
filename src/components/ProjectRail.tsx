@@ -57,7 +57,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
           <span className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">Folders</span>
           <button
             onClick={() => setAdding(true)}
-            aria-label="new folder"
+            aria-label="New folder"
             className="text-muted-foreground/70 hover:text-foreground transition-colors"
           >
             <Plus className="w-[15px] h-[15px]" strokeWidth={1.5} />
@@ -94,10 +94,10 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                   }
                 }}
                 onBlur={() => (name.trim() ? submit() : setAdding(false))}
-                placeholder="folder name"
+                placeholder="Folder name"
                 className="flex-1 bg-transparent text-[0.9rem] outline-none placeholder:text-muted-foreground/50"
               />
-              <button onClick={submit} aria-label="save folder" className="text-muted-foreground">
+              <button onClick={submit} aria-label="Save folder" className="text-muted-foreground">
                 <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
             </div>
@@ -105,7 +105,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
           {!projects.length && !adding && (
             <p className="px-3 text-[0.8rem] leading-relaxed text-muted-foreground/70">
-              folders keep related notes together.
+              Folders keep related notes together.
             </p>
           )}
         </div>
