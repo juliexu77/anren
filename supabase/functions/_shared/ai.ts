@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { QuotaError, assertHouseAllowance, ownKeyFor, recordHouseUsage } from './usage.ts';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -8,6 +9,13 @@ const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 export const EMBEDDING_MODEL = 'google/gemini-embedding-001';
 export const CHAT_MODEL = 'claude-sonnet-4-5';
 
+// Sonnet list price, expressed as millionths of a cent per token so the maths
+// stays in integers: $3 / M input, $15 / M output.
+const INPUT_MICRO_CENTS_PER_TOKEN = 300;
+const OUTPUT_MICRO_CENTS_PER_TOKEN = 1500;
+
+export { QuotaError };
+
 export function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -15,17 +23,41 @@ export function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+/** 402 body every caller returns when the free allowance is spent. */
+export function needsOwnKeyResponse() {
+  return jsonResponse({ error: 'needs_own_key' }, 402);
+}
+
 function requireKey(): string {
   if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
   return LOVABLE_API_KEY;
 }
 
-/** Chat completion against Claude. Returns the assistant message text. */
+/**
+ * Chat completion against Claude. Returns the assistant message text.
+ *
+ * With a `userId`: uses that person's own key when they've connected one
+ * (unmetered), otherwise draws on Anren's key until the free allowance runs
+ * out, at which point it throws QuotaError.
+ */
 export async function chat(
   messages: { role: string; content: string }[],
-  options: { model?: string; temperature?: number; maxTokens?: number } = {},
+  options: { model?: string; temperature?: number; maxTokens?: number; userId?: string } = {},
 ): Promise<string> {
-  if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not configured');
+  let apiKey = ANTHROPIC_API_KEY;
+  let onHouseKey = true;
+
+  if (options.userId) {
+    const personal = await ownKeyFor(options.userId);
+    if (personal) {
+      apiKey = personal;
+      onHouseKey = false;
+    } else {
+      await assertHouseAllowance(options.userId);
+    }
+  }
+
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured');
 
   // Anthropic takes the system prompt as a top-level field, not a message.
   const system = messages
@@ -40,7 +72,7 @@ export async function chat(
   const response = await fetch(ANTHROPIC_URL, {
     method: 'POST',
     headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       'Content-Type': 'application/json',
     },
@@ -59,6 +91,15 @@ export async function chat(
   }
 
   const data = await response.json();
+
+  if (options.userId && onHouseKey) {
+    const usage = data.usage ?? {};
+    const microCents =
+      (usage.input_tokens ?? 0) * INPUT_MICRO_CENTS_PER_TOKEN +
+      (usage.output_tokens ?? 0) * OUTPUT_MICRO_CENTS_PER_TOKEN;
+    await recordHouseUsage(options.userId, microCents);
+  }
+
   const parts = Array.isArray(data.content) ? data.content : [];
   return parts
     .filter((p: { type?: string }) => p?.type === 'text')
@@ -66,6 +107,7 @@ export async function chat(
     .join('')
     .trim();
 }
+
 
 
 /** Embed a batch of strings. Returns one vector per input. */
