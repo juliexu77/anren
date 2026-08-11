@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
       .select('id')
       .eq('id', noteId)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .maybeSingle();
     if (noteError) throw noteError;
     if (!note) return jsonResponse({ error: 'Note not found' }, 404);
@@ -95,6 +96,7 @@ Deno.serve(async (req) => {
       .select('id, title, recorded_at')
       .in('id', relatedIds)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .order('recorded_at', { ascending: false });
     if (notesError) throw notesError;
 
