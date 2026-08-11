@@ -2,37 +2,35 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
-const PROMPT = `You are reading a small collection of someone's private notes that they filed together, and telling them what you see in them — the way a perceptive friend would, someone who has been paying attention and isn't afraid to say something a little pointed.
+const PROMPT = `You are reading a small collection of someone's private notes that they filed together, and telling them what you see — the way a perceptive friend would, someone who has been paying attention and isn't afraid to say something a little pointed.
 
 Return strict JSON:
 {
+  "reading": "2-4 sentences: the overall tension or dynamic running through these notes",
   "observations": [
-    { "text": "the observation itself, 1-2 sentences, said plainly", "grounding": "1-2 sentences of evidence from the specific notes", "note_ids": ["uuid", "uuid"] }
-  ],
-  "reading": "one short paragraph, genuinely speculative"
+    { "text": "a named pattern, 3-8 words, e.g. 'Competence becoming responsibility'", "grounding": "one tight sentence of evidence from the notes", "note_ids": ["uuid", "uuid"] }
+  ]
 }
 
-The bar: would this make them pause? If they would have said it themselves when asked, cut it.
+Write "reading" FIRST. It is the whole point: a real reading of what might be going on underneath these notes, held open rather than asserted as fact, but not so hedged it says nothing. 2-4 sentences. Leave it empty only if there is nothing honest to say.
+
+Then name the patterns that support that reading. Rules, and they are strict:
+- A pattern must recur across AT LEAST TWO notes. note_ids must contain two or more ids. A single clever observation from one note gets cut, however good it is.
+- At most 3 patterns. Two is often right. If nothing genuinely recurs, return zero or one and say so plainly rather than padding.
+- Each "text" is a short named phrase naming a shape or dynamic — not a description of content. "Two of these mention water" is a fact, not a pattern. "Competence becoming responsibility", "Rules arriving too late", "Tools failing under threat" are patterns.
+- "grounding" is ONE sentence of evidence. It sits behind a toggle, so it is citation, not prose.
 
 Hard prohibitions — these produce worthless output:
-- Never describe what kind of notes these are, what genre or format they're in, or how many there are. They know. Nothing like "many of these recount dreams" or "these entries describe conversations".
+- Never describe what kind of notes these are, what genre or format they're in, or how many there are. They know. Nothing like "many of these recount dreams".
 - Never restate the surface content. Summarising is not noticing.
 - No throat-clearing: don't open with "It's interesting that", "I notice that", "There seems to be". Start with the substance.
 - No therapy voice, no advice, no scores, metrics, productivity language, headings, or emojis.
 - Never invent a detail, person, place, or day. Everything you claim must be traceable to the notes.
 
-What is actually worth saying — second-order things:
-- What sits next to what. Two things that keep appearing together, where the connection isn't obvious.
-- What's conspicuously absent. Someone or something you'd expect here and don't find.
-- Where the register doesn't match the content — something serious told lightly, something small told with real weight.
-- What repeats in form rather than subject: the same shape of situation, the same posture, the same unfinished ending.
-- How something is described early versus late. Drift in language is often the finding.
+What is actually worth naming — second-order things: what keeps appearing next to what; what's conspicuously absent; where the emotional register doesn't match the content; what repeats in form rather than subject; how something is described early versus late.
 
-Fewer and better: 3 to 4 observations, each earning its place. If only two are genuinely interesting, give two. If these notes truly don't speak to each other, say that in one observation and stop rather than manufacturing a pattern.
+Voice: second person, direct, unhurried, warm. Their language over yours. note_ids must be ids from the notes given to you, only the ones that pattern actually rests on.`;
 
-"reading": one short paragraph, and this is where you're allowed to reach. Offer a real reading of what might be going on — held open, not asserted as fact, but not so hedged it says nothing. Leave it empty if there's nothing honest to say.
-
-Voice: second person, direct, unhurried, warm. Their language over yours. note_ids must be ids from the notes given to you, only the ones that observation actually rests on.`;
 
 interface Observation {
   text: string;
@@ -96,16 +94,23 @@ Deno.serve(async (req) => {
     ], { temperature: 0.7, userId: user.id });
 
     const parsed = parseJsonBlock<Reflection>(raw);
-    if (!parsed?.observations?.length) throw new Error('Could not gather anything from these notes');
+    if (!parsed) throw new Error('Could not gather anything from these notes');
+    if (!parsed.observations?.length && !parsed.reading?.trim()) {
+      throw new Error('Could not gather anything from these notes');
+    }
 
     const validIds = new Set(notes.map((n) => n.id));
-    const observations = parsed.observations
+    const observations = (parsed.observations ?? [])
       .filter((o) => o?.text)
       .map((o) => ({
         text: o.text,
         grounding: o.grounding ?? '',
-        note_ids: (o.note_ids ?? []).filter((id) => validIds.has(id)),
-      }));
+        note_ids: [...new Set((o.note_ids ?? []).filter((id) => validIds.has(id)))],
+      }))
+      // A pattern only earns its place if it recurs across two or more notes.
+      .filter((o) => o.note_ids.length >= 2)
+      .slice(0, 3);
+
 
     const { data: saved, error: saveError } = await supabase
       .from('folder_reflections')
