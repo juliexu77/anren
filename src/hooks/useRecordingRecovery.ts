@@ -63,6 +63,9 @@ export function useRecordingRecovery() {
     void (async () => {
       await pruneStaleSessions();
       void resumeStalledNotes(user.id);
+      // Recordings are a means to the words — drop any audio already written up.
+      void supabase.functions.invoke("purge-audio");
+
       const found = await findUnfinishedSession(user.id);
       if (cancelled || !found) return;
       const segments = await readSegments(found.sessionId);
