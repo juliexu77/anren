@@ -64,7 +64,7 @@ const NoteDetail = () => {
     if (!note) return;
     await supabase.from("notes").update({ project_id: projectId }).eq("id", note.id);
     reload();
-    toast.success(projectId ? "Filed away." : "Removed from folder.");
+    toast.success(projectId ? "filed away." : "removed from folder.");
   };
 
   const remove = async () => {
@@ -83,18 +83,18 @@ const NoteDetail = () => {
     });
     setAsking(false);
     if (error) {
-      toast.error("Couldn't answer that just now.");
+      toast.error("couldn't answer that just now.");
       return;
     }
     setAnswer((data as { answer?: string })?.answer ?? null);
   };
 
   if (loading) {
-    return <p className="text-[0.9rem] text-muted-foreground">Opening…</p>;
+    return <p className="text-[0.9rem] text-muted-foreground">opening…</p>;
   }
 
   if (!note) {
-    return <p className="text-[0.9rem] text-muted-foreground">That note isn't here anymore.</p>;
+    return <p className="text-[0.9rem] text-muted-foreground">that note isn't here anymore.</p>;
   }
 
   const folderName = projects.find((p) => p.id === note.projectId)?.name;
@@ -107,14 +107,14 @@ const NoteDetail = () => {
           className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back
+          back
         </button>
 
         <div className="flex items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.8rem] text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors">
               <FolderClosed className="w-3.5 h-3.5" strokeWidth={1.5} />
-              {folderName ?? "File"}
+              {folderName ?? "file"}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {projects.map((p) => (
@@ -123,17 +123,17 @@ const NoteDetail = () => {
                 </DropdownMenuItem>
               ))}
               {note.projectId && (
-                <DropdownMenuItem onClick={() => moveToFolder(null)}>Remove from folder</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => moveToFolder(null)}>remove from folder</DropdownMenuItem>
               )}
               {!projects.length && (
-                <DropdownMenuItem disabled>Create a folder in the sidebar first</DropdownMenuItem>
+                <DropdownMenuItem disabled>create a folder in the sidebar first</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
 
           <button
             onClick={remove}
-            aria-label="Delete note"
+            aria-label="delete note"
             className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors"
           >
             <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -153,19 +153,19 @@ const NoteDetail = () => {
       </p>
 
       <h1 className="mt-3 font-editorial text-[1.95rem] leading-[1.22] tracking-[-0.015em]">
-        {note.title ?? (note.status === "processing" ? "Writing this up…" : "Untitled note")}
+        {note.title ?? (note.status === "processing" ? "writing this up…" : "untitled note")}
       </h1>
 
       {note.status === "processing" && (
         <div className="mt-6 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          Transcribing and summarising — this stays open, it'll fill in.
+          transcribing and summarising — this stays open, it'll fill in.
         </div>
       )}
 
       {note.status === "failed" && (
         <p className="mt-6 text-[0.9rem] text-muted-foreground">
-          {note.errorMessage ?? "Something interrupted the write-up."}
+          {note.errorMessage ?? "something interrupted the write-up."}
         </p>
       )}
 
@@ -189,7 +189,7 @@ const NoteDetail = () => {
           {loadingRelated ? (
             <div className="mt-3 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Finding earlier notes…
+              finding earlier notes…
             </div>
           ) : (
             <div className="mt-3 flex flex-col">
@@ -199,7 +199,7 @@ const NoteDetail = () => {
                   to={`/note/${r.note_id}`}
                   className="group flex items-baseline justify-between gap-3 py-3 border-b border-hairline last:border-b-0"
                 >
-                  <span className="note-title text-[0.95rem]">{r.title ?? "Untitled note"}</span>
+                  <span className="note-title text-[0.95rem]">{r.title ?? "untitled note"}</span>
                   <span className="shrink-0 text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">
                     {new Date(r.recorded_at).toLocaleDateString([], {
                       month: "short",
@@ -232,13 +232,13 @@ const NoteDetail = () => {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && ask()}
-              placeholder="What did I decide here?"
+              placeholder="what did I decide here?"
               className="flex-1 rounded-full border border-hairline bg-paper px-4 py-2.5 text-[0.92rem] outline-none focus:border-primary/40 placeholder:text-muted-foreground/60"
             />
             <button
               onClick={ask}
               disabled={asking || !question.trim()}
-              aria-label="Ask"
+              aria-label="ask"
               className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground disabled:opacity-50"
             >
               {asking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
