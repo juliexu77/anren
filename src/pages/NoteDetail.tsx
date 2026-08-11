@@ -6,6 +6,7 @@ import { useNote, softDeleteNote } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { formatDuration } from "@/lib/wav";
 import { toast } from "sonner";
+import { isNeedsKeyError, NEEDS_KEY_MESSAGE } from "@/lib/aiAccess";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,6 +104,11 @@ const NoteDetail = () => {
     });
     setRewriting(false);
     if (error) {
+      if (isNeedsKeyError(error)) {
+        toast(NEEDS_KEY_MESSAGE);
+        reload();
+        return;
+      }
       await patch({ status: "ready" });
       toast.error("Saved your words, but the write-up didn't refresh.");
       return;
