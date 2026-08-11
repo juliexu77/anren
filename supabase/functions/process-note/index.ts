@@ -40,13 +40,16 @@ interface Synthesis {
 }
 
 async function transcribe(audio: Blob): Promise<string> {
+  const openAiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openAiKey) throw new Error('OPENAI_API_KEY is not configured');
+
   const form = new FormData();
-  form.append('model', 'openai/gpt-4o-transcribe');
+  form.append('model', 'gpt-4o-mini-transcribe');
   form.append('file', new File([audio], 'note.wav', { type: 'audio/wav' }));
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/audio/transcriptions', {
+  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${LOVABLE_API_KEY}` },
+    headers: { Authorization: `Bearer ${openAiKey}` },
     body: form,
   });
 
@@ -58,6 +61,7 @@ async function transcribe(audio: Blob): Promise<string> {
   const data = await response.json();
   return (data.text ?? '').trim();
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
