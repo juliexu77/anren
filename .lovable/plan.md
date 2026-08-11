@@ -36,8 +36,8 @@ The animation reads as settling, not celebrating — no confetti, no bounce, no 
 **Sidebar (`src/components/ProjectRail.tsx`)**
 - Replace the `·` span with the emoji (or a muted dot when null), wrapped in a button that opens the picker popover.
 - New `src/components/FolderEmojiPicker.tsx` — shadcn `Popover`, alternates row + common set + free-text input, all semantic tokens.
-- New `src/components/SparkleBurst.tsx` — 3 absolutely-positioned spans animated by new Tailwind keyframes, `pointer-events-none`, unmounted after ~900ms.
-- Two keyframes added to `tailwind.config.ts`: `sparkle` (scale/opacity/translate drift) and reuse of existing `fade-up` for the row itself. Wrapped in `motion-safe:` so reduced-motion users skip it.
+- One new keyframe in `tailwind.config.ts`: `resolve-in` — `filter: blur(6px)` → `blur(0)`, `opacity 0 → 1`, `letter-spacing 0.14em → 0`, ~600ms with an ease-out curve. Applied as `motion-safe:animate-resolve-in` to the name, and to the emoji with a short `animation-delay` so it lands a beat later.
+- No particle component and no color change — the effect is entirely blur/opacity/tracking on the existing text.
 
 **Folder page (`src/pages/Index.tsx`)**
 - Heading renders the emoji before the folder name, using the same picker.
