@@ -1,0 +1,2 @@
+UPDATE public.notes SET deleted_at = now() WHERE id = '6cada18b-e467-4708-8a6f-1f3742b10a24';
+UPDATE public.notes SET status = 'processing', error_message = NULL WHERE id = '651ff227-a804-41d7-889f-0683d5750a6d';
