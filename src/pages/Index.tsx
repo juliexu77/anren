@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { NoteRow } from "@/components/NoteRow";
 import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
+import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import type { Note } from "@/types/note";
 
 function dayLabel(iso: string) {
