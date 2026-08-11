@@ -69,8 +69,10 @@ export function FolderEmojiPicker({
           type="button"
           aria-label={`Change mark for ${name}`}
           onClick={(e) => {
+            // The mark can sit inside a folder link — stop navigation, toggle by hand.
             e.preventDefault();
             e.stopPropagation();
+            setOpen((v) => !v);
           }}
           className={cn(
             "shrink-0 inline-flex items-center justify-center leading-none transition-colors",
