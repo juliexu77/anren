@@ -32,9 +32,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         to="/"
         onClick={onNavigate}
-        className="hidden md:block px-3 font-editorial text-[1.35rem] tracking-[0.01em] mb-7"
+        className="hidden md:block px-3 font-editorial text-[1.35rem] tracking-[0.01em] mb-7 lowercase"
       >
-        Anren
+        anren
       </Link>
 
       <nav className="flex flex-col gap-0.5 md:mt-0 mt-10">
