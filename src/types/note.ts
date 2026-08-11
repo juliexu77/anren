@@ -1,4 +1,4 @@
-export type NoteStatus = "processing" | "ready" | "failed";
+export type NoteStatus = "processing" | "ready" | "failed" | "needs_key";
 export type NoteSource = "voice" | "typed";
 
 export interface Note {
