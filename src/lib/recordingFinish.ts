@@ -91,9 +91,9 @@ export function requestWriteUp(noteId: string): void {
 export async function finishSession(
   session: RecordingSession,
   segments: Float32Array[],
-): Promise<string | null> {
+): Promise<{ noteId: string | null; saved: boolean }> {
   const noteId = await ensureNote(session);
-  if (!noteId) return null;
+  if (!noteId) return { noteId: null, saved: false };
 
   let path = await uploadAudio(session.userId, noteId, segments, session.sampleRate);
 
@@ -107,7 +107,7 @@ export async function finishSession(
       .from("notes")
       .update({ status: "failed", error_message: "Anren couldn't keep the audio for this one." })
       .eq("id", noteId);
-    return noteId;
+    return { noteId, saved: false };
   }
 
   await supabase
@@ -117,5 +117,5 @@ export async function finishSession(
 
   requestWriteUp(noteId);
 
-  return noteId;
+  return { noteId, saved: true };
 }
