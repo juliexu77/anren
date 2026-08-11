@@ -113,7 +113,7 @@ const FolderReflection = () => {
             className="flex shrink-0 items-center gap-2 rounded-full border border-hairline bg-paper px-4 py-2 text-[0.82rem] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
           >
             {generating ? (
-              <Loader2 className="h-3.5 h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.5} />
             )}
