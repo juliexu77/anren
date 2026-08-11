@@ -4,6 +4,8 @@ import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal } f
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
+import { NoteRailItem } from "@/components/NoteRailItem";
+
 
 import {
   DropdownMenu,
@@ -22,7 +24,7 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
 
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
   const { projects, createProject, renameProject, deleteProject, setProjectEmoji } = useProjects();
-  const { notes } = useNotes();
+  const { notes, updateNote, deleteNote } = useNotes();
   const [adding, setAdding] = useState(false);
 
   const [name, setName] = useState("");
