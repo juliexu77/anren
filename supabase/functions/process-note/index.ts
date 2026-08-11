@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
 
     const { data: note, error: noteError } = await admin
       .from('notes')
-      .select('id, user_id, audio_path, source, body, title')
+      .select('id, user_id, audio_path, source, body, title, transcript')
       .eq('id', noteId)
       .maybeSingle();
 
