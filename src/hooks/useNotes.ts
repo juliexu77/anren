@@ -78,8 +78,9 @@ export function useNotes(projectId?: string | null) {
     const { data, error } = await query;
     if (!error && data) {
       // Everything spoken shows up, including a note still on its way up — a
-      // note you spoke should never quietly vanish from the archive.
-      setNotes(data.map(mapNote));
+      // note you spoke should never quietly vanish from the archive. Notes in
+      // their undo window stay hidden until the window closes.
+      setNotes(data.map(mapNote).filter((n) => !hiddenNoteIds.has(n.id)));
     }
 
 
@@ -91,11 +92,22 @@ export function useNotes(projectId?: string | null) {
     load();
   }, [load]);
 
+  // A delete or an undo anywhere in the app reaches every list on screen.
+  useEffect(() => onNotesChanged(() => {
+    setNotes((prev) => prev.filter((n) => !hiddenNoteIds.has(n.id)));
+    void load();
+  }), [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    void sweepAbandonedDeletes(user.id);
+  }, [user]);
+
   // Live fill-in: a note appears immediately, then its title/synthesis land.
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`notes-${user.id}`)
+      .channel(`notes-${user.id}-${projectId ?? "all"}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notes", filter: `user_id=eq.${user.id}` },
@@ -105,7 +117,8 @@ export function useNotes(projectId?: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, load]);
+  }, [user, projectId, load]);
+
 
   const updateNote = useCallback(async (id: string, updates: NoteEdits) => {
     setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...updates } : n)));
