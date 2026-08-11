@@ -14,7 +14,7 @@ Folders get a small emoji chosen automatically from the name, editable any time,
 
 ## Voice and restraint
 
-The animation reads as settling, not celebrating — no confetti, no bounce, no sound. If your system is set to reduce motion, the folder simply fades in and the sparkles don't play.
+The animation reads as settling, not celebrating — no confetti, no bounce, no colored flourish, no sound. If your system is set to reduce motion, the folder simply appears with no transition.
 
 ## Technical notes
 
