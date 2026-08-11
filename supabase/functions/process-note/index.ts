@@ -100,7 +100,7 @@ function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
   view.setUint16(34, 16, true);
   writeString(36, 'data');
   view.setUint32(40, pcm.length, true);
-  return new Blob([header, pcm], { type: 'audio/wav' });
+  return new Blob([header, pcm as unknown as BlobPart], { type: 'audio/wav' });
 }
 
 /** Ten minutes of 16 kHz mono — comfortably inside the transcriber's limits. */
