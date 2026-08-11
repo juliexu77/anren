@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { undoableDelete } from "@/lib/undo";
+import { hiddenNoteIds, hideNote, notesChanged, onNotesChanged, unhideNote } from "@/lib/noteEvents";
 import { mapNote, type Note } from "@/types/note";
+
 
 type NoteEdits = Partial<
   Pick<Note, "title" | "synthesis" | "projectId" | "body" | "recordedAt" | "status">
