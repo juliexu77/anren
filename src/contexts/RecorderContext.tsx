@@ -257,12 +257,16 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     if (status !== "recording" || !user || !session) return null;
     setStatus("saving");
 
-    await flush();
+    const lastSlice = await flush();
     teardownAudio();
 
     session.state = "finishing";
     session.elapsed = elapsedRef.current;
     await saveSession({ ...session });
+
+    // Get the tail of the recording up as its own small piece first — if the
+    // whole-file upload below never finishes, the server still has everything.
+    if (lastSlice) await pushPart(lastSlice.index, lastSlice.samples);
 
     const segments = await readSegments(session.sessionId);
     const samples = segments.reduce((n, s) => n + s.length, 0);
@@ -284,13 +288,14 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     const noteId = await finishSession(session, segments);
     if (!noteId) toast.error("Couldn't save that note.");
 
-    await clearSession(session.sessionId);
+    // Only let go of the local copy once the server has confirmed audio.
+    if (noteId) await clearSession(session.sessionId);
     sessionRef.current = null;
     setStatus("idle");
     setElapsed(0);
     setLiveText("");
     return noteId;
-  }, [status, user, flush, teardownAudio]);
+  }, [status, user, flush, pushPart, teardownAudio]);
 
   // Interruptions — a lock screen, a call, a switch to another app. Get the
   // samples onto the device immediately, and pick the mic back up on return.
