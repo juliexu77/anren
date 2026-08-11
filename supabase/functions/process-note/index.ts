@@ -332,18 +332,26 @@ Deno.serve(async (req) => {
       transcript = (note.transcript ?? '').trim();
       if (!transcript) return jsonResponse({ error: 'Note has no audio yet' }, 400);
     } else {
-      let audio: Blob | null = null;
+      // Each finished stretch is written to the note as it lands, so a long
+      // recording shows its words arriving and a failure never costs the lot.
+      const saveProgress = async (partial: string) => {
+        if (partial) await admin.from('notes').update({ transcript: partial }).eq('id', noteId);
+      };
+
       if (note.audio_path.endsWith('/')) {
-        audio = await stitchParts(admin, note.user_id, noteId, note.audio_path);
+        transcript = await transcribeParts(admin, note.audio_path, saveProgress);
       } else {
         const { data } = await admin.storage.from('voice-notes').download(note.audio_path);
-        audio = data ?? null;
-        // Older path: the single file never landed, but the slices did.
-        if (!audio) audio = await stitchParts(admin, note.user_id, noteId, `${note.user_id}/${noteId}/`);
+        if (data) {
+          const bytes = new Uint8Array(await data.arrayBuffer());
+          transcript = await transcribePcm(bytes.subarray(WAV_HEADER), saveProgress);
+        } else {
+          // Older path: the single file never landed, but the slices did.
+          transcript = await transcribeParts(admin, `${note.user_id}/${noteId}/`, saveProgress);
+        }
       }
-      if (!audio) throw new Error('Audio not found');
 
-      transcript = await transcribe(audio);
+
       if (!transcript) {
         await admin
           .from('notes')
