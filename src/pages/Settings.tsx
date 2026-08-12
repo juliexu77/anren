@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAiAccess } from "@/hooks/useAiAccess";
+import { clearLocalCache } from "@/lib/localCache";
 import { Trash2 } from "lucide-react";
 
 const Settings = () => {
@@ -12,6 +14,8 @@ const Settings = () => {
   const { projects, deleteProject } = useProjects();
   const { connected: aiConnected } = useAiAccess();
   const [noteCount, setNoteCount] = useState<number | null>(null);
+  const [clearing, setClearing] = useState(false);
+
 
   useEffect(() => {
     if (!user) return;
