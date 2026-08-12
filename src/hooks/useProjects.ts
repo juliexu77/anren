@@ -122,12 +122,12 @@ export function useProjects() {
         .eq("id", id);
       if (error) {
         setProjects(before);
-        toast("Couldn't delete that folder just now.");
+        toast("Couldn't delete that project just now.");
         return;
       }
 
       undoableDelete({
-        message: "Folder deleted · its notes stayed",
+        message: "Project deleted · its notes stayed",
         onUndo: async () => {
           await supabase.from("projects").update({ deleted_at: null }).eq("id", id);
           load();

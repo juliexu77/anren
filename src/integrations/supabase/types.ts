@@ -120,6 +120,7 @@ export type Database = {
       notes: {
         Row: {
           audio_path: string | null
+          auto_filed_at: string | null
           body: string | null
           continues_note_id: string | null
           created_at: string
@@ -140,6 +141,7 @@ export type Database = {
         }
         Insert: {
           audio_path?: string | null
+          auto_filed_at?: string | null
           body?: string | null
           continues_note_id?: string | null
           created_at?: string
@@ -160,6 +162,7 @@ export type Database = {
         }
         Update: {
           audio_path?: string | null
+          auto_filed_at?: string | null
           body?: string | null
           continues_note_id?: string | null
           created_at?: string
@@ -245,6 +248,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_suggestions: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          note_ids: string[]
+          project_id: string | null
+          reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          note_ids?: string[]
+          project_id?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          note_ids?: string[]
+          project_id?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {

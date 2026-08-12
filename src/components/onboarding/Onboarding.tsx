@@ -311,7 +311,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             <div className="animate-fade-up">
               <h2 className="font-editorial text-[1.5rem] leading-snug">Put a few together</h2>
               <p className="mb-5 mt-2 text-[0.92rem] leading-[1.6] text-muted-foreground">
-                Make a folder, drop notes in, and anren reads across them to tell you what they have
+                Projects emerge as you talk — anren notices what your notes belong to and reads across them to tell you what they have
                 in common.
               </p>
               <FolderDemo runKey={runKey} />

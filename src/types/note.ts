@@ -14,6 +14,9 @@ export interface Note {
   recordedAt: string;
   status: NoteStatus;
   errorMessage: string | null;
+  /** Set when anren associated this note with a project on its own. */
+  autoFiledAt: string | null;
+
 }
 
 export interface Project {
@@ -39,5 +42,7 @@ export function mapNote(row: any): Note {
     recordedAt: row.recorded_at,
     status: (row.status as NoteStatus) ?? "processing",
     errorMessage: row.error_message ?? null,
+    autoFiledAt: row.auto_filed_at ?? null,
+
   };
 }

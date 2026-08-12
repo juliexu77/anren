@@ -115,10 +115,10 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="mt-8 flex-1 min-h-0 overflow-y-auto">
         <div className="flex items-center justify-between px-3 mb-2">
-          <span className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">Folders</span>
+          <span className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">Projects</span>
           <button
             onClick={startAdding}
-            aria-label="New folder"
+            aria-label="New project"
             className="text-muted-foreground/70 hover:text-foreground transition-colors"
           >
             <Plus className="w-[15px] h-[15px]" strokeWidth={1.5} />
@@ -142,7 +142,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                 />
                 <button
                   onClick={() => commitRename(p.id)}
-                  aria-label="Save folder name"
+                  aria-label="Save project name"
                   className="text-muted-foreground"
                 >
                   <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -197,7 +197,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                       Rename
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => removeFolder(p.id)}>Delete folder</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => removeFolder(p.id)}>Delete project</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -218,10 +218,10 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                   if (e.key === "Escape") cancelAdding();
                 }}
                 onBlur={() => submit()}
-                placeholder="Folder name"
+                placeholder="Name this project"
                 className="flex-1 bg-transparent text-[0.9rem] outline-none placeholder:text-muted-foreground/50"
               />
-              <button onClick={submit} aria-label="Save folder" className="text-muted-foreground">
+              <button onClick={submit} aria-label="Save project" className="text-muted-foreground">
                 <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
             </div>
@@ -229,7 +229,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
           {!projects.length && !adding && (
             <p className="px-3 text-[0.8rem] leading-relaxed text-muted-foreground/70">
-              Folders keep related notes together.
+              A project is a thread you keep coming back to. anren will notice them as you talk.
             </p>
           )}
         </div>

@@ -80,7 +80,7 @@ export function NoteRow({ note, projects = [], onFile, onDelete }: NoteRowProps)
             <DropdownMenuItem onClick={() => navigate(`/note/${note.id}`)}>Open</DropdownMenuItem>
             {onFile && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>File in…</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>Add to project…</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   {projects.map((p) => (
                     <DropdownMenuItem key={p.id} onClick={() => onFile(note.id, p.id)}>
@@ -90,10 +90,10 @@ export function NoteRow({ note, projects = [], onFile, onDelete }: NoteRowProps)
                   ))}
                   {note.projectId && (
                     <DropdownMenuItem onClick={() => onFile(note.id, null)}>
-                      Remove from folder
+                      Remove from project
                     </DropdownMenuItem>
                   )}
-                  {!projects.length && <DropdownMenuItem disabled>No folders yet</DropdownMenuItem>}
+                  {!projects.length && <DropdownMenuItem disabled>No projects yet</DropdownMenuItem>}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
