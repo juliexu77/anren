@@ -8,6 +8,9 @@ import type { Project } from "@/types/note";
 
 const SELECT = "id, name, position, emoji";
 
+// Shared across every mounted rail: name -> the insert already on its way.
+const recentCreates = new Map<string, Promise<Project | null>>();
+
 export function useProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -73,7 +76,7 @@ export function useProjects() {
 
 
       const created = data as Project;
-      setProjects((prev) => [...prev, created]);
+      setProjects((prev) => (prev.some((p) => p.id === created.id) ? prev : [...prev, created]));
 
       // Suggest an emoji in the background; silent on failure.
       supabase.functions
