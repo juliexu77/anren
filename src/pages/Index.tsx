@@ -69,10 +69,16 @@ const Index = () => {
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">
             {projectId
-              ? "Nothing filed here yet. Record or move a note in and it will live here."
-              : "Talk or write. anren will keep the thought and write it up."}
+              ? "Nothing filed here yet."
+              : "Press record and say what's on your mind."}
+          </p>
+          <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
+            {projectId
+              ? "Record here, or move a note in from the feed — anren will read across them once a couple have gathered."
+              : "anren will write it up for you. You can type or paste something instead."}
           </p>
         </div>
+
 
       ) : (
         <div className="flex flex-col gap-10">
