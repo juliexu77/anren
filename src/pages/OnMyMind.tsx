@@ -63,14 +63,10 @@ const OnMyMind = () => {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-10">
-          <p className="whitespace-pre-line font-editorial text-[1.08rem] leading-[1.75]">
-            {digest.narrative}
-          </p>
-
+        <div className="flex flex-col gap-8">
           {digest.themes.length > 0 && (
             <section>
-              <h2 className="mb-4 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
+              <h2 className="mb-4 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground/70">
                 What kept coming up
               </h2>
               <div className="flex flex-col gap-5">
@@ -85,7 +81,17 @@ const OnMyMind = () => {
               </div>
             </section>
           )}
+
+          <section className={digest.themes.length > 0 ? "border-t border-hairline pt-7" : undefined}>
+            <h2 className="mb-3 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground/70">
+              The longer read
+            </h2>
+            <p className="whitespace-pre-line font-editorial text-[1.08rem] leading-[1.75]">
+              {digest.narrative}
+            </p>
+          </section>
         </div>
+
       )}
     </div>
   );
