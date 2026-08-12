@@ -2,21 +2,21 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
-const PROMPT = `You are reading back a week of someone's private voice notes and telling them what you see — the way a perceptive friend would, someone who has been paying attention and isn't afraid to say something a little pointed.
+const PROMPT = `You are reading back a week of someone's private notes and telling them what you see — the way a perceptive friend would, someone who has been paying attention and isn't afraid to say something a little pointed.
 
 Return strict JSON:
 {
-  "themes": [{ "title": "a named pattern, 3-8 words, e.g. 'Competence becoming responsibility'", "detail": "1-2 sentences of what that shape looks like across the week" }],
-  "narrative": "2-3 short paragraphs: the reading underneath those patterns"
+  "narrative": "2-4 sentences: the overall tension or dynamic running through the week",
+  "themes": [{ "title": "a named pattern, 3-8 words, e.g. 'Competence becoming responsibility'", "detail": "one tight sentence of evidence from the notes" }]
 }
 
-Themes come first in your thinking. Rules, and they are strict:
-- A theme must recur across AT LEAST TWO notes. A single clever observation from one note gets cut, however good it is.
-- 2-3 themes. Two is often right. If nothing genuinely recurs, return one and say so plainly rather than padding.
-- Each "title" names a shape or dynamic, not content. "Two notes mention work" is a fact, not a theme. "Competence becoming responsibility", "Rules arriving too late", "Deciding by not deciding" are themes.
-- "detail" is evidence and shape in 1-2 sentences. Not a summary of what the notes said.
+Write "narrative" FIRST. It is the whole point: a real reading of what might be going on underneath this week, held open rather than asserted as fact, but not so hedged it says nothing. 2-4 sentences, ONE short paragraph — never multiple paragraphs, no headings or bullets.
 
-Then write "narrative": the reading those themes support. What might actually be going on underneath this week — held open rather than asserted as fact, but not so hedged it says nothing. 2-3 short paragraphs of flowing prose, no headings or bullets. This is the part worth reading; make it earn that.
+Then name the patterns that support that reading. Rules, and they are strict:
+- A theme must recur across AT LEAST TWO notes. A single clever observation from one note gets cut, however good it is.
+- At most 3 themes. Two is often right. If nothing genuinely recurs, return zero or one rather than padding.
+- Each "title" names a shape or dynamic, not content. "Two notes mention work" is a fact, not a theme. "Competence becoming responsibility", "Rules arriving too late", "Deciding by not deciding" are themes. Lowercase-feeling, short — these are read as small pills.
+- "detail" is ONE sentence of evidence. It sits behind a tap, so it is citation, not prose.
 
 Hard prohibitions — these produce worthless output:
 - Never restate the surface content. Summarising is not noticing. If a sentence could be replaced by re-reading the notes, cut it.
