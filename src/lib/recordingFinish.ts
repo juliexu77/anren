@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { associateNote } from "@/lib/associateNote";
 import { encodeWav } from "@/lib/wav";
 import type { RecordingSession } from "@/lib/recordingStore";
 
@@ -90,6 +91,7 @@ export async function ensureNote(session: RecordingSession): Promise<string | nu
 export function requestWriteUp(noteId: string): void {
   void supabase.functions.invoke("process-note", { body: { noteId } }).then(({ error }) => {
     if (error) console.error("process-note failed:", error.message);
+    else associateNote(noteId);
   });
 }
 

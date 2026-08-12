@@ -5,6 +5,7 @@ import { useRecorder } from "@/contexts/RecorderContext";
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { associateNote } from "@/lib/associateNote";
 import { toast } from "sonner";
 import { formatDuration } from "@/lib/wav";
 import { cn } from "@/lib/utils";
@@ -86,6 +87,7 @@ export function CaptureBar() {
 
     supabase.functions.invoke("process-note", { body: { noteId: data.id } }).then(({ error: fnError }) => {
       if (fnError) console.error("process-note failed:", fnError.message);
+      else associateNote(data.id);
     });
 
     setText("");
