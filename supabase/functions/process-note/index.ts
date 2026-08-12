@@ -359,7 +359,7 @@ Deno.serve(async (req) => {
             status: 'ready',
             transcript: '',
             title: 'Nothing came through',
-            synthesis: "This recording didn't carry any speech Anren could hear.",
+            synthesis: "This recording didn't carry any speech anren could hear.",
           })
           .eq('id', noteId);
         await discardAudio(admin, note.user_id, noteId, note.audio_path);
@@ -441,7 +441,7 @@ Deno.serve(async (req) => {
     if (noteId) {
       await admin
         .from('notes')
-        .update({ status: 'failed', error_message: 'Anren couldn\'t finish writing this up.' })
+        .update({ status: 'failed', error_message: 'anren couldn\'t finish writing this up.' })
         .eq('id', noteId);
     }
     return jsonResponse({ error: message }, 500);

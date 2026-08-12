@@ -40,7 +40,7 @@ async function resumeStalledNotes(userId: string): Promise<void> {
         .from("notes")
         .update({
           status: "failed",
-          error_message: "Anren never got the audio for this one.",
+          error_message: "anren never got the audio for this one.",
         })
         .eq("id", note.id);
     }

@@ -138,7 +138,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        toast.error("Anren needs microphone access to listen.");
+        toast.error("anren needs microphone access to listen.");
         return;
       }
 
@@ -284,7 +284,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
 
     const { noteId, saved } = await finishSession(session, segments);
     if (!saved) {
-      toast.error("Anren couldn't get that one up yet — it's still on this device.");
+      toast.error("anren couldn't get that one up yet — it's still on this device.");
     }
 
     // Only let go of the local copy once the server has the audio.
