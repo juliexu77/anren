@@ -107,9 +107,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
           <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Search
         </NavLink>
-        <NavLink to="/on-my-mind" className={navItemClass} onClick={onNavigate}>
+        <NavLink to="/reflect" className={navItemClass} onClick={onNavigate}>
           <Sparkles className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          On my mind
+          Reflect
         </NavLink>
       </nav>
 

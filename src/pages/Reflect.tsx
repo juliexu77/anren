@@ -2,8 +2,9 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useLookBack } from "@/hooks/useLookBack";
 import { ThemePills } from "@/components/ThemePills";
+import { AskNotes } from "@/components/AskNotes";
 
-const OnMyMind = () => {
+const Reflect = () => {
   const { digest, loading, generating, weekStart, generate, readyForFirst } = useLookBack();
 
   const weekLabel = new Date(`${weekStart}T00:00:00`).toLocaleDateString([], {
@@ -26,7 +27,7 @@ const OnMyMind = () => {
   return (
     <div>
       <header className="mb-8">
-        <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">On my mind</h1>
+        <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">Reflect</h1>
         <div className="mt-1.5 flex items-center gap-3 text-[0.9rem] text-muted-foreground">
           <span>Week of {weekLabel}</span>
           {digest && !generating && (
@@ -77,8 +78,10 @@ const OnMyMind = () => {
 
 
       )}
+
+      <AskNotes />
     </div>
   );
 };
 
-export default OnMyMind;
+export default Reflect;

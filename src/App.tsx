@@ -11,7 +11,7 @@ import Index from "./pages/Index";
 
 import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
-import OnMyMind from "./pages/OnMyMind";
+import Reflect from "./pages/Reflect";
 import Settings from "./pages/Settings";
 import ClaudeKey from "./pages/ClaudeKey";
 import Auth from "./pages/Auth";
@@ -61,7 +61,8 @@ const App = () => (
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
-          <Route path="/on-my-mind" element={<ProtectedShell><OnMyMind /></ProtectedShell>} />
+          <Route path="/reflect" element={<ProtectedShell><Reflect /></ProtectedShell>} />
+          <Route path="/on-my-mind" element={<Navigate to="/reflect" replace />} />
           <Route path="/settings" element={<ProtectedShell><Settings /></ProtectedShell>} />
           <Route path="/settings/claude" element={<ProtectedShell><ClaudeKey /></ProtectedShell>} />
           <Route path="*" element={<NotFound />} />
