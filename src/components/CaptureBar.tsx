@@ -14,13 +14,12 @@ export function CaptureBar() {
   const { status, elapsed, liveText, level, start, stop, cancel } = useRecorder();
   const { session: recovered, busy, keep, discard } = useRecordingRecovery();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { save, saving } = useTextCapture();
 
   const params = useParams();
   const folderId = params.projectId ?? null;
 
   const [text, setText] = useState("");
-  const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const recording = status === "recording";
