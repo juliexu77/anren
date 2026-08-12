@@ -3,10 +3,13 @@ import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useLookBack } from "@/hooks/useLookBack";
 import { AskNotes } from "@/components/AskNotes";
+import { ProjectSuggestion } from "@/components/ProjectSuggestion";
+import { useNotes } from "@/hooks/useNotes";
 import { cn } from "@/lib/utils";
 
 const Reflect = () => {
   const { digest, loading, generating, weekStart, generate, readyForFirst } = useLookBack();
+  const { notes, loading: notesLoading } = useNotes(null);
   const [open, setOpen] = useState(false);
 
   const weekLabel = new Date(`${weekStart}T00:00:00`).toLocaleDateString([], {
@@ -87,6 +90,10 @@ const Reflect = () => {
           )}
         </div>
       )}
+
+      <div className="mt-10">
+        <ProjectSuggestion enabled={!notesLoading && notes.length >= 5} />
+      </div>
 
       <AskNotes />
     </div>

@@ -6,7 +6,7 @@ import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { ReflectNudge } from "@/components/ReflectNudge";
-import { ProjectSuggestion } from "@/components/ProjectSuggestion";
+
 import type { Note } from "@/types/note";
 
 
@@ -72,21 +72,17 @@ const Index = () => {
         )}
       </header>
 
-      {!projectId && <ProjectSuggestion enabled={!loading && notes.length >= 5} />}
-
       {loading ? (
         <p className="text-[0.9rem] text-muted-foreground">Gathering your notes…</p>
       ) : !notes.length ? (
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">
-            {projectId
-              ? "Nothing here yet."
-              : "Press record and say what's on your mind."}
+            {projectId ? "Nothing here yet." : "Nothing kept yet."}
           </p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
             {projectId
               ? "Talk here, or bring a note in from the feed — anren will read across them once a couple have gathered, and keep an eye out for new ones that belong."
-              : "anren will write it up for you. You can type or paste something instead."}
+              : "Start on Home — say what's on your mind, or type it. anren writes it up and everything gathers here."}
           </p>
         </div>
 

@@ -3,9 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Mic, Square, ArrowUp, Loader2 } from "lucide-react";
 import { useRecorder } from "@/contexts/RecorderContext";
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { associateNote } from "@/lib/associateNote";
+import { useTextCapture } from "@/hooks/useTextCapture";
 import { toast } from "sonner";
 import { formatDuration } from "@/lib/wav";
 import { cn } from "@/lib/utils";
@@ -16,13 +14,12 @@ export function CaptureBar() {
   const { status, elapsed, liveText, level, start, stop, cancel } = useRecorder();
   const { session: recovered, busy, keep, discard } = useRecordingRecovery();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { save, saving } = useTextCapture();
 
   const params = useParams();
   const folderId = params.projectId ?? null;
 
   const [text, setText] = useState("");
-  const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const recording = status === "recording";
@@ -60,36 +57,11 @@ export function CaptureBar() {
   };
 
   const saveText = async () => {
-    const body = text.trim();
-    if (!user || !body || saving) return;
-    setSaving(true);
-
-    const { data, error } = await supabase
-      .from("notes")
-      .insert({
-        user_id: user.id,
-        project_id: folderId,
-        source: "typed",
-        body,
-        transcript: body,
-        recorded_at: new Date().toISOString(),
-        status: "processing",
-      })
-      .select("id")
-      .single();
-
-    setSaving(false);
-
-    if (error || !data) {
+    const result = await save(text, folderId);
+    if (!result) {
       toast.error("Couldn't keep that note.");
       return;
     }
-
-    supabase.functions.invoke("process-note", { body: { noteId: data.id } }).then(({ error: fnError }) => {
-      if (fnError) console.error("process-note failed:", fnError.message);
-      else associateNote(data.id);
-    });
-
     setText("");
     textareaRef.current?.blur();
     toast.success("Kept it.");

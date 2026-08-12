@@ -122,7 +122,7 @@ const NoteDetail = () => {
   const remove = async () => {
     if (!note) return;
     await softDeleteNote(note, () => reload());
-    navigate("/");
+    navigate("/notes");
   };
 
 

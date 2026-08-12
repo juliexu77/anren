@@ -333,7 +333,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             <div className="text-center animate-fade-up">
               <h2 className="font-editorial text-[1.9rem] leading-tight">Say something when you're ready.</h2>
               <p className="mt-3 text-[0.94rem] leading-[1.65] text-muted-foreground">
-                Nothing to set up. The mic is waiting at the bottom of the screen.
+                Nothing to set up. Home is a blank page with the mic waiting in the middle.
               </p>
             </div>
           )}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
+import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal, PenLine } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
@@ -85,7 +85,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
   const removeFolder = (id: string) => {
     deleteProject(id);
-    if (location.pathname === `/folder/${id}`) navigate("/");
+    if (location.pathname === `/folder/${id}`) navigate("/notes");
   };
 
   return (
@@ -100,6 +100,10 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex flex-col gap-0.5 md:mt-0 mt-10">
         <NavLink to="/" end className={navItemClass} onClick={onNavigate}>
+          <PenLine className="w-[17px] h-[17px]" strokeWidth={1.5} />
+          Home
+        </NavLink>
+        <NavLink to="/notes" className={navItemClass} onClick={onNavigate}>
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
         </NavLink>
@@ -251,7 +255,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                   onMove={(projectId) => updateNote(n.id, { projectId })}
                   onDelete={() => {
                     deleteNote(n.id);
-                    if (location.pathname === `/note/${n.id}`) navigate("/");
+                    if (location.pathname === `/note/${n.id}`) navigate("/notes");
                   }}
                 />
               ))}
