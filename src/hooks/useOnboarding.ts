@@ -2,6 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+const REPLAY_EVENT = "anren:onboarding:replay";
+
+/** Lets Settings ask the shell to play the walkthrough again. */
+export function replayOnboarding() {
+  window.dispatchEvent(new Event(REPLAY_EVENT));
+}
+
 /**
  * Reads the profile's onboarding flag so the shell can show the walkthrough
  * once. Nothing else is written to the account during onboarding.
@@ -34,6 +41,15 @@ export function useOnboarding() {
     };
   }, [user]);
 
+  useEffect(() => {
+    const onReplay = () => {
+      setChecked(true);
+      setNeeded(true);
+    };
+    window.addEventListener(REPLAY_EVENT, onReplay);
+    return () => window.removeEventListener(REPLAY_EVENT, onReplay);
+  }, []);
+
   const finish = useCallback(async () => {
     setNeeded(false);
     if (!user) return;
@@ -43,8 +59,5 @@ export function useOnboarding() {
       .eq("user_id", user.id);
   }, [user]);
 
-  /** "Show me around again" — replays the walkthrough without touching the flag. */
-  const replay = useCallback(() => setNeeded(true), []);
-
-  return { needed: checked && needed, finish, replay };
+  return { needed: checked && needed, finish };
 }
