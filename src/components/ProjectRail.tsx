@@ -99,10 +99,6 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
 
       <nav className="flex flex-col gap-0.5 md:mt-0 mt-10">
-        <NavLink to="/" end className={navItemClass} onClick={onNavigate}>
-          <PenLine className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          Home
-        </NavLink>
         <NavLink to="/notes" className={navItemClass} onClick={onNavigate}>
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
