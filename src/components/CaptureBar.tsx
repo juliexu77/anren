@@ -147,41 +147,6 @@ export function CaptureBar() {
           )}
 
           <div className="flex items-end gap-2">
-            {recording || status === "saving" ? (
-              <div className="min-w-0 flex-1 pb-3 pl-2">
-                {status === "saving" ? (
-                  <p className="text-[0.92rem] text-muted-foreground">Saving your note…</p>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <p className="text-[0.92rem] tabular-nums text-foreground">{formatDuration(elapsed)}</p>
-                    <button
-                      onClick={cancel}
-                      className="text-[0.82rem] text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <textarea
-                ref={textareaRef}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    void saveText();
-                  }
-                }}
-                rows={1}
-                aria-label="Write or paste a note"
-                placeholder="Write something…"
-                className="min-w-0 flex-1 resize-none bg-transparent px-3 py-3 text-[0.95rem] leading-[1.55] outline-none placeholder:text-muted-foreground/70"
-                style={{ maxHeight: MAX_TEXTAREA_H }}
-              />
-            )}
-
             <button
               onClick={hasText && !recording ? saveText : handleMic}
               disabled={status === "saving" || saving}
@@ -209,6 +174,41 @@ export function CaptureBar() {
                 <Mic className="w-[20px] h-[20px] relative" strokeWidth={1.6} />
               )}
             </button>
+
+            {recording || status === "saving" ? (
+              <div className="min-w-0 flex-1 pb-3 pl-1">
+                {status === "saving" ? (
+                  <p className="text-[0.92rem] text-muted-foreground">Saving your note…</p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <p className="text-[0.92rem] tabular-nums text-foreground">{formatDuration(elapsed)}</p>
+                    <button
+                      onClick={cancel}
+                      className="text-[0.82rem] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    void saveText();
+                  }
+                }}
+                rows={1}
+                aria-label="Type or copy/paste from elsewhere"
+                placeholder="Type or copy/paste from elsewhere…"
+                className="min-w-0 flex-1 resize-none bg-transparent px-2 py-3 text-[0.95rem] leading-[1.55] outline-none placeholder:text-muted-foreground/70"
+                style={{ maxHeight: MAX_TEXTAREA_H }}
+              />
+            )}
           </div>
         </div>
       </div>
