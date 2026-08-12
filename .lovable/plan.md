@@ -25,9 +25,15 @@ The earlier version made the user record their first note. This one asks nothing
 
 The animation loops once and rests on the finished note. A "play it again" affordance replays it, and "next" moves on. Respects reduced-motion by rendering the finished note immediately with no typing effect.
 
-**Card 3 — it remembers.** Folders, search, and the weekly reading, shown as three still miniatures rather than text alone: a folder row, a search result, and a Reflect card with theme pills.
+**Card 3 — filing, animated.** A folder gets made in miniature, then the pattern-finding lands:
 
-**Card 4 — over to you.** "Say something when you're ready." Dismisses onboarding and drops them on the feed with the composer in focus — no forced recording.
+1. Two or three example note rows sit in a small feed mock.
+2A folder name types itself into a new-folder row, a glyph sparkles into place, and the notes slide into it one by one.
+3. The folder's reflection then writes itself in: a short reading in serif, followed by theme pills appearing one at a time. The point being made: once a few thoughts sit together, anren tells you what they have in common.
+
+**Card 4 — the weekly reading.** A Reflect card animates in the same way — the week's narrative, then its pills — with one line explaining anren does this on its own, once a week, without being asked.
+
+**Card 5 — over to you.** "Say something when you're ready." Dismisses onboarding and drops them on the feed with the composer in focus — no forced recording.
 
 ## 3. Two example notes, clearly marked
 
