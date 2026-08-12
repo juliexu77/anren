@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ProjectRail } from "@/components/ProjectRail";
-import { CaptureBar } from "@/components/CaptureBar";
 import { Onboarding } from "@/components/onboarding/Onboarding";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
@@ -10,7 +9,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [railOpen, setRailOpen] = useState(false);
   const location = useLocation();
   const { needed: showOnboarding, finish: finishOnboarding } = useOnboarding();
-  const isHome = location.pathname === "/";
 
   return (
     <div className="min-h-screen w-full">
@@ -57,19 +55,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <main className="flex-1 min-w-0">
           <div key={location.pathname} className="mx-auto w-full max-w-[720px] px-5 md:px-10 pt-6 animate-fade-up"
-            style={{
-              paddingBottom: isHome
-                ? "calc(env(safe-area-inset-bottom, 0px) + 24px)"
-                : "calc(var(--capture-bar-h, 6rem) + env(safe-area-inset-bottom, 0px) + 28px)",
-            }}
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 40px)" }}
           >
             {children}
           </div>
         </main>
       </div>
-
-      {/* Home is its own capture surface — no second composer there. */}
-      {!isHome && <CaptureBar />}
 
       {showOnboarding && <Onboarding onDone={finishOnboarding} />}
     </div>
