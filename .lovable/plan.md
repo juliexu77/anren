@@ -14,7 +14,7 @@ New route `/` renders a Home screen instead of the notes list. Notes moves to `/
 
 Home contains, vertically centred on the page:
 
-- the `anren` mark
+- one soft line: "What's on your mind?" (no wordmark — it already sits at the top of every page)
 - one soft line: "What's on your mind?"
 - the capture object, large and central — big mic as the primary action, with a text field beneath it that reads "Type or copy/paste from elsewhere…"
 
