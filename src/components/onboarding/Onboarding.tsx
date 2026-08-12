@@ -129,7 +129,7 @@ function CaptureDemo({ runKey }: { runKey: number }) {
         )}
       </div>
 
-      {stage === 4 - 1 && (
+      {stage === 3 && (
         <p className="mt-2 text-[0.82rem] italic text-muted-foreground/70">anren is writing it up…</p>
       )}
 
