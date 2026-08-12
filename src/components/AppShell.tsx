@@ -10,6 +10,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [railOpen, setRailOpen] = useState(false);
   const location = useLocation();
   const { needed: showOnboarding, finish: finishOnboarding } = useOnboarding();
+  const isHome = location.pathname === "/";
 
   return (
     <div className="min-h-screen w-full">
