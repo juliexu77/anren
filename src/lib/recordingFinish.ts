@@ -72,6 +72,7 @@ export async function ensureNote(session: RecordingSession): Promise<string | nu
     .insert({
       user_id: session.userId,
       project_id: session.projectId,
+      continues_note_id: session.continuesNoteId ?? null,
       duration_seconds: session.elapsed,
       recorded_at: new Date(session.startedAt).toISOString(),
       status: "processing",

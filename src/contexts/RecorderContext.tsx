@@ -21,7 +21,7 @@ interface RecorderValue {
   elapsed: number;
   liveText: string;
   level: number;
-  start: (projectId?: string | null) => Promise<void>;
+  start: (projectId?: string | null, continuesNoteId?: string | null) => Promise<void>;
   stop: () => Promise<string | null>;
   cancel: () => void;
 }
@@ -131,7 +131,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   useEffect(() => () => teardownAudio(), [teardownAudio]);
 
   const start = useCallback(
-    async (projectId?: string | null) => {
+    async (projectId?: string | null, continuesNoteId?: string | null) => {
       if (status !== "idle" || !user) return;
 
       let stream: MediaStream;
@@ -156,6 +156,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         sessionId: crypto.randomUUID(),
         noteId: null,
         projectId: projectId ?? null,
+        continuesNoteId: continuesNoteId ?? null,
         userId: user.id,
         startedAt: Date.now(),
         sampleRate: STORE_RATE,
@@ -176,6 +177,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         .insert({
           user_id: user.id,
           project_id: projectId ?? null,
+          continues_note_id: continuesNoteId ?? null,
           duration_seconds: 0,
           recorded_at: new Date(session.startedAt).toISOString(),
           status: "processing",
@@ -293,7 +295,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     setStatus("idle");
     setElapsed(0);
     setLiveText("");
-    return noteId;
+    // A continuation belongs to the note it carries on from, so that's where
+    // the person should land.
+    return session.continuesNoteId ?? noteId;
   }, [status, user, flush, pushPart, teardownAudio]);
 
   // Interruptions — a lock screen, a call, a switch to another app. Get the

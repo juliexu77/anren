@@ -85,6 +85,8 @@ export function useNotes(projectId?: string | null) {
       .select("*")
       .eq("user_id", user.id)
       .is("deleted_at", null)
+      // Continuations live inside the note they carry on from.
+      .is("continues_note_id", null)
       .order("recorded_at", { ascending: false });
 
     if (projectId) query = query.eq("project_id", projectId);

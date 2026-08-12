@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
 
     const { data: note, error: noteError } = await admin
       .from('notes')
-      .select('id, user_id, audio_path, source, body, title, transcript')
+      .select('id, user_id, audio_path, source, body, title, transcript, continues_note_id, duration_seconds')
       .eq('id', noteId)
       .maybeSingle();
 
@@ -367,6 +367,45 @@ Deno.serve(async (req) => {
       }
     }
 
+    // A continuation: the new words join the note they carry on from, and the
+    // whole thing is written up again.
+    const continuesId = (note as { continues_note_id?: string | null }).continues_note_id ?? null;
+    let targetId = noteId;
+    let targetTitle = typeof note.title === 'string' ? note.title.trim() : '';
+    let rewriteTitle = regenerate;
+
+    if (continuesId) {
+      const { data: parent } = await admin
+        .from('notes')
+        .select('id, user_id, transcript, title, duration_seconds')
+        .eq('id', continuesId)
+        .maybeSingle();
+
+      if (!parent || parent.user_id !== user.id) {
+        return jsonResponse({ error: 'The note this continues is gone' }, 404);
+      }
+
+      const earlier = (parent.transcript ?? '').trim();
+      transcript = [earlier, transcript].filter(Boolean).join('\n\n');
+      targetId = parent.id as string;
+      targetTitle = typeof parent.title === 'string' ? parent.title.trim() : '';
+      rewriteTitle = true;
+
+      const added = (note as { duration_seconds?: number | null }).duration_seconds ?? 0;
+      const before = (parent.duration_seconds as number | null) ?? 0;
+      await admin
+        .from('notes')
+        .update({ duration_seconds: before + added, status: 'processing' })
+        .eq('id', targetId);
+
+      // The audio is already transcribed, so the placeholder row it was
+      // captured on has nothing left to hold.
+      if (note.audio_path) await discardAudio(admin, note.user_id, noteId, note.audio_path);
+      await admin.from('note_passages').delete().eq('note_id', noteId);
+      await admin.from('notes').delete().eq('id', noteId);
+      noteId = targetId;
+    }
+
     let raw: string;
     try {
       raw = await chat([
@@ -385,8 +424,7 @@ Deno.serve(async (req) => {
             transcript,
             status: 'needs_key',
             error_message: null,
-            title: (typeof note.title === 'string' && note.title.trim())
-              || transcript.split(/[.?!]/)[0].slice(0, 70),
+            title: targetTitle || transcript.split(/[.?!]/)[0].slice(0, 70),
           })
           .eq('id', noteId);
         return needsOwnKeyResponse();
@@ -395,9 +433,8 @@ Deno.serve(async (req) => {
     }
 
     const parsed = parseJsonBlock<Synthesis>(raw);
-    const existingTitle = typeof note.title === 'string' ? note.title.trim() : '';
     // On a regeneration the source text changed, so the old title is stale too.
-    const title = (regenerate ? '' : existingTitle) || parsed?.title?.trim()
+    const title = (rewriteTitle ? '' : targetTitle) || parsed?.title?.trim()
       || transcript.split(/[.?!]/)[0].slice(0, 70);
 
     const synthesis = parsed?.synthesis?.trim() || transcript.slice(0, 400);
@@ -408,7 +445,7 @@ Deno.serve(async (req) => {
       .eq('id', noteId);
 
     // The words are safe now, so the recording itself isn't kept.
-    if (!typed && note.audio_path) {
+    if (!typed && !continuesId && note.audio_path) {
       await discardAudio(admin, note.user_id, noteId, note.audio_path);
     }
 

@@ -16,6 +16,8 @@ export interface RecordingSession {
   sessionId: string;
   noteId: string | null;
   projectId: string | null;
+  /** Set when this recording carries on from a note that already exists. */
+  continuesNoteId?: string | null;
   userId: string;
   startedAt: number;
   sampleRate: number;
