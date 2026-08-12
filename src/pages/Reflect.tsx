@@ -91,6 +91,10 @@ const Reflect = () => {
         </div>
       )}
 
+      <div className="mt-10">
+        <ProjectSuggestion enabled={!notesLoading && notes.length >= 5} />
+      </div>
+
       <AskNotes />
     </div>
   );
