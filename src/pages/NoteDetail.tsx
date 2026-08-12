@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Trash2, FolderClosed, Sparkles, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNote, softDeleteNote } from "@/hooks/useNotes";
+import { ContinueNote } from "@/components/ContinueNote";
 import { useProjects } from "@/hooks/useProjects";
 import { formatDuration } from "@/lib/wav";
 import { toast } from "sonner";
@@ -342,6 +343,8 @@ const NoteDetail = () => {
           </section>
         )
       )}
+
+      {note.status !== "processing" && <ContinueNote note={note} onDone={reload} />}
 
       {(note.transcript || note.body) && (
         <section className="mt-12">
