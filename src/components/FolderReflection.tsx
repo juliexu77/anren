@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { ThemePills } from "@/components/ThemePills";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,7 +26,7 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
   const [reflection, setReflection] = useState<Reflection | null>(null);
   const fetched = useRef(false);
   const [working, setWorking] = useState(false);
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  
 
 
   const titleById = useMemo(
@@ -130,51 +130,16 @@ export function FolderReflection({ projectId, notes }: { projectId: string; note
               )}
 
               {!!reflection.observations.length && (
-                <div className={cn(reflection.reading && "border-t border-hairline pt-6")}>
-                  <h3 className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground/70">
-                    Patterns behind it
-                  </h3>
-                  <div className="mt-3.5 flex flex-col gap-4">
-                    {reflection.observations.map((obs, i) => (
-                      <div key={i}>
-                        <p className="text-[0.95rem] leading-[1.6]">{obs.text}</p>
-                        {(obs.grounding || !!obs.note_ids?.length) && (
-                          <button
-                            onClick={() =>
-                              setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
-                            }
-                            className="mt-1.5 text-[0.78rem] text-muted-foreground/80 underline decoration-hairline underline-offset-4 transition-colors hover:text-foreground"
-                          >
-                            {expanded[i] ? "Hide notes" : "See notes"}
-                          </button>
-                        )}
-                        {expanded[i] && (
-                          <div className="mt-2">
-                            {obs.grounding && (
-                              <p className="text-[0.9rem] leading-[1.7] text-muted-foreground">
-                                {obs.grounding}
-                              </p>
-                            )}
-                            {!!obs.note_ids?.length && (
-                              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
-                                {obs.note_ids.map((id) => (
-                                  <Link
-                                    key={id}
-                                    to={`/note/${id}`}
-                                    className="text-[0.78rem] text-muted-foreground/80 underline decoration-hairline underline-offset-4 transition-colors hover:text-foreground"
-                                  >
-                                    {titleById.get(id) ?? "Note"}
-                                  </Link>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <ThemePills
+                  items={reflection.observations.map((obs) => ({
+                    label: obs.text,
+                    detail: obs.grounding,
+                    noteIds: obs.note_ids,
+                  }))}
+                  titleById={titleById}
+                />
               )}
+
 
               <button
                 onClick={generate}
