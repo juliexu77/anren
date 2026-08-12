@@ -38,8 +38,9 @@ const Index = () => {
   const { projects, setProjectEmoji } = useProjects();
 
   const project = projectId ? projects.find((p) => p.id === projectId) : undefined;
-  const heading = projectId ? project?.name ?? "Folder" : "Notes";
+  const heading = projectId ? project?.name ?? "Project" : "Notes";
   const groups = useMemo(() => groupByDay(notes), [notes]);
+  const autoFiled = projectId ? notes.filter((n) => n.autoFiledAt).length : 0;
 
   return (
     <div>
@@ -59,6 +60,11 @@ const Index = () => {
         {notes.length > 0 && (
           <p className="mt-1.5 text-[0.9rem] text-muted-foreground">
             {`${notes.length} note${notes.length === 1 ? "" : "s"}`}
+            {autoFiled > 0 && (
+              <span className="text-muted-foreground/70">
+                {` · anren added ${autoFiled} of them here`}
+              </span>
+            )}
           </p>
         )}
         {projectId && notes.length >= 2 && (
@@ -66,6 +72,7 @@ const Index = () => {
         )}
       </header>
 
+      {!projectId && <ProjectSuggestion enabled={!loading && notes.length >= 5} />}
 
       {loading ? (
         <p className="text-[0.9rem] text-muted-foreground">Gathering your notes…</p>
@@ -73,15 +80,16 @@ const Index = () => {
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">
             {projectId
-              ? "Nothing filed here yet."
+              ? "Nothing here yet."
               : "Press record and say what's on your mind."}
           </p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
             {projectId
-              ? "Record here, or move a note in from the feed — anren will read across them once a couple have gathered."
+              ? "Talk here, or bring a note in from the feed — anren will read across them once a couple have gathered, and keep an eye out for new ones that belong."
               : "anren will write it up for you. You can type or paste something instead."}
           </p>
         </div>
+
 
 
       ) : (
