@@ -114,7 +114,7 @@ export function NoteRailItem({
           Rename
         </DropdownMenuItem>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>Move to folder</DropdownMenuSubTrigger>
+          <DropdownMenuSubTrigger>Add to project…</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             {projects.map((p) => (
               <DropdownMenuItem key={p.id} onClick={() => onMove(p.id)}>
@@ -122,9 +122,9 @@ export function NoteRailItem({
               </DropdownMenuItem>
             ))}
             {note.projectId && (
-              <DropdownMenuItem onClick={() => onMove(null)}>Remove from folder</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMove(null)}>Remove from project</DropdownMenuItem>
             )}
-            {!projects.length && <DropdownMenuItem disabled>No folders yet</DropdownMenuItem>}
+            {!projects.length && <DropdownMenuItem disabled>No projects yet</DropdownMenuItem>}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSeparator />

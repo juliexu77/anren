@@ -44,9 +44,9 @@ const Settings = () => {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Folders</h2>
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Projects</h2>
         {!projects.length ? (
-          <p className="text-[0.9rem] text-muted-foreground">No folders yet.</p>
+          <p className="text-[0.9rem] text-muted-foreground">No projects yet.</p>
         ) : (
           <div className="flex flex-col">
             {projects.map((p) => (
@@ -62,7 +62,7 @@ const Settings = () => {
               </div>
             ))}
             <p className="mt-3 text-[0.82rem] leading-relaxed text-muted-foreground/80">
-              Deleting a folder keeps its notes — they simply return to the main list.
+              Deleting a project keeps its notes — they stay in the main list, as they always were.
             </p>
           </div>
         )}

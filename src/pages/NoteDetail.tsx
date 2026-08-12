@@ -88,7 +88,7 @@ const NoteDetail = () => {
   const moveToFolder = async (projectId: string | null) => {
     if (!note) return;
     const saved = await patch({ projectId });
-    if (saved) toast.success(projectId ? "Filed away." : "Removed from folder.");
+    if (saved) toast.success(projectId ? "Added." : "Removed from project.");
   };
 
 
@@ -166,7 +166,7 @@ const NoteDetail = () => {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.8rem] text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors">
               <FolderClosed className="w-3.5 h-3.5" strokeWidth={1.5} />
-              {folderName ?? "File"}
+              {folderName ?? "Project"}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {projects.map((p) => (
@@ -175,10 +175,10 @@ const NoteDetail = () => {
                 </DropdownMenuItem>
               ))}
               {note.projectId && (
-                <DropdownMenuItem onClick={() => moveToFolder(null)}>Remove from folder</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => moveToFolder(null)}>Remove from project</DropdownMenuItem>
               )}
               {!projects.length && (
-                <DropdownMenuItem disabled>Create a folder in the sidebar first</DropdownMenuItem>
+                <DropdownMenuItem disabled>Create a project in the sidebar first</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
