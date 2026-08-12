@@ -1,6 +1,7 @@
 import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useLookBack } from "@/hooks/useLookBack";
+import { ThemePills } from "@/components/ThemePills";
 
 const OnMyMind = () => {
   const { digest, loading, generating, weekStart, generate, readyForFirst } = useLookBack();
