@@ -22,9 +22,23 @@ interface NoteRowProps {
   hideProject?: boolean;
 }
 
+function dayLabel(iso: string) {
+  const date = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (same(date, today)) return "Today";
+  if (same(date, yesterday)) return "Yesterday";
+  const withinWeek = Date.now() - date.getTime() < 6 * 24 * 60 * 60 * 1000;
+  if (withinWeek) return date.toLocaleDateString([], { weekday: "short" });
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
 export function NoteRow({ note, projects = [], onFile, onDelete, hideProject }: NoteRowProps) {
   const navigate = useNavigate();
   const time = new Date(note.recordedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const day = dayLabel(note.recordedAt);
   const processing = note.status === "processing";
   const stillSaving = processing && note.source === "voice" && !note.audioPath;
   // A long recording is written up in pieces, so it takes a while longer.
@@ -33,12 +47,30 @@ export function NoteRow({ note, projects = [], onFile, onDelete, hideProject }: 
 
   return (
     <div className="group relative border-b border-hairline last:border-b-0">
-      <Link to={`/note/${note.id}`} className="block py-7 pr-9">
-        {project && (
-          <p className="mb-1.5 text-[0.68rem] uppercase tracking-[0.16em] text-primary/80">
-            {project.name}
-          </p>
-        )}
+      <Link to={`/note/${note.id}`} className="block py-5 pr-9">
+        <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[0.68rem] uppercase tracking-[0.15em]">
+          {project && (
+            <>
+              <span className="text-primary/85">{project.name}</span>
+              <span className="text-muted-foreground/45">·</span>
+            </>
+          )}
+          <span className="text-muted-foreground/70">{day}</span>
+          <span className="text-muted-foreground/45">·</span>
+          <span className="text-muted-foreground/70 normal-case tracking-normal">{time}</span>
+          {note.source === "typed" && (
+            <PenLine className="h-3 w-3 text-muted-foreground/60" strokeWidth={1.5} aria-label="Typed note" />
+          )}
+          {note.durationSeconds ? (
+            <>
+              <span className="text-muted-foreground/45">·</span>
+              <span className="tabular-nums normal-case tracking-normal text-muted-foreground/70">
+                {formatDuration(note.durationSeconds)}
+              </span>
+            </>
+          ) : null}
+        </div>
+
         <div className="flex items-baseline gap-3">
           <h3 className="note-title flex-1 min-w-0">
             {note.title ??
@@ -53,28 +85,13 @@ export function NoteRow({ note, projects = [], onFile, onDelete, hideProject }: 
           {processing && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-muted-foreground/70" />}
         </div>
 
-
         {note.synthesis && (
-          <p className="mt-2 text-[0.93rem] leading-[1.65] text-muted-foreground line-clamp-2">
+          <p className="mt-1.5 text-[0.93rem] leading-[1.6] text-muted-foreground line-clamp-1">
             {note.synthesis}
           </p>
         )}
-
-        <div className="mt-2.5 flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">
-          <span>{time}</span>
-          {note.source === "typed" && (
-            <PenLine className="w-3 h-3" strokeWidth={1.5} aria-label="Typed note" />
-          )}
-          {note.durationSeconds ? (
-            <>
-              <span>·</span>
-              <span className="tabular-nums normal-case tracking-normal">
-                {formatDuration(note.durationSeconds)}
-              </span>
-            </>
-          ) : null}
-        </div>
       </Link>
+
 
       {(onDelete || onFile) && (
         <DropdownMenu>

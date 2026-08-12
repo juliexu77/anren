@@ -10,7 +10,7 @@ export function CaptureLine({ projectId }: { projectId?: string | null }) {
   const suffix = projectId ? `?folder=${projectId}` : "";
 
   return (
-    <div className="mb-9 flex items-center gap-3 border-b border-hairline pb-3">
+    <div className="mb-6 flex items-center gap-3 border-b border-hairline pb-3">
       <button
         onClick={() => navigate(`/capture/write${suffix}`)}
         className="flex-1 min-w-0 truncate text-left font-editorial text-[1.15rem] italic text-muted-foreground/80 transition-colors hover:text-foreground"
