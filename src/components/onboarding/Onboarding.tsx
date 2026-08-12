@@ -82,7 +82,7 @@ function Frame({ children, className }: { children: React.ReactNode; className?:
 function Pill({ label, delay }: { label: string; delay: number }) {
   return (
     <span
-      className="rounded-full border border-hairline bg-paper/70 px-3 py-1.5 text-[0.78rem] leading-none text-muted-foreground animate-fade-in"
+      className="rounded-full border border-hairline bg-paper/70 px-3 py-1.5 text-[0.78rem] leading-none text-muted-foreground animate-fade-up"
       style={{ animationDelay: `${delay}ms`, animationFillMode: "both" }}
     >
       {label}
@@ -134,7 +134,7 @@ function CaptureDemo({ runKey }: { runKey: number }) {
       )}
 
       {stage >= 4 && (
-        <div className="mt-4 border-t border-hairline pt-4 animate-fade-in">
+        <div className="mt-4 border-t border-hairline pt-4 animate-fade-up">
           <h4 className="font-editorial text-[1.15rem] leading-snug">Deciding about the move</h4>
           <p className="mt-2 text-[0.9rem] leading-[1.6] text-muted-foreground">
             The flat isn't the question. What you'd be giving up is the morning walk — and you've
@@ -185,7 +185,7 @@ function FolderDemo({ runKey }: { runKey: number }) {
       </div>
 
       {stage >= 5 && (
-        <div className="mt-4 border-t border-hairline pt-4 animate-fade-in">
+        <div className="mt-4 border-t border-hairline pt-4 animate-fade-up">
           <p className="font-editorial text-[1.08rem] leading-[1.6]">
             Across these three, the decision keeps turning on a small daily thing rather than the
             big one you keep naming.
@@ -286,7 +286,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8">
         <div className="w-full max-w-[26rem]">
           {card === 0 && (
-            <div className="text-center animate-fade-in">
+            <div className="text-center animate-fade-up">
               <h1 className="font-editorial text-[2.4rem] leading-none tracking-[-0.01em]">anren</h1>
               <p className="mt-3 font-editorial text-[1.15rem] leading-snug text-muted-foreground">
                 where the mental load rests
@@ -298,7 +298,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           )}
 
           {card === 1 && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-up">
               <h2 className="font-editorial text-[1.5rem] leading-snug">Say it once</h2>
               <p className="mb-5 mt-2 text-[0.92rem] leading-[1.6] text-muted-foreground">
                 Press the mic and speak plainly. anren transcribes it and writes it up for you.
@@ -308,7 +308,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           )}
 
           {card === 2 && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-up">
               <h2 className="font-editorial text-[1.5rem] leading-snug">Put a few together</h2>
               <p className="mb-5 mt-2 text-[0.92rem] leading-[1.6] text-muted-foreground">
                 Make a folder, drop notes in, and anren reads across them to tell you what they have
@@ -319,7 +319,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           )}
 
           {card === 3 && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-up">
               <h2 className="font-editorial text-[1.5rem] leading-snug">Your week, read back</h2>
               <p className="mb-5 mt-2 text-[0.92rem] leading-[1.6] text-muted-foreground">
                 Once a week, without being asked, anren reads everything back in Reflect — and you
@@ -330,7 +330,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           )}
 
           {card === 4 && (
-            <div className="text-center animate-fade-in">
+            <div className="text-center animate-fade-up">
               <h2 className="font-editorial text-[1.9rem] leading-tight">Say something when you're ready.</h2>
               <p className="mt-3 text-[0.94rem] leading-[1.65] text-muted-foreground">
                 Nothing to set up. The mic is waiting at the bottom of the screen.
