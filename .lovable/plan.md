@@ -14,15 +14,14 @@ New route `/` renders a Home screen instead of the notes list. Notes moves to `/
 
 Home contains, vertically centred on the page:
 
-- the `anren` mark
-- one soft line: "What's on your mind?"
+- one soft line: "What's on your mind?" (no wordmark — it already sits at the top of every page)
 - the capture object, large and central — big mic as the primary action, with a text field beneath it that reads "Type or copy/paste from elsewhere…"
 
 Nothing else. No recent notes, no projects, no digest, no reflection nudge.
 
 **The reset loop.** On Home only:
 
-1. You press the mic → the line and mark recede, the live transcript appears in place of the prompt as you speak.
+1. You press the mic → the prompt line recedes and the live transcript appears in its place as you speak.
 2. You stop → "anren is writing it up…"
 3. Once saved → a brief quiet confirmation: "Kept it." plus, if anren filed it, "in <Project>" — with an unobtrusive *open it* link.
 4. After a few seconds it fades and Home returns to blank.
