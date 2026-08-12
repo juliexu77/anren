@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAiAccess } from "@/hooks/useAiAccess";
+import { clearLocalCache } from "@/lib/localCache";
 import { Trash2 } from "lucide-react";
 
 const Settings = () => {
@@ -12,6 +14,8 @@ const Settings = () => {
   const { projects, deleteProject } = useProjects();
   const { connected: aiConnected } = useAiAccess();
   const [noteCount, setNoteCount] = useState<number | null>(null);
+  const [clearing, setClearing] = useState(false);
+
 
   useEffect(() => {
     if (!user) return;
@@ -103,12 +107,39 @@ const Settings = () => {
         </div>
       </section>
 
+      <section className="mb-10">
+        <h2 className="mb-3 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
+          This device
+        </h2>
+        <button
+          onClick={async () => {
+            if (clearing) return;
+            setClearing(true);
+            const { flags, recordings } = await clearLocalCache();
+            setClearing(false);
+            toast(
+              recordings
+                ? `Cleared ${flags + recordings} local item${flags + recordings === 1 ? "" : "s"}.`
+                : "Nothing left on this device.",
+            );
+          }}
+          className="py-3 text-[0.94rem] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {clearing ? "Clearing…" : "Clear local cache"}
+        </button>
+        <p className="mt-1 text-[0.82rem] leading-relaxed text-muted-foreground/80">
+          Forgets this session's look-back flags and any leftover recording slices. Your notes stay
+          where they are.
+        </p>
+      </section>
+
       <button
         onClick={signOut}
         className="rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground hover:text-foreground transition-colors"
       >
         Sign out
       </button>
+
 
     </div>
   );
