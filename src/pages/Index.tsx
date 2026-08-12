@@ -19,7 +19,7 @@ const Index = () => {
 
   return (
     <div>
-      <header className="mb-8">
+      <header className="mb-5">
         <div className="flex items-center gap-2.5">
           {project && (
             <FolderEmojiPicker
