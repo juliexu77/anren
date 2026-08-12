@@ -5,7 +5,6 @@ import { FolderReflection } from "@/components/FolderReflection";
 import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
-import { ReflectNudge } from "@/components/ReflectNudge";
 import { CaptureLine } from "@/components/CaptureLine";
 
 import type { Note } from "@/types/note";
@@ -45,7 +44,6 @@ const Index = () => {
 
   return (
     <div>
-      {!projectId && notes.length > 0 && <ReflectNudge />}
       <header className="mb-8">
         <div className="flex items-center gap-2.5">
           {project && (
