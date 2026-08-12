@@ -25,16 +25,28 @@ The earlier version made the user record their first note. This one asks nothing
 
 The animation loops once and rests on the finished note. A "play it again" affordance replays it, and "next" moves on. Respects reduced-motion by rendering the finished note immediately with no typing effect.
 
-**Card 3 — it remembers.** Folders, search, and the weekly reading, shown as three still miniatures rather than text alone: a folder row, a search result, and a Reflect card with theme pills.
+**Card 3 — filing, animated.** A folder gets made in miniature, then the pattern-finding lands:
 
-**Card 4 — over to you.** "Say something when you're ready." Dismisses onboarding and drops them on the feed with the composer in focus — no forced recording.
+1. Two or three example note rows sit in a small feed mock.
+2A folder name types itself into a new-folder row, a glyph sparkles into place, and the notes slide into it one by one.
+3. The folder's reflection then writes itself in: a short reading in serif, followed by theme pills appearing one at a time. The point being made: once a few thoughts sit together, anren tells you what they have in common.
 
-## 3. Two example notes, clearly marked
+**Card 4 — the weekly reading.** A Reflect card animates in the same way — the week's narrative, then its pills — with one line explaining anren does this on its own, once a week, without being asked.
 
-Seeded once when onboarding finishes, so folders, search and Reflect aren't empty rooms on day one:
+**Card 5 — over to you.** "Say something when you're ready." Dismisses onboarding and drops them on the feed with the composer in focus — no forced recording.
 
-- Two short notes with real-sounding titles and synthesis, filed in an example folder, each row labelled as an example.
-- One "clear the examples" action in Settings and on the seeded folder that removes both notes and the folder in a single tap.
+## 3. No seeded notes — a blank canvas, on purpose
+
+Your instinct is the right one, and the research backs it. Apps whose content is *work* — Notion, Craft — seed starter templates. Apps whose content is *first-person and intimate* — Day One, Bear, Apple Notes, Reflect, Obsidian — never fabricate diary entries; they teach with prompts and walkthroughs instead. Day One specifically holds its AI features back until you've actually written something.
+
+Two reasons it matters here: a fake voice memo with a fake write-up reads as uncanny in a space sold as private, and it's clutter the user has to delete out of their own archive. Since the animated cards already teach the mechanic, seeding would be redundant on top of risky.
+
+So instead:
+
+- **A warm, actionable empty feed.** One line naming the next action rather than describing the app: press record and say what's on your mind — anren will write it up.
+- **Defer the derived surfaces.** Reflect and folder reflections don't show empty or fake cards; until there's real material they show a quiet not-yet line ("once a few thoughts have gathered, anren will read them back"). No fake reading, no placeholder pills.
+
+Sources: Day One AI features (dayoneapp.com/guides/ai-features/go-deeper/), Smashing Magazine on onboarding empty states (smashingmagazine.com/2017/02/user-onboarding-empty-states-mobile-apps/), Carbon Design System empty-state pattern (v10.carbondesignsystem.com/patterns/empty-states-pattern/), "Designing for Honesty" (intrepidkarthi.com/writing/designing-for-honesty/).
 
 ## 4. The Reflect nudge
 
@@ -42,12 +54,11 @@ Once the user has their own notes and a weekly reading exists, a single dismissi
 
 ## Also
 
-- Rewrite the empty Notes state to say what happens next, not just what the app is.
 - "Show me around again" in Settings replays the sequence.
 
 ## Technical notes
 
 - Gate on the existing `profiles.onboarding_completed` (already defaults to `false`) — no schema change. A small `useOnboarding` hook reads and flips it; the app shell renders the onboarding overlay above the routes while it's `false`, so no new routes.
-- The demo card is pure presentation: staged local state driving the typing and reveal, with fixed example copy. It never touches the recorder, the microphone, or any edge function, so it costs nothing and can't fail.
-- Example notes are inserted client-side with `source: 'typed'` and pre-written `title`/`synthesis`, plus a marker for identifying and removing them. They aren't embedded, so vector search stays clean.
+- The demo cards are pure presentation: staged local state driving the typing, filing and reveal beats, with fixed example copy. They never touch the recorder, the microphone, the database, or any edge function, so they cost nothing and can't fail.
+- Nothing is written to the user's account during onboarding beyond flipping the flag.
 - Copy stays lowercase "anren", contemplative voice, no productivity language.
