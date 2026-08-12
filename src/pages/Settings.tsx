@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAiAccess } from "@/hooks/useAiAccess";
 import { Trash2 } from "lucide-react";
+import { replayOnboarding } from "@/hooks/useOnboarding";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -102,6 +103,16 @@ const Settings = () => {
           ))}
         </div>
       </section>
+
+      <button
+        onClick={() => {
+          navigate("/");
+          replayOnboarding();
+        }}
+        className="mb-4 block rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        Show me around again
+      </button>
 
       <button
         onClick={signOut}

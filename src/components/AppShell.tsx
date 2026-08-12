@@ -3,10 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ProjectRail } from "@/components/ProjectRail";
 import { CaptureBar } from "@/components/CaptureBar";
+import { Onboarding } from "@/components/onboarding/Onboarding";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [railOpen, setRailOpen] = useState(false);
   const location = useLocation();
+  const { needed: showOnboarding, finish: finishOnboarding } = useOnboarding();
 
   return (
     <div className="min-h-screen w-full">
@@ -64,6 +67,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <CaptureBar />
+
+      {showOnboarding && <Onboarding onDone={finishOnboarding} />}
     </div>
   );
 }
