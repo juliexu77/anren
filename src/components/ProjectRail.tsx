@@ -5,6 +5,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { NoteRailItem } from "@/components/NoteRailItem";
+import { ProjectSuggestion } from "@/components/ProjectSuggestion";
 
 
 import {
@@ -98,7 +99,17 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
         anren
       </Link>
 
-      <nav className="flex flex-col gap-0.5 md:mt-0 mt-10">
+      <NavLink
+        to="/"
+        end
+        onClick={onNavigate}
+        className="mb-4 flex items-center gap-2 rounded-lg border border-hairline px-3 py-2.5 text-[0.9rem] text-primary transition-colors hover:bg-paper-sunk/60 md:mt-0 mt-10"
+      >
+        <Plus className="w-[16px] h-[16px]" strokeWidth={1.5} />
+        New thought
+      </NavLink>
+
+      <nav className="flex flex-col gap-0.5">
         <NavLink to="/notes" className={navItemClass} onClick={onNavigate}>
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
@@ -232,6 +243,10 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
               A project is a thread you keep coming back to. anren will notice them as you talk.
             </p>
           )}
+        </div>
+
+        <div className="mt-3">
+          <ProjectSuggestion enabled={notes.length >= 5} variant="rail" />
         </div>
 
         {notes.length > 0 && (

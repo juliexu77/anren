@@ -9,6 +9,8 @@ import { RecorderProvider } from "@/contexts/RecorderContext";
 import { AppShell } from "@/components/AppShell";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
+import VoiceCapture from "./pages/VoiceCapture";
+import WriteCapture from "./pages/WriteCapture";
 
 import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
@@ -58,6 +60,8 @@ const App = () => (
 
 
           <Route path="/" element={<ProtectedShell><Home /></ProtectedShell>} />
+          <Route path="/capture/voice" element={<ProtectedShell><VoiceCapture /></ProtectedShell>} />
+          <Route path="/capture/write" element={<ProtectedShell><WriteCapture /></ProtectedShell>} />
           <Route path="/notes" element={<ProtectedShell><Index /></ProtectedShell>} />
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
           
