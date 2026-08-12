@@ -21,7 +21,7 @@ Nothing else. No recent notes, no projects, no digest, no reflection nudge.
 
 **The reset loop.** On Home only:
 
-1. You press the mic → the line and mark recede, the live transcript appears in place of the prompt as you speak.
+1. You press the mic → the prompt line recedes and the live transcript appears in its place as you speak.
 2. You stop → "anren is writing it up…"
 3. Once saved → a brief quiet confirmation: "Kept it." plus, if anren filed it, "in <Project>" — with an unobtrusive *open it* link.
 4. After a few seconds it fades and Home returns to blank.
