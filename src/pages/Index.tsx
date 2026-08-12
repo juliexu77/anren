@@ -65,10 +65,8 @@ const Index = () => {
         <p className="text-[0.9rem] text-muted-foreground">Gathering your notes…</p>
       ) : !notes.length ? (
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
-          <p className="font-editorial text-[1.2rem] leading-snug">Start by saying something out loud.</p>
-          <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
-            Tap the microphone below and ramble — or write it down instead. Anren will title it, sum it up, and keep
-            it here for you.
+          <p className="font-editorial text-[1.2rem] leading-snug">
+            Talk or write. Anren will keep the thought and write it up.
           </p>
         </div>
       ) : (

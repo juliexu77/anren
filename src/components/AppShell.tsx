@@ -53,7 +53,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <main className="flex-1 min-w-0">
           <div key={location.pathname} className="mx-auto w-full max-w-[720px] px-5 md:px-10 pt-6 animate-fade-up"
-            style={{ paddingBottom: "calc(var(--capture-bar-h, 10rem) + 2rem)" }}
+            style={{
+              paddingBottom:
+                "calc(var(--capture-bar-h, 6rem) + env(safe-area-inset-bottom, 0px) + 28px)",
+            }}
           >
             {children}
           </div>
