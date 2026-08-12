@@ -1,11 +1,13 @@
-import { Loader2, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useLookBack } from "@/hooks/useLookBack";
-import { ThemePills } from "@/components/ThemePills";
 import { AskNotes } from "@/components/AskNotes";
+import { cn } from "@/lib/utils";
 
 const Reflect = () => {
   const { digest, loading, generating, weekStart, generate, readyForFirst } = useLookBack();
+  const [open, setOpen] = useState(false);
 
   const weekLabel = new Date(`${weekStart}T00:00:00`).toLocaleDateString([], {
     month: "long",
@@ -65,18 +67,25 @@ const Reflect = () => {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          <p className="font-editorial text-[1.15rem] leading-[1.6]">{digest.narrative}</p>
+        <div>
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="flex items-center gap-2 text-[0.9rem] italic underline decoration-[0.5px] underline-offset-[3px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Read this week back
+            <ChevronDown
+              className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")}
+              strokeWidth={1.5}
+            />
+          </button>
 
-          <ThemePills
-            items={digest.themes.map((theme) => ({
-              label: theme.title,
-              detail: theme.detail,
-            }))}
-          />
+          {open && (
+            <p className="mt-4 font-editorial text-[1.15rem] leading-[1.6] motion-safe:animate-fade-in">
+              {digest.narrative}
+            </p>
+          )}
         </div>
-
-
       )}
 
       <AskNotes />
