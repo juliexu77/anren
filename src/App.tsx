@@ -22,8 +22,6 @@ import Support from "./pages/Support";
 import DeleteAccount from "./pages/DeleteAccount";
 import NotFound from "./pages/NotFound";
 
-import { Onboarding } from "@/components/onboarding/Onboarding";
-const TempOnb = () => <Onboarding onDone={() => {}} />;
 const queryClient = new QueryClient();
 
 function ProtectedShell({ children }: { children: React.ReactNode }) {
@@ -52,7 +50,6 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/~oauth/callback" element={<LovableOAuthCallback />} />
-          <Route path="/__onb" element={<TempOnb />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/support" element={<Support />} />
