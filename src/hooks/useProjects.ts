@@ -8,6 +8,9 @@ import type { Project } from "@/types/note";
 
 const SELECT = "id, name, position, emoji";
 
+// Shared across every mounted rail: name -> the insert already on its way.
+const recentCreates = new Map<string, Promise<Project | null>>();
+
 export function useProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -46,15 +49,34 @@ export function useProjects() {
     async (name: string) => {
       if (!user || !name.trim()) return null;
       const trimmed = name.trim();
-      const { data } = await supabase
-        .from("projects")
-        .insert({ user_id: user.id, name: trimmed, position: projects.length })
-        .select(SELECT)
-        .single();
-      if (!data) return null;
+
+      // Two rails are mounted at once (drawer + sidebar) and a keypress can land
+      // beside a trailing blur, so the same folder used to get written twice.
+      // Anything asking for the same name within a breath gets the first row.
+      const key = `${user.id}:${trimmed.toLowerCase()}`;
+      const inFlight = recentCreates.get(key);
+      if (inFlight) return inFlight;
+
+      const request = (async () => {
+        const { data } = await supabase
+          .from("projects")
+          .insert({ user_id: user.id, name: trimmed, position: projects.length })
+          .select(SELECT)
+          .single();
+        return (data as Project | null) ?? null;
+      })();
+      recentCreates.set(key, request);
+      window.setTimeout(() => recentCreates.delete(key), 3000);
+
+      const data = await request;
+      if (!data) {
+        recentCreates.delete(key);
+        return null;
+      }
+
 
       const created = data as Project;
-      setProjects((prev) => [...prev, created]);
+      setProjects((prev) => (prev.some((p) => p.id === created.id) ? prev : [...prev, created]));
 
       // Suggest an emoji in the background; silent on failure.
       supabase.functions
