@@ -1,26 +1,34 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Mic, Square, PenLine } from "lucide-react";
+import { Mic, Square, ArrowUp, Loader2 } from "lucide-react";
 import { useRecorder } from "@/contexts/RecorderContext";
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
-
-import { ComposeSheet } from "@/components/ComposeSheet";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { formatDuration } from "@/lib/wav";
 import { cn } from "@/lib/utils";
 
+const MAX_TEXTAREA_H = 140;
+
 export function CaptureBar() {
-  const { status, elapsed, liveText, level, start, stop } = useRecorder();
+  const { status, elapsed, liveText, level, start, stop, cancel } = useRecorder();
   const { session: recovered, busy, keep, discard } = useRecordingRecovery();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const params = useParams();
   const folderId = params.projectId ?? null;
-  const [writing, setWriting] = useState(false);
+
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const recording = status === "recording";
+  const hasText = text.trim().length > 0;
 
-  // The bar grows (recovery card, live transcript), so publish its real height
-  // and let the page reserve exactly that much room.
+  // The composer grows (recovery card, live transcript, pasted text), so publish
+  // its real height and let the page reserve exactly that much room.
   const barRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = barRef.current;
@@ -33,7 +41,15 @@ export function CaptureBar() {
     return () => observer.disconnect();
   }, []);
 
-  const handleClick = async () => {
+  // Auto-grow the textarea up to a ceiling, then scroll internally.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_H)}px`;
+  }, [text]);
+
+  const handleMic = async () => {
     if (status === "idle") {
       await start(folderId);
     } else if (recording) {
@@ -42,12 +58,50 @@ export function CaptureBar() {
     }
   };
 
+  const saveText = async () => {
+    const body = text.trim();
+    if (!user || !body || saving) return;
+    setSaving(true);
+
+    const { data, error } = await supabase
+      .from("notes")
+      .insert({
+        user_id: user.id,
+        project_id: folderId,
+        source: "typed",
+        body,
+        transcript: body,
+        recorded_at: new Date().toISOString(),
+        status: "processing",
+      })
+      .select("id")
+      .single();
+
+    setSaving(false);
+
+    if (error || !data) {
+      toast.error("Couldn't keep that note.");
+      return;
+    }
+
+    supabase.functions.invoke("process-note", { body: { noteId: data.id } }).then(({ error: fnError }) => {
+      if (fnError) console.error("process-note failed:", fnError.message);
+    });
+
+    setText("");
+    textareaRef.current?.blur();
+    toast.success("Kept it.");
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <ComposeSheet open={writing} onOpenChange={setWriting} projectId={folderId} />
-      <div ref={barRef} className="mx-auto w-full max-w-[720px] px-5 md:px-10 pb-6 md:pl-[calc(248px+2.5rem)] md:max-w-[968px]">
+      <div
+        ref={barRef}
+        className="mx-auto w-full max-w-[720px] px-5 md:px-10 md:pl-[calc(248px+2.5rem)] md:max-w-[968px]"
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+      >
         {recovered && !recording && (
-          <div className="pointer-events-auto mb-3 rounded-[18px] border border-hairline bg-paper/95 backdrop-blur-xl p-4 animate-fade-up">
+          <div className="pointer-events-auto mb-3 rounded-[18px] border border-hairline bg-paper p-4 animate-fade-up">
             <p className="text-[0.92rem] leading-[1.6] text-foreground">
               You were part-way through something — keep it?
             </p>
@@ -80,27 +134,63 @@ export function CaptureBar() {
 
         <div
           className={cn(
-            "pointer-events-auto rounded-[22px] border border-hairline bg-paper/95 backdrop-blur-xl transition-all duration-500",
-            recording ? "p-5 shadow-lift" : "p-3",
+            "pointer-events-auto rounded-[26px] border border-hairline bg-paper transition-all duration-300",
+            recording ? "px-4 pt-4 pb-3" : "px-2.5 py-2",
           )}
         >
           {recording && (
-            <div className="mb-4 max-h-32 overflow-y-auto">
+            <div className="mb-3 max-h-32 overflow-y-auto">
               <p className="text-[0.92rem] leading-[1.7] text-muted-foreground">
                 {liveText || "Listening…"}
               </p>
             </div>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-end gap-2">
+            {recording || status === "saving" ? (
+              <div className="min-w-0 flex-1 pb-3 pl-2">
+                {status === "saving" ? (
+                  <p className="text-[0.92rem] text-muted-foreground">Saving your note…</p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <p className="text-[0.92rem] tabular-nums text-foreground">{formatDuration(elapsed)}</p>
+                    <button
+                      onClick={cancel}
+                      className="text-[0.82rem] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    void saveText();
+                  }
+                }}
+                rows={1}
+                aria-label="Write or paste a note"
+                placeholder="Write something…"
+                className="min-w-0 flex-1 resize-none bg-transparent px-3 py-3 text-[0.95rem] leading-[1.55] outline-none placeholder:text-muted-foreground/70"
+                style={{ maxHeight: MAX_TEXTAREA_H }}
+              />
+            )}
+
             <button
-              onClick={handleClick}
-              disabled={status === "saving"}
-              aria-label={recording ? "Stop recording" : "Start recording"}
+              onClick={hasText && !recording ? saveText : handleMic}
+              disabled={status === "saving" || saving}
+              aria-label={
+                recording ? "Stop recording" : hasText ? "Save note" : "Start recording"
+              }
               className={cn(
-                "relative flex items-center justify-center w-12 h-12 rounded-full shrink-0 transition-colors",
-                recording ? "bg-primary text-primary-foreground" : "bg-primary/90 text-primary-foreground hover:bg-primary",
-                status === "saving" && "opacity-60",
+                "relative flex items-center justify-center w-[50px] h-[50px] min-h-[44px] min-w-[44px] shrink-0 rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+                (status === "saving" || saving) && "opacity-60",
               )}
             >
               {recording && (
@@ -109,35 +199,16 @@ export function CaptureBar() {
                   style={{ transform: `scale(${1 + level * 1.4})` }}
                 />
               )}
-              {recording ? (
+              {saving ? (
+                <Loader2 className="w-[19px] h-[19px] relative animate-spin" strokeWidth={1.6} />
+              ) : recording ? (
                 <Square className="w-4 h-4 relative" strokeWidth={2} fill="currentColor" />
+              ) : hasText ? (
+                <ArrowUp className="w-[20px] h-[20px] relative" strokeWidth={1.8} />
               ) : (
-                <Mic className="w-[19px] h-[19px] relative" strokeWidth={1.6} />
+                <Mic className="w-[20px] h-[20px] relative" strokeWidth={1.6} />
               )}
             </button>
-
-            <div className="min-w-0 flex-1">
-              {status === "saving" ? (
-                <p className="text-[0.92rem] text-muted-foreground">Saving your note…</p>
-              ) : recording ? (
-                <p className="text-[0.92rem] tabular-nums text-foreground">{formatDuration(elapsed)}</p>
-              ) : (
-                <p className="text-[0.92rem] text-muted-foreground">
-                  Talk it through. anren listens and writes it up.
-                </p>
-              )}
-            </div>
-
-            {!recording && status !== "saving" && (
-              <button
-                onClick={() => setWriting(true)}
-                aria-label="Write a note instead"
-                className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-[0.82rem] text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors"
-              >
-                <PenLine className="w-[15px] h-[15px]" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Write</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
