@@ -123,7 +123,7 @@ export function CaptureBar() {
                 <p className="text-[0.92rem] tabular-nums text-foreground">{formatDuration(elapsed)}</p>
               ) : (
                 <p className="text-[0.92rem] text-muted-foreground">
-                  Talk it through. Anren listens and writes it up.
+                  Talk it through. anren listens and writes it up.
                 </p>
               )}
             </div>

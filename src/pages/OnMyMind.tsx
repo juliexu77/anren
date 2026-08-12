@@ -1,101 +1,65 @@
-import { useCallback, useEffect, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-
-interface Theme {
-  title: string;
-  detail: string;
-}
-
-interface Digest {
-  id: string;
-  weekStart: string;
-  narrative: string;
-  themes: Theme[];
-}
-
-function startOfWeek(date = new Date()) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Monday
-  d.setDate(d.getDate() + diff);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { useLookBack } from "@/hooks/useLookBack";
 
 const OnMyMind = () => {
-  const { user } = useAuth();
-  const [digest, setDigest] = useState<Digest | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const { digest, loading, generating, weekStart, generate, readyForFirst } = useLookBack();
 
-  const load = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("weekly_digests")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("week_start", startOfWeek())
-      .maybeSingle();
-
-    setDigest(
-      data
-        ? {
-            id: data.id,
-            weekStart: data.week_start,
-            narrative: data.narrative,
-            themes: Array.isArray(data.themes) ? (data.themes as unknown as Theme[]) : [],
-          }
-        : null,
-    );
-    setLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const generate = async () => {
-    setGenerating(true);
-    const { error } = await supabase.functions.invoke("weekly-digest", { body: {} });
-    setGenerating(false);
-    if (error) {
-      toast.error("Couldn't look back just now.");
-      return;
-    }
-    load();
-  };
-
-  const weekLabel = new Date(`${startOfWeek()}T00:00:00`).toLocaleDateString([], {
+  const weekLabel = new Date(`${weekStart}T00:00:00`).toLocaleDateString([], {
     month: "long",
     day: "numeric",
   });
 
+  const readBackOn = digest
+    ? new Date(digest.updatedAt).toLocaleDateString([], { weekday: "long" })
+    : null;
+
+  const lookAgain = async () => {
+    try {
+      await generate();
+    } catch {
+      toast("Couldn't look back just now.");
+    }
+  };
+
   return (
     <div>
-      <header className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">On my mind</h1>
-          <p className="mt-1.5 text-[0.9rem] text-muted-foreground">Week of {weekLabel}</p>
+      <header className="mb-8">
+        <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">On my mind</h1>
+        <div className="mt-1.5 flex items-center gap-3 text-[0.9rem] text-muted-foreground">
+          <span>Week of {weekLabel}</span>
+          {digest && !generating && (
+            <>
+              <span className="text-muted-foreground/40">·</span>
+              <button
+                onClick={lookAgain}
+                className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground/80 hover:text-foreground transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" strokeWidth={1.5} />
+                Look again
+              </button>
+            </>
+          )}
         </div>
-        <button
-          onClick={generate}
-          disabled={generating}
-          className="flex items-center gap-2 rounded-full border border-hairline bg-paper px-4 py-2 text-[0.82rem] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
-        >
-          {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />}
-          {digest ? "Look back" : "Look back"}
-        </button>
+        {readBackOn && !generating && (
+          <p className="mt-1 text-[0.8rem] text-muted-foreground/60">Read back {readBackOn}</p>
+        )}
       </header>
 
       {loading ? (
         <p className="text-[0.9rem] text-muted-foreground">Looking back over the week…</p>
+      ) : generating ? (
+        <p className="flex items-center gap-2 text-[0.9rem] text-muted-foreground">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Reading back your week…
+        </p>
       ) : !digest ? (
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">Nothing pulled together yet.</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-muted-foreground">
-            Once you've left a few notes this week, anren can read them back and suggest what keeps coming up.
+            {readyForFirst
+              ? "anren will read this week back shortly."
+              : "Once you've left a few notes this week, anren reads them back on its own and suggests what keeps coming up."}
           </p>
         </div>
       ) : (
@@ -113,7 +77,9 @@ const OnMyMind = () => {
                 {digest.themes.map((theme) => (
                   <div key={theme.title}>
                     <h3 className="note-title">{theme.title}</h3>
-                    <p className="mt-1.5 text-[0.93rem] leading-[1.7] text-muted-foreground">{theme.detail}</p>
+                    <p className="mt-1.5 text-[0.93rem] leading-[1.7] text-muted-foreground">
+                      {theme.detail}
+                    </p>
                   </div>
                 ))}
               </div>
