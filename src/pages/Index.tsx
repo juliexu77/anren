@@ -6,7 +6,7 @@ import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { ReflectNudge } from "@/components/ReflectNudge";
-import { ProjectSuggestion } from "@/components/ProjectSuggestion";
+
 import type { Note } from "@/types/note";
 
 
