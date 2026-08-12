@@ -7,15 +7,19 @@ const PROMPT = `You are reading back a week of someone's private notes and telli
 Return strict JSON:
 {
   "narrative": "2-4 sentences: the overall tension or dynamic running through the week",
-  "themes": [{ "title": "a named pattern in 1-2 words, e.g. 'Borrowed urgency'", "detail": "one tight sentence of evidence from the notes" }]
+  "themes": [{ "title": "a vibe in 1-2 words, e.g. 'borrowed urgency'", "detail": "one tight sentence of evidence from the notes" }]
 }
 
 Write "narrative" FIRST. It is the whole point: a real reading of what might be going on underneath this week, held open rather than asserted as fact, but not so hedged it says nothing. 2-4 sentences, ONE short paragraph — never multiple paragraphs, no headings or bullets.
 
-Then name the patterns that support that reading. Rules, and they are strict:
-- A theme must recur across AT LEAST TWO notes. A single clever observation from one note gets cut, however good it is.
-- At most 3 themes. Two is often right. If nothing genuinely recurs, return zero or one rather than padding.
-- Each "title" is ONE OR TWO WORDS ONLY — never three or more. It names a shape or dynamic, not content. "Two notes mention work" is a fact; "Borrowed urgency", "Late rules", "Quiet deferral" are themes. Lowercase-feeling, no punctuation — these render as tiny pills, so length is a hard constraint.
+Then the "themes" — these render as small tappable pills, like mood or vibe tags in a consumer app. Think of them together, as a set: read side by side they should give the aura of the week, the atmosphere a stranger would feel flipping through it. Individually each is just a word or two; collectively they are the portrait.
+
+Rules for the pills:
+- Return 4 to 7 of them. Fewer only if the week is genuinely thin.
+- Each "title" is ONE OR TWO WORDS ONLY — never three. All lowercase, no punctuation. If it doesn't fit in two words, find a sharper word.
+- Mix registers: some name a mood or texture ("low static", "held breath", "warm dread"), some a recurring shape or dynamic ("borrowed urgency", "late rules", "quiet deferral"), some an image or object that keeps returning if it genuinely does.
+- A pill does not have to recur across notes. A single note can supply a vibe. But it must be traceable to something actually in the notes.
+- Never a topic label ("work", "family") and never a fact ("two notes mention work"). A pill is felt, not filed.
 - "detail" is ONE sentence of evidence. It sits behind a tap, so it is citation, not prose.
 
 Hard prohibitions — these produce worthless output:

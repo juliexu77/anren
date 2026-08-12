@@ -8,17 +8,21 @@ Return strict JSON:
 {
   "reading": "2-4 sentences: the overall tension or dynamic running through these notes",
   "observations": [
-    { "text": "a named pattern in 1-2 words, e.g. 'Unchosen rooms'", "grounding": "one tight sentence of evidence from the notes", "note_ids": ["uuid", "uuid"] }
+    { "text": "a vibe in 1-2 words, e.g. 'unchosen rooms'", "grounding": "one tight sentence of evidence from the notes", "note_ids": ["uuid"] }
   ]
 }
 
 Write "reading" FIRST. It is the whole point: a real reading of what might be going on underneath these notes, held open rather than asserted as fact, but not so hedged it says nothing. 2-4 sentences. Leave it empty only if there is nothing honest to say.
 
-Then name the patterns that support that reading. Rules, and they are strict:
-- A pattern must recur across AT LEAST TWO notes. note_ids must contain two or more ids. A single clever observation from one note gets cut, however good it is.
-- At most 3 patterns. Two is often right. If nothing genuinely recurs, return zero or one and say so plainly rather than padding.
-- Each "text" is ONE OR TWO WORDS ONLY — never three or more. It names a shape or dynamic, not content. "Two of these mention water" is a fact; "Unchosen rooms", "Late rules", "Failing tools" are patterns. Lowercase-feeling, no punctuation. These render as tiny pills, so length is a hard constraint: if it doesn't fit in two words, find a sharper word.
-- "grounding" is ONE sentence of evidence. It sits behind a toggle, so it is citation, not prose.
+Then the "observations" — these render as small tappable pills, like mood or vibe tags in a consumer app. Think of them together, as a set: read side by side they should give the aura of this collection, the atmosphere a stranger would feel flipping through it. Individually each is just a word or two; collectively they are the portrait.
+
+Rules for the pills:
+- Return 4 to 7 of them. Fewer only if the collection is genuinely thin.
+- ONE OR TWO WORDS ONLY — never three. All lowercase, no punctuation. If it doesn't fit in two words, find a sharper word.
+- Mix registers: some name a mood or texture ("low static", "held breath", "warm dread"), some a recurring shape or dynamic ("unchosen rooms", "late rules", "failing tools"), some an object or image that keeps returning if it genuinely does.
+- A pill does not have to recur across notes. A single note can supply a vibe. But it must be traceable — note_ids lists the notes it rests on, at least one.
+- Never a topic label ("work", "family", "dreams") and never a fact ("two mention water"). A pill is felt, not filed.
+- "grounding" is ONE sentence of evidence. It sits behind a tap, so it is citation, not prose.
 
 Hard prohibitions — these produce worthless output:
 - Never describe what kind of notes these are, what genre or format they're in, or how many there are. They know. Nothing like "many of these recount dreams".
@@ -27,10 +31,7 @@ Hard prohibitions — these produce worthless output:
 - No therapy voice, no advice, no scores, metrics, productivity language, headings, or emojis.
 - Never invent a detail, person, place, or day. Everything you claim must be traceable to the notes.
 
-What is actually worth naming — second-order things: what keeps appearing next to what; what's conspicuously absent; where the emotional register doesn't match the content; what repeats in form rather than subject; how something is described early versus late.
-
-Voice: second person, direct, unhurried, warm. Their language over yours. note_ids must be ids from the notes given to you, only the ones that pattern actually rests on.`;
-
+Voice: second person, direct, unhurried, warm. Their language over yours. note_ids must be ids from the notes given to you.`;
 
 interface Observation {
   text: string;
@@ -107,9 +108,8 @@ Deno.serve(async (req) => {
         grounding: o.grounding ?? '',
         note_ids: [...new Set((o.note_ids ?? []).filter((id) => validIds.has(id)))],
       }))
-      // A pattern only earns its place if it recurs across two or more notes.
-      .filter((o) => o.note_ids.length >= 2)
-      .slice(0, 3);
+      .filter((o) => o.note_ids.length >= 1)
+      .slice(0, 7);
 
 
     const { data: saved, error: saveError } = await supabase
