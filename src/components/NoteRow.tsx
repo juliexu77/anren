@@ -18,19 +18,27 @@ interface NoteRowProps {
   projects?: Project[];
   onFile?: (noteId: string, projectId: string | null) => void;
   onDelete?: (noteId: string) => void;
+  /** Inside a project view the label would just repeat the page title. */
+  hideProject?: boolean;
 }
 
-export function NoteRow({ note, projects = [], onFile, onDelete }: NoteRowProps) {
+export function NoteRow({ note, projects = [], onFile, onDelete, hideProject }: NoteRowProps) {
   const navigate = useNavigate();
   const time = new Date(note.recordedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   const processing = note.status === "processing";
   const stillSaving = processing && note.source === "voice" && !note.audioPath;
   // A long recording is written up in pieces, so it takes a while longer.
   const long = (note.durationSeconds ?? 0) >= 600;
+  const project = hideProject ? null : projects.find((p) => p.id === note.projectId) ?? null;
 
   return (
     <div className="group relative border-b border-hairline last:border-b-0">
-      <Link to={`/note/${note.id}`} className="block py-5 pr-9">
+      <Link to={`/note/${note.id}`} className="block py-7 pr-9">
+        {project && (
+          <p className="mb-1.5 text-[0.68rem] uppercase tracking-[0.16em] text-primary/80">
+            {project.name}
+          </p>
+        )}
         <div className="flex items-baseline gap-3">
           <h3 className="note-title flex-1 min-w-0">
             {note.title ??
