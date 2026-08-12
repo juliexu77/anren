@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 const Reflect = () => {
   const { digest, loading, generating, weekStart, generate, readyForFirst } = useLookBack();
+  const { notes, loading: notesLoading } = useNotes(null);
   const [open, setOpen] = useState(false);
 
   const weekLabel = new Date(`${weekStart}T00:00:00`).toLocaleDateString([], {
