@@ -16,7 +16,6 @@ Home contains, vertically centred on the page:
 
 - one soft line: "What's on your mind?" (no wordmark — it already sits at the top of every page)
 - the capture object, large and central — big mic as the primary action, with a text field beneath it that reads "Type or copy/paste from elsewhere…"
-- the capture object, large and central — big mic as the primary action, with a text field beneath it that reads "Type or copy/paste from elsewhere…"
 
 Nothing else. No recent notes, no projects, no digest, no reflection nudge.
 
