@@ -3,6 +3,8 @@ import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useLookBack } from "@/hooks/useLookBack";
 import { AskNotes } from "@/components/AskNotes";
+import { ProjectSuggestion } from "@/components/ProjectSuggestion";
+import { useNotes } from "@/hooks/useNotes";
 import { cn } from "@/lib/utils";
 
 const Reflect = () => {
