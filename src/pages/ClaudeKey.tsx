@@ -25,7 +25,7 @@ const ClaudeKey = () => {
     }
     setKey("");
     await refresh();
-    toast("Connected. Anren will write up your notes with your own key from here on.");
+    toast("Connected. anren will write up your notes with your own key from here on.");
   };
 
   const remove = async () => {
@@ -53,7 +53,7 @@ const ClaudeKey = () => {
       <p className="mt-4 text-[0.95rem] leading-[1.7] text-muted-foreground">
         Recording, transcribing and keeping your notes is always free. The write-ups —
         the summaries, the reflections, the look back — are written by Claude, and past a
-        point those run on your own key rather than Anren's.
+        point those run on your own key rather than anren's.
       </p>
 
       {connected ? (

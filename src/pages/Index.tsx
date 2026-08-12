@@ -52,9 +52,11 @@ const Index = () => {
           )}
           <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">{heading}</h1>
         </div>
-        <p className="mt-1.5 text-[0.9rem] text-muted-foreground">
-          {notes.length ? `${notes.length} note${notes.length === 1 ? "" : "s"}` : "Nothing here yet"}
-        </p>
+        {notes.length > 0 && (
+          <p className="mt-1.5 text-[0.9rem] text-muted-foreground">
+            {`${notes.length} note${notes.length === 1 ? "" : "s"}`}
+          </p>
+        )}
         {projectId && notes.length >= 2 && (
           <FolderReflection projectId={projectId} notes={notes} />
         )}
@@ -66,9 +68,12 @@ const Index = () => {
       ) : !notes.length ? (
         <div className="rounded-[20px] border border-hairline bg-paper/70 px-6 py-10 text-center">
           <p className="font-editorial text-[1.2rem] leading-snug">
-            Talk or write. Anren will keep the thought and write it up.
+            {projectId
+              ? "Nothing filed here yet. Record or move a note in and it will live here."
+              : "Talk or write. anren will keep the thought and write it up."}
           </p>
         </div>
+
       ) : (
         <div className="flex flex-col gap-10">
           {groups.map((group) => (
