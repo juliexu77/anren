@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { NoteRow } from "@/components/NoteRow";
 import { FolderReflection } from "@/components/FolderReflection";
@@ -7,30 +6,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { CaptureLine } from "@/components/CaptureLine";
 
-import type { Note } from "@/types/note";
 
-
-function dayLabel(iso: string) {
-  const date = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  if (same(date, today)) return "Today";
-  if (same(date, yesterday)) return "Yesterday";
-  return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
-}
-
-function groupByDay(notes: Note[]) {
-  const groups: { label: string; notes: Note[] }[] = [];
-  for (const note of notes) {
-    const label = dayLabel(note.recordedAt);
-    const last = groups[groups.length - 1];
-    if (last && last.label === label) last.notes.push(note);
-    else groups.push({ label, notes: [note] });
-  }
-  return groups;
-}
 
 const Index = () => {
   const { projectId } = useParams();
@@ -38,8 +14,7 @@ const Index = () => {
   const { projects, setProjectEmoji } = useProjects();
 
   const project = projectId ? projects.find((p) => p.id === projectId) : undefined;
-  const heading = projectId ? project?.name ?? "Project" : "Notes";
-  const groups = useMemo(() => groupByDay(notes), [notes]);
+  const heading = projectId ? project?.name ?? "Project" : "All notes";
   const autoFiled = projectId ? notes.filter((n) => n.autoFiledAt).length : 0;
 
   return (
@@ -56,14 +31,9 @@ const Index = () => {
           )}
           <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">{heading}</h1>
         </div>
-        {notes.length > 0 && (
-          <p className="mt-1.5 text-[0.9rem] text-muted-foreground">
-            {`${notes.length} note${notes.length === 1 ? "" : "s"}`}
-            {autoFiled > 0 && (
-              <span className="text-muted-foreground/70">
-                {` · anren added ${autoFiled} of them here`}
-              </span>
-            )}
+        {projectId && autoFiled > 0 && (
+          <p className="mt-1.5 text-[0.9rem] text-muted-foreground/70">
+            {`anren added ${autoFiled} of these here`}
           </p>
         )}
         {projectId && notes.length >= 2 && (
@@ -90,25 +60,16 @@ const Index = () => {
 
 
       ) : (
-        <div className="flex flex-col gap-10">
-          {groups.map((group) => (
-            <section key={group.label}>
-              <h2 className="mb-1 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
-                {group.label}
-              </h2>
-              <div>
-                {group.notes.map((note) => (
-                  <NoteRow
-                    key={note.id}
-                    note={note}
-                    projects={projects}
-                    onFile={(id, folder) => updateNote(id, { projectId: folder })}
-                    onDelete={deleteNote}
-                    hideProject={!!projectId}
-                  />
-                ))}
-              </div>
-            </section>
+        <div>
+          {notes.map((note) => (
+            <NoteRow
+              key={note.id}
+              note={note}
+              projects={projects}
+              onFile={(id, folder) => updateNote(id, { projectId: folder })}
+              onDelete={deleteNote}
+              hideProject={!!projectId}
+            />
           ))}
         </div>
       )}
