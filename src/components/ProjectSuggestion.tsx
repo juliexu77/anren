@@ -7,7 +7,13 @@ import { useProjectSuggestions } from "@/hooks/useProjectSuggestions";
  * A quiet nudge, never a chore: anren says what it noticed and you either let
  * it stand or wave it away. Notes stay in the feed either way.
  */
-export function ProjectSuggestion({ enabled }: { enabled: boolean }) {
+export function ProjectSuggestion({
+  enabled,
+  variant = "card",
+}: {
+  enabled: boolean;
+  variant?: "card" | "rail";
+}) {
   const { suggestion, accept, dismiss, working } = useProjectSuggestions(enabled);
   const { createProject } = useProjects();
   const navigate = useNavigate();
@@ -27,6 +33,34 @@ export function ProjectSuggestion({ enabled }: { enabled: boolean }) {
       action: { label: "Open", onClick: () => navigate(`/folder/${projectId}`) },
     });
   };
+
+  if (variant === "rail") {
+    return (
+      <div className="px-3 py-2">
+        <p className="text-[0.82rem] leading-[1.5] text-muted-foreground">
+          {existing
+            ? `${count} note${count === 1 ? "" : "s"} seem to belong in ${suggestion.name}`
+            : `${count} notes seem to belong together — ${suggestion.name}`}
+        </p>
+        <div className="mt-1.5 flex items-center gap-3 text-[0.8rem]">
+          <button
+            onClick={onAccept}
+            disabled={working}
+            className="text-primary underline decoration-[0.5px] underline-offset-[3px] transition-opacity hover:opacity-80 disabled:opacity-50"
+          >
+            {existing ? "Add them" : "Make it"}
+          </button>
+          <button
+            onClick={dismiss}
+            disabled={working}
+            className="text-muted-foreground/70 transition-colors hover:text-foreground disabled:opacity-50"
+          >
+            Not now
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8 rounded-[18px] border border-hairline bg-paper/70 px-5 py-4">

@@ -6,6 +6,7 @@ import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { ReflectNudge } from "@/components/ReflectNudge";
+import { CaptureLine } from "@/components/CaptureLine";
 
 import type { Note } from "@/types/note";
 
@@ -72,6 +73,8 @@ const Index = () => {
         )}
       </header>
 
+      <CaptureLine projectId={projectId ?? null} />
+
       {loading ? (
         <p className="text-[0.9rem] text-muted-foreground">Gathering your notes…</p>
       ) : !notes.length ? (
@@ -103,6 +106,7 @@ const Index = () => {
                     projects={projects}
                     onFile={(id, folder) => updateNote(id, { projectId: folder })}
                     onDelete={deleteNote}
+                    hideProject={!!projectId}
                   />
                 ))}
               </div>
