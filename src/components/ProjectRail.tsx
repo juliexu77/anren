@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
@@ -40,10 +40,36 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
     return () => window.clearTimeout(timer);
   }, [justCreatedId]);
 
+  const pendingName = useRef("");
+  const submitting = useRef(false);
+
+  const startAdding = () => {
+    pendingName.current = "";
+    submitting.current = false;
+    setAdding(true);
+  };
+
+  const cancelAdding = () => {
+    pendingName.current = "";
+    submitting.current = true;
+    setAdding(false);
+    setName("");
+  };
+
   const submit = async () => {
-    const created = await createProject(name);
+    // Enter (or the check) closes the row, which fires a trailing blur — without
+    // this guard the same folder gets created twice.
+    if (submitting.current) return;
+    const value = pendingName.current.trim();
+    if (!value) {
+      cancelAdding();
+      return;
+    }
+    submitting.current = true;
+    pendingName.current = "";
     setName("");
     setAdding(false);
+    const created = await createProject(value);
     if (created) {
       setJustCreatedId(created.id);
       navigate(`/folder/${created.id}`);
@@ -91,7 +117,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex items-center justify-between px-3 mb-2">
           <span className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">Folders</span>
           <button
-            onClick={() => setAdding(true)}
+            onClick={startAdding}
             aria-label="New folder"
             className="text-muted-foreground/70 hover:text-foreground transition-colors"
           >
@@ -183,15 +209,15 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
               <input
                 autoFocus
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  pendingName.current = e.target.value;
+                  setName(e.target.value);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") submit();
-                  if (e.key === "Escape") {
-                    setAdding(false);
-                    setName("");
-                  }
+                  if (e.key === "Escape") cancelAdding();
                 }}
-                onBlur={() => (name.trim() ? submit() : setAdding(false))}
+                onBlur={() => submit()}
                 placeholder="Folder name"
                 className="flex-1 bg-transparent text-[0.9rem] outline-none placeholder:text-muted-foreground/50"
               />
