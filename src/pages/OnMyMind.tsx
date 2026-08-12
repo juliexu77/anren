@@ -63,34 +63,17 @@ const OnMyMind = () => {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
-          {digest.themes.length > 0 && (
-            <section>
-              <h2 className="mb-4 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground/70">
-                What kept coming up
-              </h2>
-              <div className="flex flex-col gap-5">
-                {digest.themes.map((theme) => (
-                  <div key={theme.title}>
-                    <h3 className="note-title">{theme.title}</h3>
-                    <p className="mt-1.5 text-[0.93rem] leading-[1.7] text-muted-foreground">
-                      {theme.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+        <div className="flex flex-col gap-6">
+          <p className="font-editorial text-[1.15rem] leading-[1.6]">{digest.narrative}</p>
 
-          <section className={digest.themes.length > 0 ? "border-t border-hairline pt-7" : undefined}>
-            <h2 className="mb-3 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground/70">
-              The longer read
-            </h2>
-            <p className="whitespace-pre-line font-editorial text-[1.08rem] leading-[1.75]">
-              {digest.narrative}
-            </p>
-          </section>
+          <ThemePills
+            items={digest.themes.map((theme) => ({
+              label: theme.title,
+              detail: theme.detail,
+            }))}
+          />
         </div>
+
 
       )}
     </div>
