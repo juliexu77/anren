@@ -57,7 +57,8 @@ const App = () => (
           <Route path="/delete-account" element={<ProtectedShell><DeleteAccount /></ProtectedShell>} />
 
 
-          <Route path="/" element={<ProtectedShell><Index /></ProtectedShell>} />
+          <Route path="/" element={<ProtectedShell><Home /></ProtectedShell>} />
+          <Route path="/notes" element={<ProtectedShell><Index /></ProtectedShell>} />
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
