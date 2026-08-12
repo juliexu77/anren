@@ -85,7 +85,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
   const removeFolder = (id: string) => {
     deleteProject(id);
-    if (location.pathname === `/folder/${id}`) navigate("/");
+    if (location.pathname === `/folder/${id}`) navigate("/notes");
   };
 
   return (
@@ -255,7 +255,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
                   onMove={(projectId) => updateNote(n.id, { projectId })}
                   onDelete={() => {
                     deleteNote(n.id);
-                    if (location.pathname === `/note/${n.id}`) navigate("/");
+                    if (location.pathname === `/note/${n.id}`) navigate("/notes");
                   }}
                 />
               ))}
