@@ -121,6 +121,7 @@ export type Database = {
         Row: {
           audio_path: string | null
           body: string | null
+          continues_note_id: string | null
           created_at: string
           deleted_at: string | null
           duration_seconds: number | null
@@ -140,6 +141,7 @@ export type Database = {
         Insert: {
           audio_path?: string | null
           body?: string | null
+          continues_note_id?: string | null
           created_at?: string
           deleted_at?: string | null
           duration_seconds?: number | null
@@ -159,6 +161,7 @@ export type Database = {
         Update: {
           audio_path?: string | null
           body?: string | null
+          continues_note_id?: string | null
           created_at?: string
           deleted_at?: string | null
           duration_seconds?: number | null
@@ -176,6 +179,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notes_continues_note_id_fkey"
+            columns: ["continues_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notes_project_id_fkey"
             columns: ["project_id"]

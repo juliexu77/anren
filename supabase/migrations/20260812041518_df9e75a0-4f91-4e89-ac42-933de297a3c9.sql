@@ -1,0 +1,2 @@
+ALTER TABLE public.notes ADD COLUMN continues_note_id uuid REFERENCES public.notes(id) ON DELETE SET NULL;
+CREATE INDEX notes_continues_note_id_idx ON public.notes (continues_note_id) WHERE continues_note_id IS NOT NULL;
