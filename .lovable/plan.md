@@ -1,17 +1,53 @@
-# Swap the capture mic button to the left of the text input
+# Composer layout + a hands-off onboarding
 
-Today the bottom composer has the text input on the left and the round mic/send button on the right. This is a quick layout change to put the recording button first and the typing/pasting field to its right, which feels more natural for a voice-first app.
+Two changes: the bottom capture bar puts recording first, and onboarding shows the magic instead of asking the user to perform it.
 
-## What changes
+## 1. Capture bar: record on the left, typing on the right
 
 In `src/components/CaptureBar.tsx`:
 
-- Reorder the inner flex row so the round action button (mic/send/stop) renders first, followed by the text area or the recording/saving status read-out.
-- Keep all existing behavior: the mic starts recording, the square stops it, the arrow sends a typed note, and the spinner shows while saving.
-- Keep all existing styling, animation, spacing, and accessible labels.
-- No state logic, API, or routing changes.
+- Reorder the inner flex row so the round action button (mic / stop / send / spinner) renders first, then the text field or the recording status read-out.
+- Change the field's placeholder to **"Type or copy/paste from elsewhere…"** and match the accessible label to it.
+- Everything else stays: mic starts, square stops, arrow sends a typed note, spinner while saving, same styling, animation, spacing and safe-area handling. No state, API, or routing changes.
 
-## Verification
+## 2. Onboarding: an animated example, nothing to perform
 
-- Typecheck passes.
-- In the preview, the composer shows a round button on the left and the text input on the right in idle state; during recording it shows the stop button on the left with the timer/cancel on the right; during a save it shows the spinner on the left with the saving message on the right.
+The earlier version made the user record their first note. This one asks nothing of them — anren demonstrates itself and they can watch, skip, or start whenever they like. A short sequence they tap through, full-screen on paper ivory, with a quiet "skip" always available.
+
+**Card 1 — anren.** "Where the mental load rests." One line under it: you talk, anren keeps the thought.
+
+**Card 2 — the demo, animated.** The whole loop plays itself out in miniature, no input needed:
+
+1. A small composer mock appears with the mic lit and a soft pulse ring — the same shape they'll see in the app.
+2. Example spoken words type themselves in, line by line, the way a live transcript arrives — a real-sounding, everyday thought, not a to-do list.
+3. The transcript settles, a brief line says anren is writing it up.
+4. The finished note fades in over it: title, a short synthesis, the words underneath. This is the payoff beat, held long enough to read.
+
+The animation loops once and rests on the finished note. A "play it again" affordance replays it, and "next" moves on. Respects reduced-motion by rendering the finished note immediately with no typing effect.
+
+**Card 3 — it remembers.** Folders, search, and the weekly reading, shown as three still miniatures rather than text alone: a folder row, a search result, and a Reflect card with theme pills.
+
+**Card 4 — over to you.** "Say something when you're ready." Dismisses onboarding and drops them on the feed with the composer in focus — no forced recording.
+
+## 3. Two example notes, clearly marked
+
+Seeded once when onboarding finishes, so folders, search and Reflect aren't empty rooms on day one:
+
+- Two short notes with real-sounding titles and synthesis, filed in an example folder, each row labelled as an example.
+- One "clear the examples" action in Settings and on the seeded folder that removes both notes and the folder in a single tap.
+
+## 4. The Reflect nudge
+
+Once the user has their own notes and a weekly reading exists, a single dismissible line at the top of the feed: "anren has read your week back — see Reflect." No coach marks anywhere.
+
+## Also
+
+- Rewrite the empty Notes state to say what happens next, not just what the app is.
+- "Show me around again" in Settings replays the sequence.
+
+## Technical notes
+
+- Gate on the existing `profiles.onboarding_completed` (already defaults to `false`) — no schema change. A small `useOnboarding` hook reads and flips it; the app shell renders the onboarding overlay above the routes while it's `false`, so no new routes.
+- The demo card is pure presentation: staged local state driving the typing and reveal, with fixed example copy. It never touches the recorder, the microphone, or any edge function, so it costs nothing and can't fail.
+- Example notes are inserted client-side with `source: 'typed'` and pre-written `title`/`synthesis`, plus a marker for identifying and removing them. They aren't embedded, so vector search stays clean.
+- Copy stays lowercase "anren", contemplative voice, no productivity language.
