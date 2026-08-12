@@ -8,7 +8,7 @@ Return strict JSON:
 {
   "reading": "2-4 sentences: the overall tension or dynamic running through these notes",
   "observations": [
-    { "text": "a named pattern, 3-8 words, e.g. 'Competence becoming responsibility'", "grounding": "one tight sentence of evidence from the notes", "note_ids": ["uuid", "uuid"] }
+    { "text": "a named pattern in 1-2 words, e.g. 'Unchosen rooms'", "grounding": "one tight sentence of evidence from the notes", "note_ids": ["uuid", "uuid"] }
   ]
 }
 
@@ -17,7 +17,7 @@ Write "reading" FIRST. It is the whole point: a real reading of what might be go
 Then name the patterns that support that reading. Rules, and they are strict:
 - A pattern must recur across AT LEAST TWO notes. note_ids must contain two or more ids. A single clever observation from one note gets cut, however good it is.
 - At most 3 patterns. Two is often right. If nothing genuinely recurs, return zero or one and say so plainly rather than padding.
-- Each "text" is a short named phrase naming a shape or dynamic — not a description of content. "Two of these mention water" is a fact, not a pattern. "Competence becoming responsibility", "Rules arriving too late", "Tools failing under threat" are patterns.
+- Each "text" is ONE OR TWO WORDS ONLY — never three or more. It names a shape or dynamic, not content. "Two of these mention water" is a fact; "Unchosen rooms", "Late rules", "Failing tools" are patterns. Lowercase-feeling, no punctuation. These render as tiny pills, so length is a hard constraint: if it doesn't fit in two words, find a sharper word.
 - "grounding" is ONE sentence of evidence. It sits behind a toggle, so it is citation, not prose.
 
 Hard prohibitions — these produce worthless output:

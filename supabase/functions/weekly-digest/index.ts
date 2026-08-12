@@ -7,7 +7,7 @@ const PROMPT = `You are reading back a week of someone's private notes and telli
 Return strict JSON:
 {
   "narrative": "2-4 sentences: the overall tension or dynamic running through the week",
-  "themes": [{ "title": "a named pattern, 3-8 words, e.g. 'Competence becoming responsibility'", "detail": "one tight sentence of evidence from the notes" }]
+  "themes": [{ "title": "a named pattern in 1-2 words, e.g. 'Borrowed urgency'", "detail": "one tight sentence of evidence from the notes" }]
 }
 
 Write "narrative" FIRST. It is the whole point: a real reading of what might be going on underneath this week, held open rather than asserted as fact, but not so hedged it says nothing. 2-4 sentences, ONE short paragraph — never multiple paragraphs, no headings or bullets.
@@ -15,7 +15,7 @@ Write "narrative" FIRST. It is the whole point: a real reading of what might be 
 Then name the patterns that support that reading. Rules, and they are strict:
 - A theme must recur across AT LEAST TWO notes. A single clever observation from one note gets cut, however good it is.
 - At most 3 themes. Two is often right. If nothing genuinely recurs, return zero or one rather than padding.
-- Each "title" names a shape or dynamic, not content. "Two notes mention work" is a fact, not a theme. "Competence becoming responsibility", "Rules arriving too late", "Deciding by not deciding" are themes. Lowercase-feeling, short — these are read as small pills.
+- Each "title" is ONE OR TWO WORDS ONLY — never three or more. It names a shape or dynamic, not content. "Two notes mention work" is a fact; "Borrowed urgency", "Late rules", "Quiet deferral" are themes. Lowercase-feeling, no punctuation — these render as tiny pills, so length is a hard constraint.
 - "detail" is ONE sentence of evidence. It sits behind a tap, so it is citation, not prose.
 
 Hard prohibitions — these produce worthless output:
