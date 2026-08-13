@@ -1,9 +1,15 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useProjects } from "@/hooks/useProjects";
+import { suggestProjectForThread } from "@/lib/associateNote";
+import { cn } from "@/lib/utils";
 import type { Thread, ThreadNote } from "@/hooks/useThreads";
 
 const DAY = 24 * 60 * 60 * 1000;
+/** How long the notes take to visibly draw together before they're a project. */
+const GATHER_MS = 620;
+const SUGGEST_KEY = "anren.clusterSuggestions";
 
 /** A plain read of the shape of this little pile — never a metric. */
 function shapeLine(notes: ThreadNote[]) {
@@ -14,6 +20,29 @@ function shapeLine(notes: ThreadNote[]) {
   if (gap > 18) return "You came back to this";
   if (stretch > 14) return "These have been accumulating";
   return "These seem to belong together";
+}
+
+interface Suggestion {
+  projectId: string;
+  projectName: string;
+}
+
+function readCache(): Record<string, Suggestion | null> {
+  try {
+    const raw = window.sessionStorage.getItem(SUGGEST_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, Suggestion | null>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCache(threadId: string, value: Suggestion | null) {
+  try {
+    const next = { ...readCache(), [threadId]: value };
+    window.sessionStorage.setItem(SUGGEST_KEY, JSON.stringify(next));
+  } catch {
+    /* a suggestion is a nicety */
+  }
 }
 
 /**
@@ -35,37 +64,69 @@ export function ThreadCard({
   ) => Promise<string | null>;
   working: boolean;
 }) {
-  const { createProject } = useProjects();
+  const { createProject, projects } = useProjects();
   const navigate = useNavigate();
+  const [gathering, setGathering] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
 
   const loose = thread.notes.filter((n) => !n.projectId);
+
+  // Might this pile already belong somewhere? Asked once per visit, quietly.
+  useEffect(() => {
+    if (!projects.length || loose.length < 2) return;
+    const cache = readCache();
+    if (thread.id in cache) {
+      setSuggestion(cache[thread.id]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const found = await suggestProjectForThread(thread.id);
+      const valid = found && projects.some((p) => p.id === found.projectId) ? found : null;
+      writeCache(thread.id, valid);
+      if (!cancelled) setSuggestion(valid);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [thread.id, projects, loose.length]);
+
   if (loose.length < 2) return null;
 
   const shown = loose.slice(0, 5);
   const rest = loose.length - shown.length;
 
-  const promote = async () => {
-    const projectId = await onPromoted(thread, createProject);
+  const gather = async (existingProjectId?: string, label?: string) => {
+    setGathering(label ?? thread.name);
+    // Let the pile visibly draw together before it becomes a project.
+    await new Promise((r) => window.setTimeout(r, GATHER_MS));
+    const projectId = await onPromoted(thread, createProject, existingProjectId);
     if (!projectId) {
+      setGathering(null);
       toast("Couldn't set that up just now.");
       return;
     }
-    toast(`${thread.name} is a project now.`, {
-      action: { label: "Open", onClick: () => navigate(`/folder/${projectId}`) },
-    });
+    toast(
+      existingProjectId
+        ? `Added to ${label ?? "that project"}.`
+        : `${thread.name} is a project now.`,
+      { action: { label: "Open", onClick: () => navigate(`/folder/${projectId}`) } },
+    );
   };
 
   return (
     <article>
       <h3 className="font-editorial text-[1.1rem] leading-tight tracking-[-0.01em]">
-        {thread.name}
+        {gathering ?? thread.name}
         <span className="ml-2 font-sans text-[0.72rem] uppercase tracking-[0.12em] text-muted-foreground/60">
           {loose.length} notes
         </span>
       </h3>
-      <p className="mt-1 text-[0.8rem] text-muted-foreground/75">{shapeLine(loose)}</p>
+      <p className="mt-1 text-[0.8rem] text-muted-foreground/75">
+        {gathering ? "Gathering these together…" : shapeLine(loose)}
+      </p>
 
-      <div className="thread-cluster mt-2.5">
+      <div className={cn("thread-cluster mt-2.5", gathering && "motion-safe:animate-gather")}>
         {shown.map((n) => (
           <Link
             key={n.id}
@@ -85,22 +146,43 @@ export function ThreadCard({
         )}
       </div>
 
-      <div className="mt-2.5 flex items-center gap-5 pl-4 text-[0.82rem]">
-        <button
-          onClick={promote}
-          disabled={working}
-          className="text-primary transition-opacity hover:opacity-80 disabled:opacity-50"
-        >
-          Gather into a project →
-        </button>
-        <button
-          onClick={onDismiss}
-          disabled={working}
-          className="text-muted-foreground/60 transition-colors hover:text-foreground disabled:opacity-50"
-        >
-          Not this
-        </button>
-      </div>
+      {!gathering && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 pl-4 text-[0.82rem]">
+          {suggestion && (
+            <button
+              onClick={() => gather(suggestion.projectId, suggestion.projectName)}
+              disabled={working}
+              className="text-primary transition-opacity hover:opacity-80 disabled:opacity-50"
+            >
+              Add to {suggestion.projectName} →
+            </button>
+          )}
+          <button
+            onClick={() => gather()}
+            disabled={working}
+            className={cn(
+              "transition-opacity hover:opacity-80 disabled:opacity-50",
+              suggestion ? "text-muted-foreground/80 hover:text-foreground" : "text-primary",
+            )}
+          >
+            {suggestion ? "Start a project instead →" : "Gather into a project →"}
+          </button>
+          <button
+            onClick={onDismiss}
+            disabled={working}
+            className="text-muted-foreground/60 transition-colors hover:text-foreground disabled:opacity-50"
+          >
+            Not this
+          </button>
+        </div>
+      )}
+
+      <Link
+        to={`/reflect?thread=${thread.id}`}
+        className="mt-2 inline-block pl-4 text-[0.8rem] italic text-muted-foreground/70 underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
+      >
+        What's going on in this?
+      </Link>
     </article>
   );
 }
