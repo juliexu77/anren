@@ -9,7 +9,7 @@ const SYSTEM_PROMPT = `You turn a person's spoken voice memo into a short writte
 Return strict JSON:
 {
   "title": "one line, max 9 words, in their own voice, naming the actual thought — never 'Voice note' or a date",
-  "synthesis": "2-4 sentences describing what they were working out, any decision or intention, and anything they said they'd do. Plain prose, no bullet points, no headings."
+  "synthesis": "3-6 bullet points, one per line, each starting with '- '. Each bullet is one short sentence: what they were working out, any decision or intention, anything they said they'd do. No headings, no nested bullets, no prose paragraphs."
 }
 
 Rules:
