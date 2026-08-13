@@ -103,14 +103,19 @@ function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
   return new Blob([header, pcm as unknown as BlobPart], { type: 'audio/wav' });
 }
 
-/** Ten minutes of 16 kHz mono — comfortably inside the transcriber's limits. */
-const CHUNK_BYTES = 10 * 60 * BYTES_PER_SECOND;
+/**
+ * Ninety seconds of 16 kHz mono. Small enough that even a short memo is split
+ * into a few pieces transcribed at the same time, which is what keeps the wait
+ * after "keep it" short.
+ */
+const CHUNK_BYTES = 90 * BYTES_PER_SECOND;
 /** How far either side of a boundary to look for a quiet moment. */
 const CUT_SEARCH = 4 * BYTES_PER_SECOND;
 /** A little of the previous chunk is repeated so nothing falls in the crack. */
 const OVERLAP = Math.floor(1.5 * BYTES_PER_SECOND);
 const WINDOW = Math.floor(0.1 * BYTES_PER_SECOND);
-const CONCURRENCY = 3;
+const CONCURRENCY = 4;
+
 
 /**
  * Cutting at an exact byte count lands mid-word almost every time. Look around
@@ -245,16 +250,27 @@ async function transcribeParts(
     if (onProgress) await onProgress(joinAll(texts)).catch(() => {});
   };
 
-  for (const name of parts) {
-    const { data } = await admin.storage.from('voice-notes').download(`${folder}/${name}`);
-    if (!data) continue;
-    const bytes = new Uint8Array(await data.arrayBuffer());
-    if (bytes.length <= WAV_HEADER) continue;
-    const pcm = bytes.subarray(WAV_HEADER);
-    batch.push(pcm);
-    batchBytes += pcm.length;
+  // A five-second slice per file means dozens of small downloads; fetching
+  // them a handful at a time keeps that from becoming the wait.
+  const DOWNLOADS = 8;
+  for (let i = 0; i < parts.length; i += DOWNLOADS) {
+    const names = parts.slice(i, i + DOWNLOADS);
+    const pieces = await Promise.all(
+      names.map(async (name) => {
+        const { data } = await admin.storage.from('voice-notes').download(`${folder}/${name}`);
+        if (!data) return null;
+        const bytes = new Uint8Array(await data.arrayBuffer());
+        return bytes.length > WAV_HEADER ? bytes.subarray(WAV_HEADER) : null;
+      }),
+    );
+    for (const pcm of pieces) {
+      if (!pcm) continue;
+      batch.push(pcm);
+      batchBytes += pcm.length;
+    }
     if (batchBytes >= CHUNK_BYTES) await flush();
   }
+
   await flush();
 
   return joinAll(texts);
@@ -444,34 +460,41 @@ Deno.serve(async (req) => {
       .update({ transcript, title, synthesis, status: 'ready', error_message: null })
       .eq('id', noteId);
 
-    // The words are safe now, so the recording itself isn't kept.
-    if (!typed && !continuesId && note.audio_path) {
-      await discardAudio(admin, note.user_id, noteId, note.audio_path);
-    }
-
-
-
-    // Index passages for semantic search — best effort, never blocks the note.
-    try {
-      const passages = chunkText(`${title}\n\n${synthesis}\n\n${transcript}`);
-      if (passages.length) {
-        const vectors = await embed(passages);
-        await admin.from('note_passages').delete().eq('note_id', noteId);
-        await admin.from('note_passages').insert(
-          passages.map((content, index) => ({
-            note_id: noteId,
-            user_id: user.id,
-            chunk_index: index,
-            content,
-            embedding: vectors[index] ? JSON.stringify(vectors[index]) : null,
-          })),
-        );
+    // Everything left is housekeeping the person never sees: throwing the
+    // recording away, and indexing the words for search. Doing it after the
+    // reply means the note lands as soon as it's readable.
+    const settledId = noteId;
+    const tidyUp = async () => {
+      if (!typed && !continuesId && note.audio_path) {
+        await discardAudio(admin, note.user_id, settledId, note.audio_path);
       }
-    } catch (embedError) {
-      console.error('embedding failed:', (embedError as Error).message);
-    }
+      try {
+        const passages = chunkText(`${title}\n\n${synthesis}\n\n${transcript}`);
+        if (passages.length) {
+          const vectors = await embed(passages);
+          await admin.from('note_passages').delete().eq('note_id', settledId);
+          await admin.from('note_passages').insert(
+            passages.map((content, index) => ({
+              note_id: settledId,
+              user_id: user.id,
+              chunk_index: index,
+              content,
+              embedding: vectors[index] ? JSON.stringify(vectors[index]) : null,
+            })),
+          );
+        }
+      } catch (embedError) {
+        console.error('embedding failed:', (embedError as Error).message);
+      }
+    };
+
+    const runner = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } })
+      .EdgeRuntime;
+    if (runner?.waitUntil) runner.waitUntil(tidyUp());
+    else await tidyUp();
 
     return jsonResponse({ ok: true, title, synthesis });
+
   } catch (error) {
     const message = (error as Error).message ?? 'Processing failed';
     console.error('process-note error:', message);

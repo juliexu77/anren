@@ -34,6 +34,9 @@ export function landingLine(landing: Landing | null | undefined): string | null 
   return null;
 }
 
+/** How long the screen waits on the reading before it lets go. */
+const READING_MS = 4000;
+
 export async function noticeNote(
   noteId: string,
   onStage: (stage: NoticeStage) => void,
@@ -52,8 +55,26 @@ export async function noticeNote(
     .maybeSingle();
 
   onStage("reading");
-  const landing = await associateNoteAsync(noteId);
+  // The reading keeps going either way — it just doesn't get to hold the
+  // screen. If it lands in time, we can say where the note went.
+  const reading = associateNoteAsync(noteId);
+  const landing = await Promise.race([
+    reading,
+    new Promise<null>((r) => setTimeout(() => r(null), READING_MS)),
+  ]);
 
   onStage("landed");
-  return { noteId, title: (note?.title as string | null) ?? null, landing };
+  return {
+    noteId,
+    title: (note?.title as string | null) ?? null,
+    landing: landing ?? {
+      projectId: null,
+      projectName: null,
+      threadId: null,
+      threadName: null,
+      threadNoteCount: 0,
+      alreadyFiled: false,
+    },
+  };
 }
+

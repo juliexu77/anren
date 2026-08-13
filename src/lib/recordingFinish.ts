@@ -115,11 +115,21 @@ export async function finishSession(
   const noteId = await ensureNote(session);
   if (!noteId) return { noteId: null, saved: false };
 
-  let path = await uploadAudio(session.userId, noteId, segments, session.sampleRate);
+  // The slices pushed up while the person was talking already hold the whole
+  // recording, so there's nothing to upload again — hand the write-up the
+  // folder and let it stitch them. This is what makes stop feel instant.
+  const uploadedParts = session.uploadedParts ?? 0;
+  const segmentCount = session.segmentCount ?? 0;
+  const partsComplete = Boolean(session.uploaded) && segmentCount > 0 && uploadedParts >= segmentCount;
+
+  let path: string | null = partsComplete ? partsPrefix(session.userId, noteId) : null;
 
   if (!path) {
-    // Whole-file upload didn't make it — the slices pushed up during the
-    // recording do, so hand the write-up the folder instead.
+    path = await uploadAudio(session.userId, noteId, segments, session.sampleRate);
+  }
+
+  if (!path) {
+    // Whole-file upload didn't make it — whatever slices did land are enough.
     const prefix = partsPrefix(session.userId, noteId);
     const { data: parts } = await supabase.storage
       .from("voice-notes")
@@ -136,6 +146,7 @@ export async function finishSession(
       .eq("id", noteId);
     return { noteId, saved: false };
   }
+
 
 
   await supabase
