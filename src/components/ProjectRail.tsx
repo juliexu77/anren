@@ -23,6 +23,12 @@ const navItemClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-paper-sunk text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-paper-sunk/60",
   );
 
+const iconNavItemClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "p-2 rounded-lg transition-colors",
+    isActive ? "bg-paper-sunk text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-paper-sunk/60",
+  );
+
 export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
   const { projects, createProject, renameProject, deleteProject, setProjectEmoji } = useProjects();
   const { notes, updateNote, deleteNote } = useNotes();
