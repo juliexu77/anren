@@ -322,6 +322,29 @@ const NoteDetail = () => {
         className="w-full resize-none overflow-hidden bg-transparent pr-6 font-editorial text-[1.85rem] font-medium leading-[1.2] tracking-[-0.015em] outline-none placeholder:text-muted-foreground/60"
       />
 
+      {/* Where this note lives in the bigger shape */}
+      {(folderName || threads.length > 0) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {folderName && (
+            <Link
+              to={`/folder/${note.projectId}`}
+              className="rounded-full border border-hairline bg-paper-sunk/60 px-2.5 py-1 text-[0.75rem] text-foreground/80 transition-colors hover:text-foreground"
+            >
+              {folderName}
+            </Link>
+          )}
+          {threads.map((t) => (
+            <Link
+              key={t.id}
+              to="/threads"
+              className="rounded-full border border-hairline px-2.5 py-1 text-[0.75rem] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              part of {t.name}
+            </Link>
+          ))}
+        </div>
+      )}
+
       {/* Two views of the same thought */}
       <div className="mt-5 flex items-center gap-7 border-b border-hairline">
         {(
@@ -456,23 +479,6 @@ const NoteDetail = () => {
             </audio>
           )}
         </section>
-      )}
-
-      {threads.length > 0 && (
-        <p className="mt-10 text-[0.85rem] text-muted-foreground">
-          Part of{" "}
-          {threads.map((t, i) => (
-            <span key={t.id}>
-              {i > 0 && (i === threads.length - 1 ? " and " : ", ")}
-              <Link
-                to="/threads"
-                className="text-foreground underline decoration-hairline underline-offset-4"
-              >
-                {t.name}
-              </Link>
-            </span>
-          ))}
-        </p>
       )}
 
       {(related?.length || loadingRelated) && (
