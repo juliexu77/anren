@@ -14,23 +14,24 @@ export const PROMPT_SURFACES: Record<PromptSurface, boolean> = {
   threads: true,
 };
 
+const MODE_MENU = [
+  "Capture an idea before I lose it",
+  "Talk through a decision I'm stuck on",
+  "Debrief what just happened",
+  "Log last night's dream",
+  "Say the thing I'm avoiding saying",
+];
+
 export const PROMPT_SETS: Record<PromptSurface, string[]> = {
-  home: [
-    "What's on my mind right now?",
-    "What have I been avoiding today?",
-    "An idea I don't want to lose",
-    "What happened today that's worth remembering?",
-  ],
-  notes: [
-    "What's on my mind right now?",
-    "What have I been avoiding today?",
-    "An idea I don't want to lose",
-    "What happened today that's worth remembering?",
-  ],
+  home: MODE_MENU,
+  notes: MODE_MENU,
   project: [
     "Where did I leave this?",
     "What's not working yet?",
-    "What am I actually trying to say here?",
+    "Debrief what just happened",
   ],
-  threads: ["Something that's been nagging at me", "A decision I'm putting off"],
+  threads: [
+    "Talk through a decision I'm stuck on",
+    "Say the thing I'm avoiding saying",
+  ],
 };
