@@ -103,10 +103,14 @@ export function requestWriteUp(noteId: string): void {
  * The single-file upload is preferred (it plays back directly), but if it
  * can't complete we fall back to the parts already uploaded during recording,
  * which the write-up stitches back together server-side.
+ *
+ * Pass `handOff: false` when the caller wants to run the write-up itself and
+ * watch it happen — the capture screen does, so it can say what it noticed.
  */
 export async function finishSession(
   session: RecordingSession,
   segments: Float32Array[],
+  { handOff = true }: { handOff?: boolean } = {},
 ): Promise<{ noteId: string | null; saved: boolean }> {
   const noteId = await ensureNote(session);
   if (!noteId) return { noteId: null, saved: false };
@@ -139,7 +143,7 @@ export async function finishSession(
     .update({ audio_path: path, duration_seconds: session.elapsed, status: "processing" })
     .eq("id", noteId);
 
-  requestWriteUp(noteId);
+  if (handOff) requestWriteUp(noteId);
 
   return { noteId, saved: true };
 }

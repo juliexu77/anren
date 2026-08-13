@@ -14,7 +14,7 @@ export interface ProjectOverview {
   project: Project;
   count: number;
   recent: OverviewNote[];
-  /** Notes that arrived since you last opened this screen. */
+  /** Notes that arrived since you last opened this project. */
   newSinceLooked: number;
   lastActivityAt: number;
 }
@@ -27,6 +27,16 @@ function readLooked(): Record<string, number> {
     return raw ? (JSON.parse(raw) as Record<string, number>) : {};
   } catch {
     return {};
+  }
+}
+
+/** Stamped when you actually open a project — not when you glance at the list. */
+export function markProjectLooked(projectId: string) {
+  try {
+    const next = { ...readLooked(), [projectId]: Date.now() };
+    window.localStorage.setItem(LOOKED_KEY, JSON.stringify(next));
+  } catch {
+    /* fine — "new since" is a nicety */
   }
 }
 
@@ -68,30 +78,27 @@ export function useProjectOverview() {
     const mapped: ProjectOverview[] = projects.map((project) => {
       const notes = byProject.get(project.id) ?? [];
       const since = looked[project.id] ?? 0;
+      // A project never looked at yet: everything in it counts as unread once
+      // there's more than the first thing.
+      const newSinceLooked = since
+        ? notes.filter((n) => +new Date(n.recordedAt) > since).length
+        : 0;
       return {
         project,
         count: notes.length,
         recent: notes.slice(0, 2),
-        newSinceLooked: since
-          ? notes.filter((n) => +new Date(n.recordedAt) > since).length
-          : 0,
+        newSinceLooked,
         lastActivityAt: notes.length ? +new Date(notes[0].recordedAt) : 0,
       };
     });
 
-    mapped.sort((a, b) => b.lastActivityAt - a.lastActivityAt);
+    // What moved sits above what's been sitting still.
+    mapped.sort((a, b) => {
+      if (!!a.newSinceLooked !== !!b.newSinceLooked) return a.newSinceLooked ? -1 : 1;
+      return b.lastActivityAt - a.lastActivityAt;
+    });
     setOverviews(mapped);
     setLooseCount(loose);
-
-    // Mark this visit once we've read what was new.
-    const next: Record<string, number> = { ...looked };
-    const now = Date.now();
-    for (const p of projects) next[p.id] = now;
-    try {
-      window.localStorage.setItem(LOOKED_KEY, JSON.stringify(next));
-    } catch {
-      /* fine — "new since" is a nicety */
-    }
   }, [user, projects]);
 
   useEffect(() => {
@@ -101,3 +108,4 @@ export function useProjectOverview() {
 
   return { overviews, looseCount, loading: overviews === null, reload: load };
 }
+

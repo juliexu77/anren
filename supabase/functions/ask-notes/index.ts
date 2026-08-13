@@ -40,6 +40,13 @@ Deno.serve(async (req) => {
         answer: turn.answer.slice(0, 2000),
       }));
 
+    // A question can be scoped to one grouping of notes — the same nouns the
+    // Threads screen shows — instead of the whole archive.
+    const scopeIds = (Array.isArray(body.noteIds) ? body.noteIds : [])
+      .filter((id: unknown): id is string => typeof id === 'string')
+      .slice(0, 40);
+    const scopeName = typeof body.scopeName === 'string' ? body.scopeName.slice(0, 120) : '';
+
     // Retrieval first: the answer may only lean on words they actually left.
     let queryEmbedding: string | null = null;
     try {
@@ -49,15 +56,26 @@ Deno.serve(async (req) => {
       console.error('query embedding failed:', (error as Error).message);
     }
 
-    const { data: matches, error: searchError } = await supabase.rpc('hybrid_search_notes', {
-      query_text: question,
-      query_embedding: queryEmbedding,
-      match_count: 12,
-      filter_project: null,
-    });
-    if (searchError) throw searchError;
-
-    const rows = (matches ?? []) as { note_id: string; passage: string; score: number }[];
+    let rows: { note_id: string; passage: string; score: number }[] = [];
+    if (scopeIds.length) {
+      const { data: passages, error: passageError } = await supabase
+        .from('note_passages')
+        .select('note_id, content')
+        .in('note_id', scopeIds)
+        .order('chunk_index', { ascending: true })
+        .limit(40);
+      if (passageError) throw passageError;
+      rows = (passages ?? []).map((p) => ({ note_id: p.note_id, passage: p.content, score: 1 }));
+    } else {
+      const { data: matches, error: searchError } = await supabase.rpc('hybrid_search_notes', {
+        query_text: question,
+        query_embedding: queryEmbedding,
+        match_count: 12,
+        filter_project: null,
+      });
+      if (searchError) throw searchError;
+      rows = (matches ?? []) as { note_id: string; passage: string; score: number }[];
+    }
     if (!rows.length) {
       return jsonResponse({ answer: "You haven't left anything that speaks to this yet.", sources: [] });
     }
@@ -70,7 +88,7 @@ Deno.serve(async (req) => {
     if (notesError) throw notesError;
 
     const byId = new Map((notes ?? []).map((n) => [n.id, n]));
-    const kept = rows.filter((row) => byId.has(row.note_id)).slice(0, 8);
+    const kept = rows.filter((row) => byId.has(row.note_id)).slice(0, 10);
     if (!kept.length) {
       return jsonResponse({ answer: "You haven't left anything that speaks to this yet.", sources: [] });
     }
@@ -107,7 +125,9 @@ Deno.serve(async (req) => {
       ]),
       {
         role: 'user',
-        content: `Excerpts from their notes:\n\n${excerpts}${themeLine}\n\nTheir question: ${question}`,
+        content: scopeName
+          ? `These excerpts all come from one grouping of their notes called "${scopeName}". Answer only about that.\n\n${excerpts}${themeLine}\n\nTheir question: ${question}`
+          : `Excerpts from their notes:\n\n${excerpts}${themeLine}\n\nTheir question: ${question}`,
       },
     ];
 

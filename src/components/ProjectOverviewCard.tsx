@@ -1,17 +1,25 @@
 import { Link } from "react-router-dom";
 import { FolderMark } from "@/components/folder-glyphs";
-import type { ProjectOverview } from "@/hooks/useProjectOverview";
+import { markProjectLooked, type ProjectOverview } from "@/hooks/useProjectOverview";
 
 export function ProjectOverviewCard({ overview }: { overview: ProjectOverview }) {
   const { project, count, recent, newSinceLooked } = overview;
+  const seen = () => markProjectLooked(project.id);
 
   return (
     <article className="rounded-[18px] border border-hairline bg-paper/70 px-5 py-4">
       <div className="flex items-baseline justify-between gap-3">
         <Link
           to={`/folder/${project.id}`}
+          onClick={seen}
           className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80"
         >
+          {newSinceLooked > 0 && (
+            <span
+              aria-hidden
+              className="h-[6px] w-[6px] shrink-0 rounded-full bg-primary"
+            />
+          )}
           <FolderMark value={project.emoji} />
           <h3 className="truncate font-editorial text-[1.15rem] leading-tight tracking-[-0.01em]">
             {project.name}
@@ -30,6 +38,7 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
             <Link
               key={n.id}
               to={`/note/${n.id}`}
+              onClick={seen}
               className="flex items-baseline justify-between gap-3 py-[0.3rem] transition-colors hover:text-foreground"
             >
               <span className="truncate text-[0.875rem] leading-snug text-foreground/75">
@@ -49,7 +58,11 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
             ? `${newSinceLooked} new since you last looked`
             : "\u00a0"}
         </span>
-        <Link to={`/folder/${project.id}`} className="text-primary transition-opacity hover:opacity-80">
+        <Link
+          to={`/folder/${project.id}`}
+          onClick={seen}
+          className="text-primary transition-opacity hover:opacity-80"
+        >
           Open →
         </Link>
       </div>

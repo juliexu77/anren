@@ -420,9 +420,11 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          movements: Json
           narrative: string
           notes_analyzed: number
           project_id: string | null
+          tension: string | null
           themes: Json
           updated_at: string
           user_id: string
@@ -431,9 +433,11 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          movements?: Json
           narrative: string
           notes_analyzed?: number
           project_id?: string | null
+          tension?: string | null
           themes?: Json
           updated_at?: string
           user_id: string
@@ -442,9 +446,11 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          movements?: Json
           narrative?: string
           notes_analyzed?: number
           project_id?: string | null
+          tension?: string | null
           themes?: Json
           updated_at?: string
           user_id?: string
