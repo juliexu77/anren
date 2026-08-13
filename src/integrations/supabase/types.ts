@@ -418,6 +418,7 @@ export type Database = {
       }
       weekly_digests: {
         Row: {
+          bullets: Json
           created_at: string
           id: string
           movements: Json
@@ -431,6 +432,7 @@ export type Database = {
           week_start: string
         }
         Insert: {
+          bullets?: Json
           created_at?: string
           id?: string
           movements?: Json
@@ -444,6 +446,7 @@ export type Database = {
           week_start: string
         }
         Update: {
+          bullets?: Json
           created_at?: string
           id?: string
           movements?: Json
