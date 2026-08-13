@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HomeCaptureLine } from "@/components/HomeCaptureLine";
+import { StarterPrompts } from "@/components/StarterPrompts";
+
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
 import { supabase } from "@/integrations/supabase/client";
 import { notesChanged } from "@/lib/noteEvents";
@@ -123,8 +125,12 @@ export function CaptureSurface() {
             )}
           </div>
         ) : (
-          <HomeCaptureLine />
+          <>
+            <HomeCaptureLine />
+            <StarterPrompts surface="home" className="mt-7 max-w-[380px] mx-auto" />
+          </>
         )}
+
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { CaptureLine } from "@/components/CaptureLine";
+import { StarterPrompts } from "@/components/StarterPrompts";
+
 
 
 
@@ -55,7 +57,13 @@ const Index = () => {
               ? "Talk here, or bring a note in from the feed — anren will read across them once a couple have gathered, and keep an eye out for new ones that belong."
               : "Start on Home — say what's on your mind, or type it. anren writes it up and everything gathers here."}
           </p>
+          <StarterPrompts
+            surface={projectId ? "project" : "notes"}
+            projectId={projectId ?? null}
+            className="mt-6"
+          />
         </div>
+
 
 
 

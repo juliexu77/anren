@@ -4,6 +4,8 @@ import { ThreadCard } from "@/components/ThreadCard";
 import { ProjectOverviewCard } from "@/components/ProjectOverviewCard";
 import { useThreads } from "@/hooks/useThreads";
 import { useProjectOverview } from "@/hooks/useProjectOverview";
+import { StarterPrompts } from "@/components/StarterPrompts";
+
 
 const Threads = () => {
   const { threads, noticing, working, notice, dismiss, promote } = useThreads();
@@ -71,9 +73,13 @@ const Threads = () => {
         ) : threads === null ? (
           <p className="text-[0.9rem] text-muted-foreground">Opening…</p>
         ) : looseCount === 0 ? (
-          <p className="max-w-[38ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-            Everything you've kept has found a home.
-          </p>
+          <div>
+            <p className="max-w-[38ch] text-[0.95rem] leading-relaxed text-muted-foreground">
+              Everything you've kept has found a home.
+            </p>
+            <StarterPrompts surface="threads" className="mt-5 justify-start" />
+          </div>
+
         ) : (
           <div className="flex flex-col gap-10">
             {groupings.map((thread) => (
