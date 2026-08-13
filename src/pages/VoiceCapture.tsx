@@ -98,16 +98,37 @@ const VoiceCapture = () => {
         {noticing ? (
           <NoticingBeat stage={stage} title={title} landing={landed} />
         ) : (
-          <p
-            className={cn(
-              "mx-auto max-w-[36ch] font-editorial text-[1.35rem] leading-[1.7]",
-              liveText ? "text-foreground" : "text-muted-foreground",
+          <>
+            {prompt && !liveText && status !== "saving" && (
+              <div className="mx-auto mb-6 max-w-[36ch] text-center">
+                <p className="font-editorial text-[1.05rem] italic leading-[1.6] text-muted-foreground/80">
+                  {prompt}
+                </p>
+                <button
+                  onClick={() => {
+                    cancel();
+                    const p = new URLSearchParams({ prompt });
+                    if (folderId) p.set("folder", folderId);
+                    navigate(`/capture/write?${p.toString()}`, { replace: true });
+                  }}
+                  className="mt-2 text-[0.78rem] text-muted-foreground/70 underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
+                >
+                  write it instead
+                </button>
+              </div>
             )}
-          >
-            {status === "saving" ? "anren is keeping it…" : liveText || "Listening…"}
-          </p>
+            <p
+              className={cn(
+                "mx-auto max-w-[36ch] font-editorial text-[1.35rem] leading-[1.7]",
+                liveText ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {status === "saving" ? "anren is keeping it…" : liveText || "Listening…"}
+            </p>
+          </>
         )}
       </div>
+
 
       <div className="flex justify-center px-6 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1.5rem))]">
         <button
