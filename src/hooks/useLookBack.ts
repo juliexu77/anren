@@ -7,10 +7,19 @@ export interface Theme {
   detail: string;
 }
 
+export interface Movement {
+  name: string;
+  moved: string;
+}
+
 export interface LookBack {
   id: string;
   weekStart: string;
   narrative: string;
+  /** What moved, named the way the Threads screen names things. */
+  movements: Movement[];
+  /** Where two of those pull against each other, when they do. */
+  tension: string | null;
   themes: Theme[];
   notesAnalyzed: number;
   updatedAt: string;
@@ -67,6 +76,10 @@ export function useLookBack() {
           id: data.id,
           weekStart: data.week_start,
           narrative: data.narrative,
+          movements: Array.isArray(data.movements)
+            ? (data.movements as unknown as Movement[])
+            : [],
+          tension: (data.tension as string | null) ?? null,
           themes: Array.isArray(data.themes) ? (data.themes as unknown as Theme[]) : [],
           notesAnalyzed: data.notes_analyzed ?? 0,
           updatedAt: data.updated_at ?? data.created_at,

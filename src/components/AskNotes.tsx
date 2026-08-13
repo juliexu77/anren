@@ -27,7 +27,12 @@ const STARTERS = [
  * server, so every answer is anchored in words already spoken — the notes it
  * leaned on sit right underneath. Nothing here is kept once you walk away.
  */
-export function AskNotes() {
+export function AskNotes({
+  scope,
+}: {
+  /** Ask only of one grouping — the same nouns Threads shows. */
+  scope?: { name: string; noteIds: string[] };
+} = {}) {
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [asking, setAsking] = useState(false);
@@ -47,7 +52,11 @@ export function AskNotes() {
       .map((t) => ({ question: t.question, answer: t.answer as string }));
 
     const { data, error } = await supabase.functions.invoke("ask-notes", {
-      body: { question: value, history },
+      body: {
+        question: value,
+        history,
+        ...(scope ? { noteIds: scope.noteIds, scopeName: scope.name } : {}),
+      },
     });
     setAsking(false);
 
@@ -70,7 +79,9 @@ export function AskNotes() {
 
   return (
     <section className="mt-12 border-t border-hairline pt-9">
-      <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Ask about your notes</h2>
+      <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
+        {scope ? `Ask about ${scope.name}` : "Ask about your notes"}
+      </h2>
 
       {turns.length > 0 && (
         <div className="mt-6 flex flex-col gap-8">
@@ -120,7 +131,9 @@ export function AskNotes() {
             }
           }}
           rows={1}
-          placeholder="What have I been circling lately?"
+          placeholder={
+            scope ? `What am I actually stuck on with ${scope.name}?` : "What have I been circling lately?"
+          }
           aria-label="Ask about your notes"
           className="flex-1 resize-none bg-transparent py-1.5 text-[0.95rem] leading-[1.6] outline-none placeholder:text-muted-foreground/55"
         />
@@ -136,7 +149,13 @@ export function AskNotes() {
 
       {!turns.length && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {STARTERS.map((starter) => (
+          {(scope
+            ? [
+                `What am I actually stuck on with ${scope.name}?`,
+                "What keeps repeating here?",
+              ]
+            : STARTERS
+          ).map((starter) => (
             <button
               key={starter}
               onClick={() => {
