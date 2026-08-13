@@ -106,6 +106,11 @@ export default {
           from: { opacity: "0", transform: "translateY(6px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        gather: {
+          "0%": { opacity: "1", transform: "none" },
+          "55%": { opacity: "1", transform: "scaleY(0.88) translateY(-2px)" },
+          "100%": { opacity: "0", transform: "scaleY(0.72) translateY(-6px)" },
+        },
         "stipple-in": {
           "0%": {
             opacity: "0",
@@ -159,6 +164,7 @@ export default {
         breathe: "breathe 3.4s ease-in-out infinite",
         ripple: "ripple 2.6s ease-out infinite",
         "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
+        gather: "gather 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
         "stipple-in": "stipple-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
 
