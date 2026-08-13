@@ -256,54 +256,63 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     }
   }, [teardownAudio]);
 
-  const stop = useCallback(async (): Promise<string | null> => {
-    const session = sessionRef.current;
-    if (status !== "recording" || !user || !session) return null;
-    setStatus("saving");
+  const stop = useCallback(
+    async ({ deferWriteUp }: { deferWriteUp?: boolean } = {}): Promise<{
+      noteId: string | null;
+      openId: string | null;
+    }> => {
+      const session = sessionRef.current;
+      const nothing = { noteId: null, openId: null };
+      if (status !== "recording" || !user || !session) return nothing;
+      setStatus("saving");
 
-    const lastSlice = await flush();
-    teardownAudio();
+      const lastSlice = await flush();
+      teardownAudio();
 
-    session.state = "finishing";
-    session.elapsed = elapsedRef.current;
-    await saveSession({ ...session });
+      session.state = "finishing";
+      session.elapsed = elapsedRef.current;
+      await saveSession({ ...session });
 
-    // Get the tail of the recording up as its own small piece first — if the
-    // whole-file upload below never finishes, the server still has everything.
-    if (lastSlice) await pushPart(lastSlice.index, lastSlice.samples);
+      // Get the tail of the recording up as its own small piece first — if the
+      // whole-file upload below never finishes, the server still has everything.
+      if (lastSlice) await pushPart(lastSlice.index, lastSlice.samples);
 
-    const segments = await readSegments(session.sessionId);
-    const samples = segments.reduce((n, s) => n + s.length, 0);
+      const segments = await readSegments(session.sessionId);
+      const samples = segments.reduce((n, s) => n + s.length, 0);
 
-    if (samples < 8000) {
-      toast.error("That was too quiet to keep. Try again?");
-      if (session.noteId) {
-        await supabase
-          .from("notes")
-          .update({ deleted_at: new Date().toISOString() })
-          .eq("id", session.noteId);
+      if (samples < 8000) {
+        toast.error("That was too quiet to keep. Try again?");
+        if (session.noteId) {
+          await supabase
+            .from("notes")
+            .update({ deleted_at: new Date().toISOString() })
+            .eq("id", session.noteId);
+        }
+        await clearSession(session.sessionId);
+        sessionRef.current = null;
+        setStatus("idle");
+        return nothing;
       }
-      await clearSession(session.sessionId);
+
+      const { noteId, saved } = await finishSession(session, segments, {
+        handOff: !deferWriteUp,
+      });
+      if (!saved) {
+        toast.error("anren couldn't get that one up yet — it's still on this device.");
+      }
+
+      // Only let go of the local copy once the server has the audio.
+      if (saved) await clearSession(session.sessionId);
       sessionRef.current = null;
       setStatus("idle");
-      return null;
-    }
-
-    const { noteId, saved } = await finishSession(session, segments);
-    if (!saved) {
-      toast.error("anren couldn't get that one up yet — it's still on this device.");
-    }
-
-    // Only let go of the local copy once the server has the audio.
-    if (saved) await clearSession(session.sessionId);
-    sessionRef.current = null;
-    setStatus("idle");
-    setElapsed(0);
-    setLiveText("");
-    // A continuation belongs to the note it carries on from, so that's where
-    // the person should land.
-    return session.continuesNoteId ?? noteId;
-  }, [status, user, flush, pushPart, teardownAudio]);
+      setElapsed(0);
+      setLiveText("");
+      // A continuation belongs to the note it carries on from, so that's where
+      // the person should land.
+      return { noteId, openId: session.continuesNoteId ?? noteId };
+    },
+    [status, user, flush, pushPart, teardownAudio],
+  );
 
   // Interruptions — a lock screen, a call, a switch to another app. Get the
   // samples onto the device immediately, and pick the mic back up on return.
