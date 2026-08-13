@@ -5,6 +5,8 @@ import { useNotes } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { CaptureLine } from "@/components/CaptureLine";
+import { StarterPrompts } from "@/components/StarterPrompts";
+
 
 
 
