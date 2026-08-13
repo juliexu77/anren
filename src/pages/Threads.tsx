@@ -38,7 +38,7 @@ const Threads = () => {
           Threads appear once a few thoughts start rhyming. Keep talking.
         </p>
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-14">
           {threads.map((thread) => (
             <ThreadCard
               key={thread.id}
