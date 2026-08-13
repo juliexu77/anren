@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
+import { FolderMark } from "@/components/folder-glyphs";
 import type { ProjectOverview } from "@/hooks/useProjectOverview";
 
 export function ProjectOverviewCard({ overview }: { overview: ProjectOverview }) {
@@ -12,7 +12,7 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
           to={`/folder/${project.id}`}
           className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80"
         >
-          <FolderEmojiPicker name={project.name} emoji={project.emoji} />
+          <FolderMark value={project.emoji} />
           <h3 className="truncate font-editorial text-[1.15rem] leading-tight tracking-[-0.01em]">
             {project.name}
           </h3>
