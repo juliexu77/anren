@@ -91,14 +91,29 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex flex-col h-full pt-6 pb-6 px-4">
-      <Link
-        to="/"
-        onClick={onNavigate}
-        className="hidden md:flex items-center gap-2 px-3 mb-7 font-editorial text-[1.35rem] tracking-[0.01em] lowercase"
-      >
-        <Star className="w-[15px] h-[15px] text-primary fill-primary" strokeWidth={1.5} />
-        anren
-      </Link>
+      <div className="flex items-center justify-between px-3 mb-7">
+        <Link
+          to="/"
+          onClick={onNavigate}
+          className="flex items-center gap-2 font-editorial text-[1.35rem] tracking-[0.01em] lowercase"
+        >
+          <Star className="w-[15px] h-[15px] text-primary fill-primary" strokeWidth={1.5} />
+          anren
+        </Link>
+        <NavLink
+          to="/search"
+          onClick={onNavigate}
+          className={cn(
+            "p-2 rounded-lg transition-colors",
+            location.pathname === "/search"
+              ? "bg-paper-sunk text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-paper-sunk/60",
+          )}
+          aria-label="Search"
+        >
+          <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
+        </NavLink>
+      </div>
 
       <NavLink
         to="/"
@@ -111,14 +126,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       </NavLink>
 
       <nav className="flex flex-col gap-1.5">
-
         <NavLink to="/notes" className={navItemClass} onClick={onNavigate}>
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
-        </NavLink>
-        <NavLink to="/search" className={navItemClass} onClick={onNavigate}>
-          <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          Search
         </NavLink>
         <NavLink to="/reflect" className={navItemClass} onClick={onNavigate}>
           <Sparkles className="w-[17px] h-[17px]" strokeWidth={1.5} />
