@@ -460,34 +460,41 @@ Deno.serve(async (req) => {
       .update({ transcript, title, synthesis, status: 'ready', error_message: null })
       .eq('id', noteId);
 
-    // The words are safe now, so the recording itself isn't kept.
-    if (!typed && !continuesId && note.audio_path) {
-      await discardAudio(admin, note.user_id, noteId, note.audio_path);
-    }
-
-
-
-    // Index passages for semantic search — best effort, never blocks the note.
-    try {
-      const passages = chunkText(`${title}\n\n${synthesis}\n\n${transcript}`);
-      if (passages.length) {
-        const vectors = await embed(passages);
-        await admin.from('note_passages').delete().eq('note_id', noteId);
-        await admin.from('note_passages').insert(
-          passages.map((content, index) => ({
-            note_id: noteId,
-            user_id: user.id,
-            chunk_index: index,
-            content,
-            embedding: vectors[index] ? JSON.stringify(vectors[index]) : null,
-          })),
-        );
+    // Everything left is housekeeping the person never sees: throwing the
+    // recording away, and indexing the words for search. Doing it after the
+    // reply means the note lands as soon as it's readable.
+    const settledId = noteId;
+    const tidyUp = async () => {
+      if (!typed && !continuesId && note.audio_path) {
+        await discardAudio(admin, note.user_id, settledId, note.audio_path);
       }
-    } catch (embedError) {
-      console.error('embedding failed:', (embedError as Error).message);
-    }
+      try {
+        const passages = chunkText(`${title}\n\n${synthesis}\n\n${transcript}`);
+        if (passages.length) {
+          const vectors = await embed(passages);
+          await admin.from('note_passages').delete().eq('note_id', settledId);
+          await admin.from('note_passages').insert(
+            passages.map((content, index) => ({
+              note_id: settledId,
+              user_id: user.id,
+              chunk_index: index,
+              content,
+              embedding: vectors[index] ? JSON.stringify(vectors[index]) : null,
+            })),
+          );
+        }
+      } catch (embedError) {
+        console.error('embedding failed:', (embedError as Error).message);
+      }
+    };
+
+    const runner = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } })
+      .EdgeRuntime;
+    if (runner?.waitUntil) runner.waitUntil(tidyUp());
+    else await tidyUp();
 
     return jsonResponse({ ok: true, title, synthesis });
+
   } catch (error) {
     const message = (error as Error).message ?? 'Processing failed';
     console.error('process-note error:', message);
