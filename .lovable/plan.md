@@ -1,47 +1,45 @@
-# Dead code cleanup
+# Dead code cleanup (iOS stays intact)
 
-You're right — the HealthKit / Google Calendar / Contacts era left residue behind. The app source (`src/`) is already clean of all three; what remains is packaging, native config, docs, and a few stragglers. Here's what I verified and what I'd remove.
+Understood — Capacitor and the iOS build are load-bearing and stay. This only removes the extras we bolted on and later abandoned. Nothing in the capture → notes → threads → reflect loop, nothing in Google/Apple sign-in, nothing in the `ios/` project structure is touched.
 
-## Confirmed dead
+## Stays, untouched
 
-**Native plugins still installed but never imported anywhere in `src/`:**
-- `@perfood/capacitor-healthkit` (Apple Health)
-- `@capacitor-community/contacts` (Contacts)
-- `@capacitor/push-notifications` (no code registers or listens for pushes)
-- `@capacitor/app` (unused)
+- `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android`, `capacitor.config.ts`, the whole `ios/` Xcode project
+- `@capgo/capacitor-social-login`, the GoogleSignIn handling in `AppDelegate.swift`, the reversed-client-ID URL scheme in `Info.plist`, `src/lib/authNative.ts`
+- `NSMicrophoneUsageDescription` and everything recording-related
+- Historical migrations (the old `people` / health-signal tables are already dropped by a later migration; rewriting history isn't worth the risk)
 
-**Native config for those plugins:**
-- `capacitor.config.ts` — `Contacts` and `PushNotifications` plugin blocks
-- `ios/App/App/Info.plist` — `UIBackgroundModes: remote-notification`
-- `ios/App/App/AppDelegate.swift` — the two APNs token forwarding methods
-- Google Sign-In handling in `AppDelegate` / the reversed-client-ID URL scheme stay (native Google auth is live)
+## Removed — abandoned integrations
 
-**Stale scripts and docs:**
+Verified: none of these are imported anywhere in `src/`.
+
+- `@perfood/capacitor-healthkit` (Apple Health experiment)
+- `@capacitor-community/contacts` (Contacts import)
+- `@capacitor/push-notifications` + `@capacitor/app`
+- `capacitor.config.ts`: the `Contacts` and `PushNotifications` plugin blocks
+- `Info.plist`: `UIBackgroundModes: remote-notification`
+- `AppDelegate.swift`: the two APNs token-forwarding methods
+
+## Removed — other strays
+
+- `supabase/functions/transcribe-audio/` — zero references; transcription happens inside `process-note`. Also drops its `config.toml` entry.
 - `package.json` script `build:extension` — the `extension/` directory no longer exists
-- `docs/push-notifications-setup.md`, `docs/google-auth-architecture.md` (Calendar OAuth), and the Contacts/Health sections of `docs/ios-deployment-plan.md`, `docs/lovable-brief.md`, `docs/app-store-submission.md`
-- `claude.md` describes the pre-v2 app (BrainCard, people, calendar, extension) and contradicts the current codebase — rewrite it to match anren v2
+- Unused frontend packages with no imports outside their own orphaned shadcn wrapper: `xlsx`, `recharts`, `embla-carousel-react`, `input-otp`, `react-day-picker`, `react-resizable-panels`, `vaul`, `next-themes` — and those wrappers (`chart`, `carousel`, `input-otp`, `calendar`, `resizable`, `drawer`)
+- Stale docs: `docs/push-notifications-setup.md`, `docs/google-auth-architecture.md` (Calendar OAuth flow that no longer exists), and the Contacts/Health sections of `docs/ios-deployment-plan.md`, `docs/lovable-brief.md`, `docs/app-store-submission.md`
+- `claude.md` — still describes the pre-v2 app (BrainCard, people, calendar, Chrome extension); rewritten to match anren v2
 
-**Backend:**
-- `supabase/functions/transcribe-audio/` — zero references anywhere; transcription runs inside `process-note`. Delete the function and its `config.toml` entry.
+## Order of work
 
-**Unused npm packages (frontend, no imports outside untouched shadcn files):** `xlsx`, `recharts`, `embla-carousel-react`, `input-otp`, `react-day-picker`, `react-resizable-panels`, `vaul`, `next-themes` — with their orphaned shadcn wrappers (`chart`, `carousel`, `input-otp`, `calendar`, `resizable`, `drawer`).
+1. Delete the `transcribe-audio` function and its config entry.
+2. Remove the four abandoned plugins and their config/Info.plist/AppDelegate hooks.
+3. Remove the unused frontend packages and orphan shadcn wrappers.
+4. Prune docs, rewrite `claude.md`, drop the dead script.
+5. Build and run tests to confirm the app is unchanged.
 
-## What I would NOT touch
+## After I'm done
 
-- Historical migrations that created the old `people` / health-signal tables — they're already dropped by a later migration; rewriting history is riskier than the tidiness is worth.
-- Anything under `src/` related to capture, notes, threads, projects, reflect.
-- Google native auth, Apple auth, `ios/` project structure.
+Since native dependencies change, your next iOS build needs a `git pull`, `npm install`, then `npx cap sync` before opening Xcode. The app itself will behave identically.
 
-## Suggested order
+## One question
 
-1. Delete the `transcribe-audio` edge function + config entry.
-2. Strip native plugin config (Capacitor config, Info.plist, AppDelegate) and uninstall the four Capacitor plugins.
-3. Remove the unused frontend packages and their orphan shadcn wrappers.
-4. Prune/rewrite docs and `claude.md`.
-5. Build + test to confirm nothing regressed.
-
-Note: removing native plugins changes the iOS project's dependencies, so the next iOS build needs a `cap sync` on your machine — I'll call that out at the end.
-
-## Open question
-
-Do you want push notifications gone entirely, or kept as scaffolding for a future "time to check in" reminder? Everything else above I'd remove outright.
+Push notifications: gone entirely, or keep the plugin installed as scaffolding for a future gentle "time to check in" reminder? Everything else above I'd remove outright.
