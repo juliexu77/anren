@@ -32,6 +32,11 @@ export default {
           DEFAULT: "hsl(var(--ink))",
           foreground: "hsl(var(--ink-foreground))",
         },
+        plum: {
+          DEFAULT: "hsl(var(--plum))",
+          foreground: "hsl(var(--plum-foreground))",
+          soft: "hsl(var(--plum-soft))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
