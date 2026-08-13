@@ -129,18 +129,28 @@ export function useThreads() {
 
   /** Promoting a thread is the one place it becomes something you keep. */
   const promote = useCallback(
-    async (thread: Thread, createProject: (name: string) => Promise<{ id: string } | null>) => {
+    async (
+      thread: Thread,
+      createProject: (name: string) => Promise<{ id: string } | null>,
+      existingProjectId?: string,
+    ) => {
       setWorking(true);
       try {
-        const created = await createProject(thread.name);
-        if (!created?.id) return null;
-        await supabase
-          .from("notes")
-          .update({ project_id: created.id, auto_filed_at: new Date().toISOString() })
-          .in("id", thread.notes.map((n) => n.id));
+        // If most of this thread already lives in a project, we just file the rest.
+        const target = existingProjectId
+          ? { id: existingProjectId }
+          : await createProject(thread.name);
+        if (!target?.id) return null;
+        const toFile = thread.notes.filter((n) => n.projectId !== target.id).map((n) => n.id);
+        if (toFile.length) {
+          await supabase
+            .from("notes")
+            .update({ project_id: target.id, auto_filed_at: new Date().toISOString() })
+            .in("id", toFile);
+        }
         await supabase
           .from("threads")
-          .update({ status: "promoted", project_id: created.id })
+          .update({ status: "promoted", project_id: target.id })
           .eq("id", thread.id);
         setThreads((prev) => (prev ?? []).filter((t) => t.id !== thread.id));
         notesChanged();
