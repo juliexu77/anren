@@ -153,12 +153,19 @@ const Reflect = () => {
 
             {open && (
               <>
-                <p className="mt-4 max-w-[52ch] font-editorial text-[1.15rem] leading-[1.6] motion-safe:animate-fade-in">
-                  {digest.narrative}
-                </p>
+                <ul className="mt-4 flex max-w-[52ch] flex-col gap-3 motion-safe:animate-fade-in">
+                  {digest.bullets.map((bullet, i) => (
+                    <li
+                      key={i}
+                      className="font-editorial text-[1.05rem] leading-[1.55]"
+                    >
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
                 <button
                   onClick={lookAgain}
-                  className="mt-4 text-[0.82rem] text-muted-foreground/70 underline decoration-hairline underline-offset-4 transition-colors hover:text-foreground"
+                  className="mt-5 text-[0.82rem] text-muted-foreground/70 underline decoration-hairline underline-offset-4 transition-colors hover:text-foreground"
                 >
                   Read it again
                 </button>
