@@ -103,14 +103,19 @@ function wrapPcm(pcm: Uint8Array, rate = PART_RATE): Blob {
   return new Blob([header, pcm as unknown as BlobPart], { type: 'audio/wav' });
 }
 
-/** Ten minutes of 16 kHz mono — comfortably inside the transcriber's limits. */
-const CHUNK_BYTES = 10 * 60 * BYTES_PER_SECOND;
+/**
+ * Ninety seconds of 16 kHz mono. Small enough that even a short memo is split
+ * into a few pieces transcribed at the same time, which is what keeps the wait
+ * after "keep it" short.
+ */
+const CHUNK_BYTES = 90 * BYTES_PER_SECOND;
 /** How far either side of a boundary to look for a quiet moment. */
 const CUT_SEARCH = 4 * BYTES_PER_SECOND;
 /** A little of the previous chunk is repeated so nothing falls in the crack. */
 const OVERLAP = Math.floor(1.5 * BYTES_PER_SECOND);
 const WINDOW = Math.floor(0.1 * BYTES_PER_SECOND);
-const CONCURRENCY = 3;
+const CONCURRENCY = 4;
+
 
 /**
  * Cutting at an exact byte count lands mid-word almost every time. Look around
