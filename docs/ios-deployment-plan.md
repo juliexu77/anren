@@ -1,6 +1,6 @@
 # iOS deployment plan — ANREN
 
-Plan to deploy ANREN as a native iOS app (TestFlight / App Store). The app already has Capacitor and native contacts set up; the iOS project has not been added yet.
+Plan to deploy ANREN as a native iOS app (TestFlight / App Store). The app already has Capacitor set up.
 
 ---
 
@@ -58,14 +58,8 @@ Right now `capacitor.config.ts` has **hot-reload** pointing at your Lovable prev
 
 ## Phase 3: iOS-specific setup
 
-1. **Contacts permission (required for “Import contacts”)**  
-   The Contacts plugin will prompt at runtime; Apple also requires a usage description in **Info.plist**.
-   - Open the iOS project in Xcode: `npx cap open ios`.
-   - In the project navigator, open **App** → **App** → **Info.plist**.
-   - Add a row:
-     - **Key**: `Privacy - Contacts Usage Description` (or raw key `NSContactsUsageDescription`).
-     - **Value**: e.g. *"ANREN uses your contacts so you can add people to your circle."*
-   - Save. This string is shown in the system permission dialog.
+1. **Microphone permission (required for recording)**  
+   `NSMicrophoneUsageDescription` is already set in **ios/App/App/Info.plist**; iOS prompts the first time you record.
 
 2. **Bundle ID (optional but recommended for release)**  
    - In Xcode: select the **App** project → **App** target → **Signing & Capabilities**.
@@ -89,7 +83,7 @@ Right now `capacitor.config.ts` has **hot-reload** pointing at your Lovable prev
    - Device: connect an iPhone, select it, and trust the device. You may need to set the device as a development target in the Apple Developer portal.
 
 3. **Run**  
-   Click Run (▶). The first time on a real device, confirm the Contacts permission when you use “Import” in the People flow.
+   Click Run (▶). The first time on a real device, confirm the microphone permission when you start a recording.
 
 ---
 
@@ -119,7 +113,6 @@ Right now `capacitor.config.ts` has **hot-reload** pointing at your Lovable prev
 | 2 | `npx cap add ios` (once) |
 | 3 | Remove or set `server` in `capacitor.config.ts` for production |
 | 4 | `npm run build` and `npx cap sync ios` |
-| 5 | Add `NSContactsUsageDescription` in `ios/App/App/Info.plist` |
 | 6 | (Optional) Set Bundle ID in Xcode and in `capacitor.config.ts` |
 | 7 | Configure signing in Xcode |
 | 8 | Run on simulator/device via Xcode |

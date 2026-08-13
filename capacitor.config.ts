@@ -13,9 +13,6 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',
   },
   plugins: {
-    Contacts: {
-      // iOS will prompt for permission automatically
-    },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
     },
