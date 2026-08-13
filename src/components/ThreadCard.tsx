@@ -5,29 +5,22 @@ import type { Thread } from "@/hooks/useThreads";
 
 const DAY = 24 * 60 * 60 * 1000;
 
-/** How long a stretch of days reads out loud. */
-function span(days: number) {
-  if (days <= 2) return "in the last couple of days";
-  if (days <= 9) return "over the last week";
-  if (days <= 20) return "over two weeks";
-  if (days <= 45) return "over the last month";
-  return "over a few months";
-}
-
-/** One quiet line about how alive this is — never a metric. */
-function aliveness(thread: Thread) {
+/** One short line: how many, and how alive — never a metric dashboard. */
+function countLine(thread: Thread) {
   const dates = thread.notes.map((n) => +new Date(n.recordedAt)).sort((a, b) => b - a);
   const count = dates.length;
-  const stretch = dates.length > 1 ? (dates[0] - dates[dates.length - 1]) / DAY : 0;
-  const gap = dates.length > 1 ? (dates[0] - dates[1]) / DAY : 0;
+  const noun = `${count} note${count === 1 ? "" : "s"}`;
+  if (!count) return noun;
+
+  const stretch = count > 1 ? (dates[0] - dates[count - 1]) / DAY : 0;
+  const gap = count > 1 ? (dates[0] - dates[1]) / DAY : 0;
   const sinceLast = (Date.now() - dates[0]) / DAY;
 
-  const tail = `${count} note${count === 1 ? "" : "s"} ${span(stretch)}`;
-
-  if (gap > 18) return `You came back to this after a few weeks · ${tail}`;
-  if (sinceLast > 10) return `Quiet for a while now · ${tail}`;
-  if (count >= 4 && stretch <= 14) return `Showing up more lately · ${tail}`;
-  return tail;
+  if (gap > 18) return `${noun} · back again`;
+  if (sinceLast > 14) return `${noun} · quiet lately`;
+  if (count >= 4 && stretch <= 14) return `${noun} · active lately`;
+  if (count >= 3 && sinceLast <= 7) return `${noun} · growing`;
+  return noun;
 }
 
 export function ThreadCard({
@@ -38,74 +31,91 @@ export function ThreadCard({
 }: {
   thread: Thread;
   onDismiss: () => void;
-  onPromoted: (thread: Thread, createProject: (name: string) => Promise<{ id: string } | null>) => Promise<string | null>;
+  onPromoted: (
+    thread: Thread,
+    createProject: (name: string) => Promise<{ id: string } | null>,
+    existingProjectId?: string,
+  ) => Promise<string | null>;
   working: boolean;
 }) {
-  const { createProject } = useProjects();
+  const { createProject, projects } = useProjects();
   const navigate = useNavigate();
 
+  // If most of this grouping already sits in one project, say so instead of
+  // offering to make a second one.
+  const tally = new Map<string, number>();
+  for (const n of thread.notes) {
+    if (n.projectId) tally.set(n.projectId, (tally.get(n.projectId) ?? 0) + 1);
+  }
+  let homeId: string | null = null;
+  for (const [id, n] of tally) {
+    if (n >= 2 && n >= (tally.get(homeId ?? "") ?? 0)) homeId = id;
+  }
+  const home = homeId ? projects.find((p) => p.id === homeId) : undefined;
+  const unfiled = home ? thread.notes.filter((n) => n.projectId !== home.id).length : 0;
+
+  const shown = thread.notes.slice(0, 5);
+  const rest = thread.notes.length - shown.length;
+
   const promote = async () => {
-    const projectId = await onPromoted(thread, createProject);
+    const projectId = await onPromoted(thread, createProject, home?.id);
     if (!projectId) {
       toast("Couldn't set that up just now.");
       return;
     }
-    toast(`${thread.name} is a project now.`, {
+    toast(home ? `Filed into ${home.name}.` : `${thread.name} is a project now.`, {
       action: { label: "Open", onClick: () => navigate(`/folder/${projectId}`) },
     });
   };
 
   return (
-    <article className="border-b border-hairline pb-8 last:border-b-0">
-      <h2 className="font-editorial text-[1.45rem] leading-tight tracking-[-0.01em]">{thread.name}</h2>
-      <p className="mt-1 text-[0.82rem] text-muted-foreground">{aliveness(thread)}</p>
+    <article>
+      <h2 className="font-editorial text-[1.22rem] leading-tight tracking-[-0.01em]">{thread.name}</h2>
+      <p className="mt-1 text-[0.78rem] text-muted-foreground/80">{countLine(thread)}</p>
 
-      {thread.blurb && (
-        <p className="mt-3 font-editorial text-[1.02rem] leading-[1.6] text-foreground/85">{thread.blurb}</p>
-      )}
-
-      {thread.quotes.length > 0 && (
-        <div className="mt-4 flex flex-col gap-2 border-l border-primary/40 pl-4">
-          {thread.quotes.map((quote, i) => (
-            <p key={i} className="font-editorial text-[0.98rem] italic leading-[1.6] text-foreground/70">
-              “{quote}”
-            </p>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-5 flex flex-col">
-        {thread.notes.slice(0, 4).map((n) => (
+      <div className="thread-cluster mt-3">
+        {shown.map((n) => (
           <Link
             key={n.id}
             to={`/note/${n.id}`}
-            className="flex items-baseline justify-between gap-3 py-1.5 transition-colors hover:text-foreground"
+            className="flex items-baseline justify-between gap-3 py-[0.3rem] transition-colors hover:text-foreground"
           >
-            <span className="truncate text-[0.85rem] text-muted-foreground">{n.title ?? "Untitled note"}</span>
-            <span className="shrink-0 text-[0.7rem] uppercase tracking-[0.13em] text-muted-foreground/60">
+            <span className="truncate text-[0.875rem] leading-snug text-foreground/75">
+              {n.title ?? "Untitled note"}
+            </span>
+            <span className="shrink-0 text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground/50">
               {new Date(n.recordedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
             </span>
           </Link>
         ))}
-        {thread.notes.length > 4 && (
-          <p className="py-1.5 text-[0.8rem] text-muted-foreground/70">
-            and {thread.notes.length - 4} more
-          </p>
+        {rest > 0 && (
+          <p className="py-[0.3rem] text-[0.8rem] text-muted-foreground/60">and {rest} more</p>
         )}
       </div>
 
-      <div className="mt-5 flex items-center gap-5 text-[0.85rem]">
-        <button
-          onClick={promote}
-          disabled={working}
-          className="text-primary underline decoration-[0.5px] underline-offset-[3px] transition-opacity hover:opacity-80 disabled:opacity-50"
-        >
-          Make this a Project
-        </button>
+      <div className="mt-3 flex items-center gap-5 pl-4 text-[0.82rem]">
+        {home && unfiled === 0 ? (
+          <Link
+            to={`/folder/${home.id}`}
+            className="text-muted-foreground/80 transition-colors hover:text-foreground"
+          >
+            Already a Project · {home.name}
+          </Link>
+        ) : (
+          <button
+            onClick={promote}
+            disabled={working}
+            className="text-primary transition-opacity hover:opacity-80 disabled:opacity-50"
+          >
+            {home
+              ? `Already a Project · Add ${unfiled} note${unfiled === 1 ? "" : "s"} →`
+              : "Gather into Project →"}
+          </button>
+        )}
         <button
           onClick={onDismiss}
           disabled={working}
-          className="text-muted-foreground/70 transition-colors hover:text-foreground disabled:opacity-50"
+          className="text-muted-foreground/60 transition-colors hover:text-foreground disabled:opacity-50"
         >
           Not this
         </button>
