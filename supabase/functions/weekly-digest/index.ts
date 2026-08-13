@@ -10,7 +10,7 @@ Return strict JSON:
 {
   "movements": [{ "name": "the exact project or thread name", "moved": "one short sentence: what happened here this week" }],
   "tension": "one or two sentences naming a place where two of these pull against each other — or null if nothing genuinely does",
-  "narrative": "2-4 sentences: the overall dynamic running through the week",
+  "bullets": ["short observation 1", "short observation 2", "short observation 3"],
   "themes": [{ "title": "a vibe in 1-2 words, e.g. 'borrowed urgency'", "detail": "one tight sentence of evidence from the notes" }]
 }
 
@@ -18,7 +18,7 @@ Return strict JSON:
 
 "tension" is anren's edge over a summary: two named things pulling in opposite directions (a bold move against financial caution, wanting out while deepening in). Only when it's really there in the notes. Otherwise null.
 
-Then "narrative": a real reading of what might be going on underneath this week, held open rather than asserted as fact, but not so hedged it says nothing. Name projects and threads where it helps. 2-4 sentences, ONE short paragraph — never multiple paragraphs, no headings or bullets.
+Then "bullets": the reading layer. 3-4 short, complete sentences, each one a distinct noticing. Name projects and threads where it helps. Do not repeat what is already in "movements" or "tension"; these bullets should add the texture, the undercurrent that connects the movements, the "why it looks this way". Each bullet is a standalone thought. No headings, no numbers, no metrics.
 
 Then the "themes" — these render as small tappable pills, like mood or vibe tags in a consumer app. Think of them together, as a set: read side by side they should give the aura of the week, the atmosphere a stranger would feel flipping through it. Individually each is just a word or two; collectively they are the portrait.
 
@@ -43,7 +43,7 @@ Voice: second person, direct, unhurried, warm. Their language over yours. Hedge 
 
 
 interface Digest {
-  narrative: string;
+  bullets: string[];
   tension?: string | null;
   movements?: { name: string; moved: string }[];
   themes: { title: string; detail: string }[];
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     ], { temperature: 0.7, userId: user.id });
 
     const parsed = parseJsonBlock<Digest>(raw);
-    if (!parsed?.narrative) throw new Error('Could not compose the digest');
+    if (!Array.isArray(parsed?.bullets) || !parsed.bullets.length) throw new Error('Could not compose the digest');
 
     await supabase
       .from('weekly_digests')
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       .insert({
         user_id: user.id,
         week_start: weekStart,
-        narrative: parsed.narrative,
+        bullets: parsed.bullets.slice(0, 5),
         tension: typeof parsed.tension === 'string' && parsed.tension.trim() ? parsed.tension.trim() : null,
         movements: Array.isArray(parsed.movements) ? parsed.movements.slice(0, 4) : [],
         themes: parsed.themes ?? [],

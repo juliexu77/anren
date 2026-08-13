@@ -15,7 +15,8 @@ export interface Movement {
 export interface LookBack {
   id: string;
   weekStart: string;
-  narrative: string;
+  /** Short observation bullets — the reading layer on top of movements/tension. */
+  bullets: string[];
   /** What moved, named the way the Threads screen names things. */
   movements: Movement[];
   /** Where two of those pull against each other, when they do. */
@@ -75,7 +76,9 @@ export function useLookBack() {
       ? {
           id: data.id,
           weekStart: data.week_start,
-          narrative: data.narrative,
+          bullets: Array.isArray(data.bullets)
+            ? (data.bullets as unknown as string[])
+            : [],
           movements: Array.isArray(data.movements)
             ? (data.movements as unknown as Movement[])
             : [],
@@ -125,8 +128,8 @@ export function useLookBack() {
       const stale =
         !!current && Date.now() - new Date(current.updatedAt).getTime() > STALE_MS && newSince > 0;
 
-      // A digest written before "what moved" existed reads as a bare essay — rewrite it once.
-      const legacy = !!current && current.movements.length === 0;
+      // A digest written before "what moved" or bullets existed reads as a bare essay — rewrite it once.
+      const legacy = !!current && (current.movements.length === 0 || current.bullets.length === 0);
       const due = enough && (!current || legacy || newSince >= REFRESH_EVERY || stale);
       if (!due) return;
 

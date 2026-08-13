@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     // The week's themes give the answer somewhere to stand beyond the excerpts.
     const { data: digest } = await supabase
       .from('weekly_digests')
-      .select('narrative, themes')
+      .select('themes')
       .eq('user_id', user.id)
       .order('week_start', { ascending: false })
       .limit(1)
