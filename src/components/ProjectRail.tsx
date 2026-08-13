@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
+import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal, Star } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
@@ -94,8 +94,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         to="/"
         onClick={onNavigate}
-        className="hidden md:block px-3 font-editorial text-[1.35rem] tracking-[0.01em] mb-7 lowercase"
+        className="hidden md:flex items-center gap-2 px-3 mb-7 font-editorial text-[1.35rem] tracking-[0.01em] lowercase"
       >
+        <Star className="w-[15px] h-[15px] text-primary fill-primary" strokeWidth={1.5} />
         anren
       </Link>
 
@@ -103,13 +104,14 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
         to="/"
         end
         onClick={onNavigate}
-        className="mb-4 flex items-center gap-2 rounded-lg border border-hairline px-3 py-2.5 text-[0.9rem] text-primary transition-colors hover:bg-paper-sunk/60 md:mt-0 mt-10"
+        className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-ink px-4 py-3.5 text-[0.95rem] text-ink-foreground transition-opacity hover:opacity-90 md:mt-0 mt-10"
       >
-        <Plus className="w-[16px] h-[16px]" strokeWidth={1.5} />
+        <Plus className="w-[17px] h-[17px]" strokeWidth={1.75} />
         New thought
       </NavLink>
 
-      <nav className="flex flex-col gap-0.5">
+      <nav className="flex flex-col gap-1.5">
+
         <NavLink to="/notes" className={navItemClass} onClick={onNavigate}>
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes

@@ -28,6 +28,10 @@ export default {
           sunk: "hsl(var(--paper-sunk))",
         },
         whisper: "hsl(var(--whisper))",
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          foreground: "hsl(var(--ink-foreground))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
