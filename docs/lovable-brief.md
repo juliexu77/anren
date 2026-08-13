@@ -9,7 +9,6 @@ Use this when asking Lovable to continue work on this project so they have conte
 1. **iOS app (Capacitor)**  
    - `ios/` is a full Xcode project; bundle ID `com.anrenapp.anren`.  
    - Production build serves from `dist/` (no dev server URL in `capacitor.config.ts`).  
-   - Contacts: `@capacitor-community/contacts` + `NSContactsUsageDescription` in Info.plist.
 
 2. **Native Google Sign-In on iOS**  
    - **Capgo** (`@capgo/capacitor-social-login`) is installed and wired.  
@@ -38,9 +37,8 @@ Use this when asking Lovable to continue work on this project so they have conte
 3. **Don’t replace**  
    - `src/lib/authNative.ts`  
    - The iOS branch in `Auth.tsx` (native Google sign-in on iOS)  
-   - `getAppOrigin()` in `src/lib/utils.ts` and its use in `GoogleCalendarView` and `GoogleCallback`  
    - `ios/App/App/AppDelegate.swift` (Google Sign-In URL handling)  
-   - `ios/App/App/Info.plist` (URL scheme and contacts usage description)
+   - `ios/App/App/Info.plist` (Google URL scheme, microphone usage description)
 
 4. **After any web or config change for iOS**  
    Run `npm run build && npx cap sync ios` before building in Xcode or shipping to TestFlight.

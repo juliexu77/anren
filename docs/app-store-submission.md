@@ -43,15 +43,13 @@ browsing history, identifiers for tracking.
 ## Permission strings (already in `ios/App/App/Info.plist`)
 
 - `NSMicrophoneUsageDescription` — recording voice notes.
-- Remove `NSContactsUsageDescription`, `NSHealthShareUsageDescription` and
-  `NSHealthUpdateUsageDescription` plus the HealthKit entitlements before submitting: v2 uses none of
-  them, and unused sensitive permissions trigger rejection.
+- No other sensitive permission strings are present; v2 needs none, and unused ones trigger rejection.
 
 ## Metadata checklist
 
 - Name: `anren`
 - Subtitle (30 chars): `Think out loud`
-- Category: Productivity (secondary: Health & Fitness only if reintroduced)
+- Category: Productivity
 - Age rating: 4+
 - Keywords: voice memo, notes, transcribe, journal, dictation, voice notes, thoughts
 - Description: lead with "Talk it through. anren transcribes what you said, writes it up, and remembers

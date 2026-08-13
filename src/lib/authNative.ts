@@ -112,7 +112,7 @@ export async function signInWithGoogleNative(): Promise<AuthResult> {
   const response = await SocialLogin.login({
     provider: "google",
     options: {
-      scopes: ["email", "profile", "https://www.googleapis.com/auth/calendar"],
+      scopes: ["email", "profile"],
       nonce: nonceDigest,
     } as GoogleLoginOptions,
   });
