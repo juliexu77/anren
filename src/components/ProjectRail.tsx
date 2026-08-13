@@ -290,9 +290,13 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
 
-      <NavLink to="/settings" className={navItemClass} onClick={onNavigate}>
+      <NavLink
+        to="/settings"
+        className={cn(iconNavItemClass({ isActive: false }), "mt-auto self-start")}
+        onClick={onNavigate}
+        aria-label="Settings"
+      >
         <Settings className="w-[17px] h-[17px]" strokeWidth={1.5} />
-        Settings
       </NavLink>
     </div>
   );
