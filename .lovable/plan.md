@@ -55,5 +55,5 @@ Softness distinction is preserved: projects get emoji/glyph, a firmer heading an
 - New `src/hooks/useProjectOverview.ts`: per-project note count + 2 most recent notes (single `notes` query grouped client-side), and a `localStorage` map of last-looked timestamps per project id to compute "N new".
 - New `src/components/ProjectOverviewCard.tsx` and a reworked `src/components/ThreadCard.tsx` (loose-only: filters `thread.notes` to notes with no `projectId`, hides groupings that fall under 2 notes, drops the "Already a Project" branch since project material now lives in section 1).
 - `src/hooks/useThreads.ts`: `promote` unchanged; add derived loose-note counts so the "N other loose notes" line can be computed from all loose notes minus those in shown groupings (needs a count of loose notes, added to the hook).
-- `src/components/ProjectRail.tsx`: nav label Threads → Overview.
+- `src/components/ProjectRail.tsx`: unchanged — nav label stays "Threads".
 - No schema or edge-function changes; `notice-threads` keeps producing the groupings.
