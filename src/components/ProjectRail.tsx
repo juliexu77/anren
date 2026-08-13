@@ -109,12 +109,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
         <NavLink
           to="/search"
           onClick={onNavigate}
-          className={cn(
-            "p-2 rounded-lg transition-colors",
-            location.pathname === "/search"
-              ? "bg-paper-sunk text-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-paper-sunk/60",
-          )}
+          className={iconNavItemClass}
           aria-label="Search"
         >
           <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
