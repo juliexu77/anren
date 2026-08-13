@@ -7,6 +7,7 @@ export interface ThreadNote {
   id: string;
   title: string | null;
   recordedAt: string;
+  projectId: string | null;
 }
 
 export interface Thread {
@@ -48,11 +49,16 @@ export function useThreads() {
     if (ids.length) {
       const { data: notes } = await supabase
         .from("notes")
-        .select("id, title, recorded_at")
+        .select("id, title, recorded_at, project_id")
         .in("id", ids)
         .is("deleted_at", null);
       for (const n of notes ?? []) {
-        notesById.set(n.id, { id: n.id, title: n.title, recordedAt: n.recorded_at });
+        notesById.set(n.id, {
+          id: n.id,
+          title: n.title,
+          recordedAt: n.recorded_at,
+          projectId: n.project_id ?? null,
+        });
       }
     }
 
@@ -123,22 +129,32 @@ export function useThreads() {
 
   /** Promoting a thread is the one place it becomes something you keep. */
   const promote = useCallback(
-    async (thread: Thread, createProject: (name: string) => Promise<{ id: string } | null>) => {
+    async (
+      thread: Thread,
+      createProject: (name: string) => Promise<{ id: string } | null>,
+      existingProjectId?: string,
+    ) => {
       setWorking(true);
       try {
-        const created = await createProject(thread.name);
-        if (!created?.id) return null;
-        await supabase
-          .from("notes")
-          .update({ project_id: created.id, auto_filed_at: new Date().toISOString() })
-          .in("id", thread.notes.map((n) => n.id));
+        // If most of this thread already lives in a project, we just file the rest.
+        const target = existingProjectId
+          ? { id: existingProjectId }
+          : await createProject(thread.name);
+        if (!target?.id) return null;
+        const toFile = thread.notes.filter((n) => n.projectId !== target.id).map((n) => n.id);
+        if (toFile.length) {
+          await supabase
+            .from("notes")
+            .update({ project_id: target.id, auto_filed_at: new Date().toISOString() })
+            .in("id", toFile);
+        }
         await supabase
           .from("threads")
-          .update({ status: "promoted", project_id: created.id })
+          .update({ status: "promoted", project_id: target.id })
           .eq("id", thread.id);
         setThreads((prev) => (prev ?? []).filter((t) => t.id !== thread.id));
         notesChanged();
-        return created.id;
+        return target.id;
       } finally {
         setWorking(false);
       }

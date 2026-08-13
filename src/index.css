@@ -134,6 +134,17 @@
     @apply bg-paper border border-hairline rounded-lg;
   }
 
+  /* Notes anren loosely gathered: one soft stack, not a list of rows. */
+  .thread-cluster {
+    @apply flex flex-col rounded-md border-l border-hairline pl-4 pr-2 py-1.5;
+    background: linear-gradient(
+      to right,
+      hsl(var(--paper-sunk) / 0.55) 0%,
+      hsl(var(--paper-sunk) / 0.18) 70%,
+      transparent 100%
+    );
+  }
+
   .rail-item {
     @apply w-full text-left px-3 py-2 rounded-md text-[0.875rem] text-secondary-foreground/80
            transition-colors duration-200 hover:bg-accent hover:text-accent-foreground;
