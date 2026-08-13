@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ProjectRail } from "@/components/ProjectRail";
 import { Onboarding } from "@/components/onboarding/Onboarding";
@@ -21,9 +21,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Menu className="w-5 h-5" strokeWidth={1.5} />
         </button>
-        <Link to="/" className="font-editorial text-lg tracking-[0.02em] lowercase">
-          anren
-        </Link>
         <div className="w-9" />
       </div>
 
