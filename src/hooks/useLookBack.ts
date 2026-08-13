@@ -125,11 +125,13 @@ export function useLookBack() {
       const stale =
         !!current && Date.now() - new Date(current.updatedAt).getTime() > STALE_MS && newSince > 0;
 
-      const due = enough && (!current || newSince >= REFRESH_EVERY || stale);
+      // A digest written before "what moved" existed reads as a bare essay — rewrite it once.
+      const legacy = !!current && current.movements.length === 0;
+      const due = enough && (!current || legacy || newSince >= REFRESH_EVERY || stale);
       if (!due) return;
 
       // Don't re-attempt within a session if the last try got us nowhere.
-      const marker = `anren:lookback:${weekStart}:${count}`;
+      const marker = `anren:lookback:${weekStart}:${count}:${legacy ? "legacy" : "n"}`;
       if (sessionStorage.getItem(marker)) return;
       sessionStorage.setItem(marker, "1");
 
