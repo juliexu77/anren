@@ -69,7 +69,7 @@ const App = () => (
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
-          <Route path="/threads" element={<ProtectedShell><Threads /></ProtectedShell>} />
+          <Route path="/threads" element={<Navigate to="/" replace />} />
           <Route path="/reflect" element={<ProtectedShell><Reflect /></ProtectedShell>} />
           <Route path="/on-my-mind" element={<Navigate to="/reflect" replace />} />
           <Route path="/settings" element={<ProtectedShell><Settings /></ProtectedShell>} />

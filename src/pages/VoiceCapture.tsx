@@ -43,7 +43,7 @@ const VoiceCapture = () => {
     setLanded(line);
 
     const land = () =>
-      navigate("/", {
+      navigate("/capture", {
         state: {
           kept: openId ?? noteId,
           filedInto: noticed.landing.projectId,
