@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Mic, PenLine } from "lucide-react";
+import { HomeCaptureLine } from "@/components/HomeCaptureLine";
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
 import { supabase } from "@/integrations/supabase/client";
 import { notesChanged } from "@/lib/noteEvents";
@@ -123,29 +123,8 @@ export function CaptureSurface() {
             )}
           </div>
         ) : (
-          <p className="font-editorial text-[1.55rem] leading-snug tracking-[-0.01em]">
-            What's on your mind?
-          </p>
+          <HomeCaptureLine />
         )}
-      </div>
-
-      <div className="mt-10 flex flex-col items-center gap-4">
-        <button
-          onClick={() => navigate("/capture/voice")}
-          aria-label="Speak a new thought"
-          className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
-        >
-          <Mic className="h-8 w-8" strokeWidth={1.4} />
-        </button>
-        <p className="text-[0.8rem] uppercase tracking-[0.16em] text-muted-foreground/70">Speak it</p>
-
-        <button
-          onClick={() => navigate("/capture/write")}
-          className="mt-4 flex items-center gap-2 text-[0.92rem] italic text-muted-foreground underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
-        >
-          <PenLine className="h-[15px] w-[15px]" strokeWidth={1.5} />
-          or write it instead
-        </button>
       </div>
     </div>
   );
