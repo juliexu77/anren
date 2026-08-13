@@ -4,13 +4,21 @@ import { chat, parseJsonBlock, jsonResponse , QuotaError, needsOwnKeyResponse } 
 
 const PROMPT = `You are reading back a week of someone's private notes and telling them what you see — the way a perceptive friend would, someone who has been paying attention and isn't afraid to say something a little pointed.
 
+You are also given the names of their projects (things they deliberately keep) and their threads (loose groupings that have been accumulating on their own). Those names are the shared vocabulary of this app: use them literally, and never invent a name that isn't in the list.
+
 Return strict JSON:
 {
-  "narrative": "2-4 sentences: the overall tension or dynamic running through the week",
+  "movements": [{ "name": "the exact project or thread name", "moved": "one short sentence: what happened here this week" }],
+  "tension": "one or two sentences naming a place where two of these pull against each other — or null if nothing genuinely does",
+  "narrative": "2-4 sentences: the overall dynamic running through the week",
   "themes": [{ "title": "a vibe in 1-2 words, e.g. 'borrowed urgency'", "detail": "one tight sentence of evidence from the notes" }]
 }
 
-Write "narrative" FIRST. It is the whole point: a real reading of what might be going on underneath this week, held open rather than asserted as fact, but not so hedged it says nothing. 2-4 sentences, ONE short paragraph — never multiple paragraphs, no headings or bullets.
+"movements" comes first and matters most: 2-4 of them, only for names that actually moved this week, ordered by how much they moved. Say what moved in their terms — "pulled ahead", "is still just loose notes", "went quiet after Tuesday". Never a count, never a metric. Omit a name entirely rather than padding it.
+
+"tension" is anren's edge over a summary: two named things pulling in opposite directions (a bold move against financial caution, wanting out while deepening in). Only when it's really there in the notes. Otherwise null.
+
+Then "narrative": a real reading of what might be going on underneath this week, held open rather than asserted as fact, but not so hedged it says nothing. Name projects and threads where it helps. 2-4 sentences, ONE short paragraph — never multiple paragraphs, no headings or bullets.
 
 Then the "themes" — these render as small tappable pills, like mood or vibe tags in a consumer app. Think of them together, as a set: read side by side they should give the aura of the week, the atmosphere a stranger would feel flipping through it. Individually each is just a word or two; collectively they are the portrait.
 
@@ -36,6 +44,8 @@ Voice: second person, direct, unhurried, warm. Their language over yours. Hedge 
 
 interface Digest {
   narrative: string;
+  tension?: string | null;
+  movements?: { name: string; moved: string }[];
   themes: { title: string; detail: string }[];
 }
 
@@ -76,6 +86,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'No notes this week yet' }, 400);
     }
 
+    const [{ data: projects }, { data: threads }] = await Promise.all([
+      supabase.from('projects').select('name').is('deleted_at', null),
+      supabase.from('threads').select('name').eq('status', 'active'),
+    ]);
+
+    const shape = [
+      (projects ?? []).length
+        ? `Their projects: ${(projects ?? []).map((p) => p.name).join(', ')}`
+        : 'They keep no projects yet.',
+      (threads ?? []).length
+        ? `Loose threads anren has noticed: ${(threads ?? []).map((t) => t.name).join(', ')}`
+        : 'No loose threads noticed yet.',
+    ].join('\n');
+
     const context = notes
       .map((n) => {
         const day = new Date(n.recorded_at).toLocaleDateString('en-US', {
@@ -90,7 +114,7 @@ Deno.serve(async (req) => {
 
     const raw = await chat([
       { role: 'system', content: PROMPT },
-      { role: 'user', content: `Notes from this week:\n\n${context}` },
+      { role: 'user', content: `${shape}\n\nNotes from this week:\n\n${context}` },
     ], { temperature: 0.7, userId: user.id });
 
     const parsed = parseJsonBlock<Digest>(raw);
@@ -109,6 +133,8 @@ Deno.serve(async (req) => {
         user_id: user.id,
         week_start: weekStart,
         narrative: parsed.narrative,
+        tension: typeof parsed.tension === 'string' && parsed.tension.trim() ? parsed.tension.trim() : null,
+        movements: Array.isArray(parsed.movements) ? parsed.movements.slice(0, 4) : [],
         themes: parsed.themes ?? [],
         notes_analyzed: notes.length,
       })
