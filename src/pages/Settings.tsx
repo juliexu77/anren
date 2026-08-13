@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAiAccess } from "@/hooks/useAiAccess";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { notesChanged } from "@/lib/noteEvents";
 import { replayOnboarding } from "@/hooks/useOnboarding";
 
 const Settings = () => {
@@ -13,6 +14,47 @@ const Settings = () => {
   const { projects, deleteProject } = useProjects();
   const { connected: aiConnected } = useAiAccess();
   const [noteCount, setNoteCount] = useState<number | null>(null);
+  const [redoing, setRedoing] = useState<{ done: number; total: number } | null>(null);
+  const [redoneMessage, setRedoneMessage] = useState<string | null>(null);
+
+  /**
+   * Write-ups change shape as anren learns how to read you back. This walks the
+   * archive one note at a time and writes each one up again from the words you
+   * already said — nothing you wrote or recorded is touched.
+   */
+  const rewriteAll = async () => {
+    if (!user || redoing) return;
+    setRedoneMessage(null);
+    const { data: notes } = await supabase
+      .from("notes")
+      .select("id")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("recorded_at", { ascending: false });
+
+    const ids = (notes ?? []).map((n) => n.id);
+    if (!ids.length) {
+      setRedoneMessage("Nothing to write up yet.");
+      return;
+    }
+
+    setRedoing({ done: 0, total: ids.length });
+    let failed = 0;
+    for (let i = 0; i < ids.length; i++) {
+      const { error } = await supabase.functions.invoke("process-note", {
+        body: { noteId: ids[i], regenerate: true },
+      });
+      if (error) failed++;
+      setRedoing({ done: i + 1, total: ids.length });
+      notesChanged();
+    }
+    setRedoing(null);
+    setRedoneMessage(
+      failed
+        ? `${ids.length - failed} of ${ids.length} written up again — ${failed} didn't come through.`
+        : `All ${ids.length} note${ids.length === 1 ? "" : "s"} written up again.`,
+    );
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +123,19 @@ const Settings = () => {
         </Link>
         <p className="mt-3 text-[0.82rem] leading-relaxed text-muted-foreground/80">
           Recording and transcribing are always free. The write-ups are written by Claude.
+        </p>
+
+        <button
+          onClick={rewriteAll}
+          disabled={!!redoing}
+          className="mt-4 flex items-center gap-2 rounded-full border border-hairline bg-paper px-5 py-2.5 text-[0.88rem] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+        >
+          {redoing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {redoing ? `Writing up again — ${redoing.done} of ${redoing.total}` : "Write up every note again"}
+        </button>
+        <p className="mt-2 text-[0.82rem] leading-relaxed text-muted-foreground/80">
+          {redoneMessage ??
+            "Rewrites the titles and write-ups across your whole archive from the words you already said. Your own words stay exactly as they are."}
         </p>
       </section>
 
