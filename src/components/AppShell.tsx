@@ -21,9 +21,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Menu className="w-5 h-5" strokeWidth={1.5} />
         </button>
-        <Link to="/" className="font-editorial text-lg tracking-[0.02em] lowercase">
-          anren
-        </Link>
         <div className="w-9" />
       </div>
 
