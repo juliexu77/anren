@@ -238,18 +238,6 @@ const NoteDetail = () => {
     />
   ) : null;
 
-  const footer = (note: string) =>
-    editingDate ? (
-      dateLine
-    ) : (
-      <button
-        onClick={() => setEditingDate(true)}
-        title="Change the date"
-        className="mt-8 block text-left text-[0.85rem] text-whisper transition-colors hover:text-muted-foreground"
-      >
-        {stamp(note)}
-      </button>
-    );
 
   const metaSuffix = note.durationSeconds ? ` · ${formatDuration(note.durationSeconds)}` : "";
   const ownWords = note.source === "typed" ? note.body : note.transcript;
