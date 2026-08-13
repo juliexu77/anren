@@ -22,7 +22,12 @@ interface RecorderValue {
   liveText: string;
   level: number;
   start: (projectId?: string | null, continuesNoteId?: string | null) => Promise<void>;
-  stop: () => Promise<string | null>;
+  /**
+   * Ends the recording. `noteId` is the note the audio landed on; `openId` is
+   * where the person should end up (a continuation belongs to its original).
+   * Pass `deferWriteUp` to run the write-up yourself and watch it happen.
+   */
+  stop: (opts?: { deferWriteUp?: boolean }) => Promise<{ noteId: string | null; openId: string | null }>;
   cancel: () => void;
 }
 
