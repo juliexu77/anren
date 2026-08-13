@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ProjectRail } from "@/components/ProjectRail";
 import { Onboarding } from "@/components/onboarding/Onboarding";
