@@ -83,21 +83,29 @@ const WriteCapture = () => {
           <NoticingBeat stage={stage} title={title} landing={landed} />
         </div>
       ) : (
-        <textarea
-          ref={ref}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              void keep();
-            }
-          }}
-          aria-label="Type or paste your thought"
-          placeholder="Type it, or paste it from wherever it lives…"
-          className="mx-auto mt-8 w-full max-w-[640px] flex-1 resize-none bg-transparent px-6 pb-[max(2rem,env(safe-area-inset-bottom))] text-[1.05rem] leading-[1.75] outline-none placeholder:text-muted-foreground/60"
-        />
+        <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col">
+          {prompt && !text && (
+            <p className="mt-8 px-6 font-editorial text-[1.05rem] italic leading-[1.6] text-muted-foreground/80">
+              {prompt}
+            </p>
+          )}
+          <textarea
+            ref={ref}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                void keep();
+              }
+            }}
+            aria-label="Type or paste your thought"
+            placeholder="Type it, or paste it from wherever it lives…"
+            className="mt-4 w-full flex-1 resize-none bg-transparent px-6 pb-[max(2rem,env(safe-area-inset-bottom))] text-[1.05rem] leading-[1.75] outline-none placeholder:text-muted-foreground/60"
+          />
+        </div>
       )}
+
     </div>
   );
 };
