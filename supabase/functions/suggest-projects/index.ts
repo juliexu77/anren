@@ -17,6 +17,7 @@ Rules:
 - Return AT MOST ONE grouping. The strongest, most obvious one. If nothing is obvious, return {"kind": "none"}.
 - A grouping needs at least 2 notes that genuinely belong together. Not "both are about work" — a shared thread: the same piece of writing, the same trip, the same recurring worry, the same body of research, the same craft.
 - If the notes clearly belong to a project that already exists, use kind "existing" with its id and its exact existing name. Prefer this over inventing a near-duplicate.
+- NEVER name a grouping "anren" or after the app itself. Never name it after the medium: "Notes", "Thoughts", "Journal", "Voice memos".
 - Names are things a person would say out loud: "Meals & cooking", "Dream journal", "The novel", "House", "Writing concepts". Never "Miscellaneous", "Personal", "Ideas", "Notes", "Thoughts", "General".
 - Never use the words folder, organize, file, category, tag, or productivity language of any kind.
 - note_ids must be ids you were given. Never invent one.
@@ -97,6 +98,9 @@ Deno.serve(async (req) => {
     const kind = parsed?.kind === 'existing' ? 'existing' : parsed?.kind === 'new' ? 'new' : 'none';
     const name = (parsed?.name ?? '').trim();
     if (kind === 'none' || !name) return jsonResponse({ ok: true, suggestion: null, reason: 'none' });
+    if (name.trim().toLowerCase() === 'anren') {
+      return jsonResponse({ ok: true, suggestion: null, reason: 'named_after_app' });
+    }
     if (asleep.has(name.toLowerCase())) {
       return jsonResponse({ ok: true, suggestion: null, reason: 'asleep' });
     }
