@@ -2,9 +2,19 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Mic, PenLine } from "lucide-react";
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
+import { supabase } from "@/integrations/supabase/client";
+import { notesChanged } from "@/lib/noteEvents";
 
 /** How long the quiet confirmation lingers before the page goes blank again. */
 const CONFIRM_MS = 4200;
+/** A filing guess is worth leaving up a little longer, in case it's wrong. */
+const FILED_MS = 9000;
+
+interface KeptState {
+  kept?: string;
+  filedInto?: string | null;
+  filedIntoName?: string | null;
+}
 
 /**
  * The blank page: one soft line and two ways in — speak it, or write it.
@@ -14,18 +24,38 @@ export function CaptureSurface() {
   const { session: recovered, busy, keep, discard } = useRecordingRecovery();
   const navigate = useNavigate();
   const location = useLocation();
-  const keptFromState = (location.state as { kept?: string } | null)?.kept ?? null;
+  const state = (location.state as KeptState | null) ?? null;
+  const keptFromState = state?.kept ?? null;
   const [kept, setKept] = useState<string | null>(keptFromState);
+  const [filed, setFiled] = useState<{ id: string; name: string } | null>(
+    state?.filedInto && state?.filedIntoName
+      ? { id: state.filedInto, name: state.filedIntoName }
+      : null,
+  );
 
   useEffect(() => {
     if (keptFromState) setKept(keptFromState);
-  }, [keptFromState]);
+    if (state?.filedInto && state?.filedIntoName) {
+      setFiled({ id: state.filedInto, name: state.filedIntoName });
+    }
+  }, [keptFromState, state?.filedInto, state?.filedIntoName]);
 
   useEffect(() => {
     if (!kept) return;
-    const t = window.setTimeout(() => setKept(null), CONFIRM_MS);
+    const t = window.setTimeout(() => {
+      setKept(null);
+      setFiled(null);
+    }, filed ? FILED_MS : CONFIRM_MS);
     return () => window.clearTimeout(t);
-  }, [kept]);
+  }, [kept, filed]);
+
+  /** A guess should never cost more than one tap to undo. */
+  const notThat = async () => {
+    if (!kept) return;
+    setFiled(null);
+    await supabase.from("notes").update({ project_id: null, auto_filed_at: null }).eq("id", kept);
+    notesChanged();
+  };
 
   return (
     <div className="w-full">
