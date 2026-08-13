@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Trash2, FolderClosed, Sparkles, PenLine } from "lucide-react";
+import { ChevronLeft, Loader2, MoreHorizontal, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNote, softDeleteNote } from "@/hooks/useNotes";
 import { ContinueNote } from "@/components/ContinueNote";
@@ -8,10 +8,15 @@ import { useProjects } from "@/hooks/useProjects";
 import { formatDuration } from "@/lib/wav";
 import { toast } from "sonner";
 import { isNeedsKeyError, NEEDS_KEY_MESSAGE } from "@/lib/aiAccess";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -21,6 +26,55 @@ function toLocalInput(iso: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(
     date.getMinutes(),
   )}`;
+}
+
+/** "Today · 8:14 PM" — the quiet line under each pane. */
+function stamp(iso: string) {
+  const date = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const day = same(date, today)
+    ? "Today"
+    : same(date, yesterday)
+      ? "Yesterday"
+      : date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return `${day} · ${time}`;
+}
+
+const BULLET = /^\s*([-*•])\s+/;
+
+/** The write-up often comes back as points — set those as clay-dotted lines. */
+function Synthesis({ text }: { text: string }) {
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const bulleted = lines.filter((l) => BULLET.test(l)).length >= 2;
+
+  if (!bulleted) {
+    return (
+      <div className="flex flex-col gap-4">
+        {lines.map((line, i) => (
+          <p key={i} className="font-editorial text-[1.08rem] leading-[1.62] text-foreground/90">
+            {line}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-5">
+      {lines.map((line, i) => (
+        <li key={i} className="flex gap-3">
+          <span className="mt-[0.6rem] h-[5px] w-[5px] shrink-0 rounded-full bg-primary" />
+          <span className="font-editorial text-[1.08rem] leading-[1.62] text-foreground/90">
+            {line.replace(BULLET, "")}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 const NoteDetail = () => {
@@ -40,8 +94,19 @@ const NoteDetail = () => {
   const [synthesisDraft, setSynthesisDraft] = useState("");
   const [bodyDraft, setBodyDraft] = useState("");
   const [rewriting, setRewriting] = useState(false);
+  const [editingSynthesis, setEditingSynthesis] = useState(false);
 
   const [editingDate, setEditingDate] = useState(false);
+  const [tab, setTab] = useState<"notes" | "words">(
+    () => (sessionStorage.getItem("anren.noteTab") as "notes" | "words") ?? "notes",
+  );
+
+  const titleRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const chooseTab = (next: "notes" | "words") => {
+    setTab(next);
+    sessionStorage.setItem("anren.noteTab", next);
+  };
 
   useEffect(() => {
     if (!note) return;
@@ -49,6 +114,14 @@ const NoteDetail = () => {
     setSynthesisDraft(note.synthesis ?? "");
     setBodyDraft(note.body ?? "");
   }, [note?.id, note?.title, note?.synthesis, note?.body]);
+
+  // Title wraps instead of running off-canvas.
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [titleDraft, loading]);
 
   useEffect(() => {
     if (!note?.audioPath) return;
@@ -91,8 +164,7 @@ const NoteDetail = () => {
     if (saved) toast.success(projectId ? "Added." : "Removed from project.");
   };
 
-
-  /** Changing your own words makes the write-up stale, so Anren writes it again. */
+  /** Changing your own words makes the write-up stale, so anren writes it again. */
   const saveBody = async (next: string) => {
     if (!note) return;
     const trimmed = next.trim();
@@ -118,13 +190,11 @@ const NoteDetail = () => {
     reload();
   };
 
-
   const remove = async () => {
     if (!note) return;
     await softDeleteNote(note, () => reload());
     navigate("/notes");
   };
-
 
   const ask = async () => {
     if (!note || !question.trim()) return;
@@ -151,96 +221,126 @@ const NoteDetail = () => {
 
   const folderName = projects.find((p) => p.id === note.projectId)?.name;
 
+  const dateLine = editingDate ? (
+    <input
+      type="datetime-local"
+      autoFocus
+      defaultValue={toLocalInput(note.recordedAt)}
+      onBlur={(e) => {
+        const next = new Date(e.target.value);
+        setEditingDate(false);
+        if (!Number.isNaN(next.getTime()) && next.toISOString() !== note.recordedAt) {
+          void patch({ recordedAt: next.toISOString() });
+        }
+      }}
+      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+      className="rounded-full border border-hairline bg-paper px-3 py-1.5 text-[0.8rem] outline-none focus:border-primary/40"
+    />
+  ) : null;
+
+  const footer = (note: string) =>
+    editingDate ? (
+      dateLine
+    ) : (
+      <button
+        onClick={() => setEditingDate(true)}
+        title="Change the date"
+        className="mt-8 block text-left text-[0.85rem] text-whisper transition-colors hover:text-muted-foreground"
+      >
+        {stamp(note)}
+      </button>
+    );
+
+  const metaSuffix = note.durationSeconds ? ` · ${formatDuration(note.durationSeconds)}` : "";
+  const ownWords = note.source === "typed" ? note.body : note.transcript;
+
   return (
     <article>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-6 flex items-start justify-between gap-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground hover:text-foreground transition-colors"
+          className="-ml-1 flex items-center gap-1 text-[0.95rem] text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back
+          <ChevronLeft className="w-[18px] h-[18px]" strokeWidth={1.5} />
+          Notes
         </button>
 
-        <div className="flex items-center gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.8rem] text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors">
-              <FolderClosed className="w-3.5 h-3.5" strokeWidth={1.5} />
-              {folderName ?? "Project"}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {projects.map((p) => (
-                <DropdownMenuItem key={p.id} onClick={() => moveToFolder(p.id)}>
-                  {p.name}
-                </DropdownMenuItem>
-              ))}
-              {note.projectId && (
-                <DropdownMenuItem onClick={() => moveToFolder(null)}>Remove from project</DropdownMenuItem>
-              )}
-              {!projects.length && (
-                <DropdownMenuItem disabled>Create a project in the sidebar first</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <button
-            onClick={remove}
-            aria-label="Delete note"
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-paper-sunk transition-colors"
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Note options"
+            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-paper-sunk hover:text-foreground"
           >
-            <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-          </button>
-        </div>
+            <MoreHorizontal className="w-[18px] h-[18px]" strokeWidth={1.5} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>{folderName ?? "Add to project…"}</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {projects.map((p) => (
+                  <DropdownMenuItem key={p.id} onClick={() => moveToFolder(p.id)}>
+                    {p.name}
+                  </DropdownMenuItem>
+                ))}
+                {note.projectId && (
+                  <DropdownMenuItem onClick={() => moveToFolder(null)}>Remove from project</DropdownMenuItem>
+                )}
+                {!projects.length && (
+                  <DropdownMenuItem disabled>Create a project in the sidebar first</DropdownMenuItem>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem onClick={() => setEditingDate(true)}>Change the date</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={remove}>Delete</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {editingDate ? (
-        <input
-          type="datetime-local"
-          autoFocus
-          defaultValue={toLocalInput(note.recordedAt)}
-          onBlur={(e) => {
-            const next = new Date(e.target.value);
-            setEditingDate(false);
-            if (!Number.isNaN(next.getTime()) && next.toISOString() !== note.recordedAt) {
-              void patch({ recordedAt: next.toISOString() });
-            }
-          }}
-          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-          className="rounded-full border border-hairline bg-paper px-3 py-1.5 text-[0.8rem] outline-none focus:border-primary/40"
-        />
-      ) : (
-        <button
-          onClick={() => setEditingDate(true)}
-          title="Change the date"
-          className="group flex items-center gap-1.5 text-[0.72rem] uppercase tracking-[0.16em] text-muted-foreground/70 hover:text-foreground transition-colors"
-        >
-          {new Date(note.recordedAt).toLocaleString([], {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })}
-          {note.durationSeconds ? ` · ${formatDuration(note.durationSeconds)}` : ""}
-          {note.source === "typed" && <PenLine className="w-3 h-3" strokeWidth={1.5} />}
-        </button>
-      )}
-
-      <input
+      <textarea
+        ref={titleRef}
         value={titleDraft}
         onChange={(e) => setTitleDraft(e.target.value)}
         onBlur={() => {
           const next = titleDraft.trim();
           if (next !== (note.title ?? "")) void patch({ title: next || null });
         }}
-        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            (e.target as HTMLTextAreaElement).blur();
+          }
+        }}
+        rows={1}
         placeholder={note.status === "processing" ? "Writing this up…" : "Untitled note"}
         aria-label="Note title"
-        className="mt-3 w-full bg-transparent font-editorial text-[1.95rem] leading-[1.22] tracking-[-0.015em] outline-none placeholder:text-muted-foreground/60 rounded-lg -mx-2 px-2 focus:bg-paper-sunk/40 transition-colors"
+        className="w-full resize-none overflow-hidden bg-transparent pr-6 font-editorial text-[1.85rem] font-medium leading-[1.2] tracking-[-0.015em] outline-none placeholder:text-muted-foreground/60"
       />
 
+      {/* Two views of the same thought */}
+      <div className="mt-5 flex items-center gap-7 border-b border-hairline">
+        {(
+          [
+            ["notes", "Notes"],
+            ["words", "Your words"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => chooseTab(key)}
+            className={cn(
+              "-mb-px border-b-2 pb-2.5 text-[0.98rem] transition-colors",
+              tab === key
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {note.status === "processing" && (
-        <div className="mt-6 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
+        <div className="mt-7 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           {rewriting
             ? "You changed the words — reading it over again."
@@ -250,9 +350,8 @@ const NoteDetail = () => {
         </div>
       )}
 
-
       {note.status === "needs_key" && (
-        <p className="mt-6 text-[0.9rem] leading-relaxed text-muted-foreground">
+        <p className="mt-7 text-[0.9rem] leading-relaxed text-muted-foreground">
           Your words are saved. Write-ups are written by Claude —{" "}
           <Link to="/settings/claude" className="text-foreground underline decoration-hairline underline-offset-4">
             connect your own key
@@ -262,34 +361,99 @@ const NoteDetail = () => {
       )}
 
       {note.status === "failed" && (
-        <p className="mt-6 text-[0.9rem] text-muted-foreground">
+        <p className="mt-7 text-[0.9rem] text-muted-foreground">
           {note.errorMessage ?? "Something interrupted the write-up."}
         </p>
       )}
 
-      {note.synthesis !== null && (
-        <div className="mt-7 rounded-[20px] border border-hairline bg-paper/70 px-6 py-6">
-          <textarea
-            value={synthesisDraft}
-            onChange={(e) => setSynthesisDraft(e.target.value)}
-            onBlur={() => {
-              if (synthesisDraft !== (note.synthesis ?? "")) void patch({ synthesis: synthesisDraft });
-            }}
-            rows={Math.max(3, synthesisDraft.split("\n").length + 2)}
-            aria-label="Write-up"
-            className="w-full resize-none bg-transparent font-editorial text-[1.05rem] leading-[1.7] outline-none"
-          />
-        </div>
-      )}
+      {tab === "notes" ? (
+        <section className="mt-7">
+          {editingSynthesis ? (
+            <textarea
+              value={synthesisDraft}
+              autoFocus
+              onChange={(e) => setSynthesisDraft(e.target.value)}
+              onBlur={() => {
+                setEditingSynthesis(false);
+                if (synthesisDraft !== (note.synthesis ?? "")) void patch({ synthesis: synthesisDraft });
+              }}
+              rows={Math.max(4, synthesisDraft.split("\n").length + 2)}
+              aria-label="Write-up"
+              className="w-full resize-none bg-transparent font-editorial text-[1.08rem] leading-[1.62] outline-none"
+            />
+          ) : note.synthesis ? (
+            <button
+              onClick={() => setEditingSynthesis(true)}
+              title="Edit the write-up"
+              className="block w-full cursor-text text-left"
+            >
+              <Synthesis text={note.synthesis} />
+            </button>
+          ) : note.status === "ready" ? (
+            <p className="text-[0.95rem] text-muted-foreground">Nothing written up for this one yet.</p>
+          ) : null}
 
-      {audioUrl && (
-        <audio controls src={audioUrl} className="mt-7 w-full" preload="none">
-          <track kind="captions" />
-        </audio>
+          {note.synthesis && (
+            <p className="mt-8 text-[0.85rem] text-whisper">
+              <button
+                onClick={() => setEditingDate(true)}
+                title="Change the date"
+                className="transition-colors hover:text-muted-foreground"
+              >
+                {stamp(note.recordedAt)}
+                {metaSuffix}
+              </button>
+              {" · cleaned up by anren"}
+            </p>
+          )}
+          {editingDate && <div className="mt-4">{dateLine}</div>}
+        </section>
+      ) : (
+        <section className="mt-7">
+          {note.source === "typed" ? (
+            <textarea
+              value={bodyDraft}
+              onChange={(e) => setBodyDraft(e.target.value)}
+              onBlur={() => {
+                if (bodyDraft !== (note.body ?? "")) void saveBody(bodyDraft);
+              }}
+              rows={Math.max(6, bodyDraft.split("\n").length + 2)}
+              aria-label="Note body"
+              className="w-full resize-none bg-transparent font-editorial text-[1.08rem] italic leading-[1.72] text-foreground/75 outline-none focus:text-foreground"
+            />
+          ) : note.transcript ? (
+            <p className="whitespace-pre-line font-editorial text-[1.08rem] italic leading-[1.72] text-foreground/75">
+              {note.transcript}
+            </p>
+          ) : (
+            <p className="text-[0.95rem] text-muted-foreground">No words captured for this one yet.</p>
+          )}
+
+          {ownWords && (
+            <p className="mt-8 text-[0.85rem] text-whisper">
+              <button
+                onClick={() => setEditingDate(true)}
+                title="Change the date"
+                className="transition-colors hover:text-muted-foreground"
+              >
+                {stamp(note.recordedAt)}
+                {metaSuffix}
+              </button>
+              {" · exactly as you said it"}
+            </p>
+          )}
+          {editingDate && <div className="mt-4">{dateLine}</div>}
+
+          {audioUrl && (
+            <audio controls src={audioUrl} className="mt-7 w-full" preload="none">
+              <track kind="captions" />
+            </audio>
+          )}
+        </section>
       )}
 
       {(related?.length || loadingRelated) && (
-        <section className="mt-10">
+        <section className="mt-12">
           <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Related</h2>
           {loadingRelated ? (
             <div className="mt-3 flex items-center gap-2 text-[0.9rem] text-muted-foreground">
@@ -297,51 +461,22 @@ const NoteDetail = () => {
               Finding earlier notes…
             </div>
           ) : (
-            <div className="mt-3 flex flex-col">
+            <div className="mt-2 flex flex-col">
               {related?.map((r) => (
                 <Link
                   key={r.note_id}
                   to={`/note/${r.note_id}`}
-                  className="group flex items-baseline justify-between gap-3 py-3 border-b border-hairline last:border-b-0"
+                  className="flex items-baseline justify-between gap-3 border-b border-hairline py-3 last:border-b-0 transition-colors hover:text-foreground"
                 >
-                  <span className="note-title text-[0.95rem]">{r.title ?? "Untitled note"}</span>
+                  <span className="text-[0.9rem] text-muted-foreground">{r.title ?? "Untitled note"}</span>
                   <span className="shrink-0 text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">
-                    {new Date(r.recorded_at).toLocaleDateString([], {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {new Date(r.recorded_at).toLocaleDateString([], { month: "short", day: "numeric" })}
                   </span>
                 </Link>
               ))}
             </div>
           )}
         </section>
-      )}
-
-      {note.source === "typed" ? (
-        <section className="mt-10">
-          <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Your words</h2>
-          <textarea
-            value={bodyDraft}
-            onChange={(e) => setBodyDraft(e.target.value)}
-            onBlur={() => {
-              if (bodyDraft !== (note.body ?? "")) void saveBody(bodyDraft);
-            }}
-
-            rows={Math.max(4, bodyDraft.split("\n").length + 2)}
-            aria-label="Note body"
-            className="mt-3 w-full resize-none rounded-[16px] bg-transparent px-0 text-[0.95rem] leading-[1.8] text-muted-foreground outline-none focus:text-foreground transition-colors"
-          />
-        </section>
-      ) : (
-        note.transcript && (
-          <section className="mt-10">
-            <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">Transcript</h2>
-            <p className="mt-3 whitespace-pre-line text-[0.95rem] leading-[1.8] text-muted-foreground">
-              {note.transcript}
-            </p>
-          </section>
-        )
       )}
 
       {note.status !== "processing" && <ContinueNote note={note} onDone={reload} />}
@@ -363,7 +498,7 @@ const NoteDetail = () => {
               onClick={ask}
               disabled={asking || !question.trim()}
               aria-label="Ask"
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
             >
               {asking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
             </button>
