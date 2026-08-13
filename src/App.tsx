@@ -60,7 +60,8 @@ const App = () => (
           <Route path="/delete-account" element={<ProtectedShell><DeleteAccount /></ProtectedShell>} />
 
 
-          <Route path="/" element={<ProtectedShell><Home /></ProtectedShell>} />
+          <Route path="/" element={<ProtectedShell><Threads /></ProtectedShell>} />
+          <Route path="/capture" element={<ProtectedShell><Home /></ProtectedShell>} />
           <Route path="/capture/voice" element={<ProtectedShell><VoiceCapture /></ProtectedShell>} />
           <Route path="/capture/write" element={<ProtectedShell><WriteCapture /></ProtectedShell>} />
           <Route path="/notes" element={<ProtectedShell><Index /></ProtectedShell>} />
