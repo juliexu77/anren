@@ -60,7 +60,8 @@ const App = () => (
           <Route path="/delete-account" element={<ProtectedShell><DeleteAccount /></ProtectedShell>} />
 
 
-          <Route path="/" element={<ProtectedShell><Home /></ProtectedShell>} />
+          <Route path="/" element={<ProtectedShell><Threads /></ProtectedShell>} />
+          <Route path="/capture" element={<ProtectedShell><Home /></ProtectedShell>} />
           <Route path="/capture/voice" element={<ProtectedShell><VoiceCapture /></ProtectedShell>} />
           <Route path="/capture/write" element={<ProtectedShell><WriteCapture /></ProtectedShell>} />
           <Route path="/notes" element={<ProtectedShell><Index /></ProtectedShell>} />
@@ -68,7 +69,7 @@ const App = () => (
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
-          <Route path="/threads" element={<ProtectedShell><Threads /></ProtectedShell>} />
+          <Route path="/threads" element={<Navigate to="/" replace />} />
           <Route path="/reflect" element={<ProtectedShell><Reflect /></ProtectedShell>} />
           <Route path="/on-my-mind" element={<Navigate to="/reflect" replace />} />
           <Route path="/settings" element={<ProtectedShell><Settings /></ProtectedShell>} />

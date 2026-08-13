@@ -39,7 +39,7 @@ const WriteCapture = () => {
     setLanded(line);
 
     const land = () =>
-      navigate("/", {
+      navigate("/capture", {
         state: {
           kept: noteId,
           filedInto: noticed.landing.projectId,

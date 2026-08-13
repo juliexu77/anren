@@ -100,8 +100,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
 
       <NavLink
-        to="/"
-        end
+        to="/capture"
         onClick={onNavigate}
         className="mb-5 flex items-center justify-center gap-2 rounded-[12px] bg-plum px-4 py-2.5 text-[0.92rem] text-plum-foreground transition-opacity hover:opacity-90"
       >
@@ -115,7 +114,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
         </NavLink>
-        <NavLink to="/threads" className={navItemClass} onClick={onNavigate}>
+        <NavLink to="/" end className={navItemClass} onClick={onNavigate}>
           <GitBranch className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Threads
         </NavLink>
