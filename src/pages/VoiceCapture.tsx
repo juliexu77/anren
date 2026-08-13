@@ -17,7 +17,8 @@ const VoiceCapture = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const folderId = params.get("folder");
-  const began = useRef(false);
+  const prompt = params.get("prompt");
+
   const [stage, setStage] = useState<NoticeStage | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [landed, setLanded] = useState<string | null>(null);
