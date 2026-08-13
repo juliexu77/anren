@@ -4,7 +4,7 @@ Turn the Threads screen into a bird's-eye view of your mind-space: the areas you
 
 ## The screen
 
-Sidebar entry becomes **Overview** (same `/threads` route, so existing links keep working).
+The sidebar entry stays **Threads** on the `/threads` route — only what's on the screen changes.
 
 **1. Your projects**
 Each project appears as a substantial block, not a sidebar row:
