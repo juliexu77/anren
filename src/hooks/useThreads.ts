@@ -49,11 +49,16 @@ export function useThreads() {
     if (ids.length) {
       const { data: notes } = await supabase
         .from("notes")
-        .select("id, title, recorded_at")
+        .select("id, title, recorded_at, project_id")
         .in("id", ids)
         .is("deleted_at", null);
       for (const n of notes ?? []) {
-        notesById.set(n.id, { id: n.id, title: n.title, recordedAt: n.recorded_at });
+        notesById.set(n.id, {
+          id: n.id,
+          title: n.title,
+          recordedAt: n.recorded_at,
+          projectId: n.project_id ?? null,
+        });
       }
     }
 
