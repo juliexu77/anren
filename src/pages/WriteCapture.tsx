@@ -15,7 +15,9 @@ const WriteCapture = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const folderId = params.get("folder");
+  const prompt = params.get("prompt");
   const [text, setText] = useState("");
+
   const ref = useRef<HTMLTextAreaElement>(null);
   const [stage, setStage] = useState<NoticeStage | null>(null);
   const [title, setTitle] = useState<string | null>(null);
