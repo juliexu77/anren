@@ -250,16 +250,27 @@ async function transcribeParts(
     if (onProgress) await onProgress(joinAll(texts)).catch(() => {});
   };
 
-  for (const name of parts) {
-    const { data } = await admin.storage.from('voice-notes').download(`${folder}/${name}`);
-    if (!data) continue;
-    const bytes = new Uint8Array(await data.arrayBuffer());
-    if (bytes.length <= WAV_HEADER) continue;
-    const pcm = bytes.subarray(WAV_HEADER);
-    batch.push(pcm);
-    batchBytes += pcm.length;
+  // A five-second slice per file means dozens of small downloads; fetching
+  // them a handful at a time keeps that from becoming the wait.
+  const DOWNLOADS = 8;
+  for (let i = 0; i < parts.length; i += DOWNLOADS) {
+    const names = parts.slice(i, i + DOWNLOADS);
+    const pieces = await Promise.all(
+      names.map(async (name) => {
+        const { data } = await admin.storage.from('voice-notes').download(`${folder}/${name}`);
+        if (!data) return null;
+        const bytes = new Uint8Array(await data.arrayBuffer());
+        return bytes.length > WAV_HEADER ? bytes.subarray(WAV_HEADER) : null;
+      }),
+    );
+    for (const pcm of pieces) {
+      if (!pcm) continue;
+      batch.push(pcm);
+      batchBytes += pcm.length;
+    }
     if (batchBytes >= CHUNK_BYTES) await flush();
   }
+
   await flush();
 
   return joinAll(texts);
