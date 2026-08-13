@@ -10,7 +10,12 @@ export interface ProjectSuggestion {
   projectId: string | null;
   noteIds: string[];
   reason: string | null;
+  /** The notes it would actually gather, so the decision is legible. */
+  notes: { id: string; title: string | null }[];
 }
+
+/** A grouping named after the app itself is never a real grouping. */
+const NOT_A_NAME = new Set(["anren"]);
 
 const LOOKED_KEY = "anren.projectShapesLookedAt";
 const A_DAY = 24 * 60 * 60 * 1000;
@@ -34,16 +39,28 @@ export function useProjectSuggestions(enabled: boolean) {
       .order("created_at", { ascending: false })
       .limit(1);
     const row = data?.[0];
-    const mapped = row
-      ? {
-          id: row.id,
-          kind: (row.kind === "existing" ? "existing" : "new") as "new" | "existing",
-          name: row.name,
-          projectId: row.project_id,
-          noteIds: (row.note_ids ?? []) as string[],
-          reason: row.reason,
-        }
-      : null;
+    if (!row || NOT_A_NAME.has((row.name ?? "").trim().toLowerCase())) {
+      setSuggestion(null);
+      return null;
+    }
+
+    const noteIds = (row.note_ids ?? []) as string[];
+    const { data: noteRows } = await supabase
+      .from("notes")
+      .select("id, title")
+      .in("id", noteIds.length ? noteIds : ["00000000-0000-0000-0000-000000000000"])
+      .is("deleted_at", null);
+    const byId = new Map((noteRows ?? []).map((n) => [n.id, n.title as string | null]));
+
+    const mapped: ProjectSuggestion = {
+      id: row.id,
+      kind: (row.kind === "existing" ? "existing" : "new") as "new" | "existing",
+      name: row.name,
+      projectId: row.project_id,
+      noteIds: noteIds.filter((id) => byId.has(id)),
+      reason: row.reason,
+      notes: noteIds.filter((id) => byId.has(id)).map((id) => ({ id, title: byId.get(id) ?? null })),
+    };
     setSuggestion(mapped);
     return mapped;
   }, [user]);
