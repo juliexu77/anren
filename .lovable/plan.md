@@ -1,45 +1,43 @@
-# Dead code cleanup (iOS stays intact)
+# Dead code cleanup (iOS and push scaffolding stay)
 
-Understood — Capacitor and the iOS build are load-bearing and stay. This only removes the extras we bolted on and later abandoned. Nothing in the capture → notes → threads → reflect loop, nothing in Google/Apple sign-in, nothing in the `ios/` project structure is touched.
+Corrections accepted: push notifications stay, `next-themes` stays, `claude.md` is already rewritten. Capacitor and the iOS build are load-bearing and untouched.
 
 ## Stays, untouched
 
 - `@capacitor/core`, `@capacitor/cli`, `@capacitor/ios`, `@capacitor/android`, `capacitor.config.ts`, the whole `ios/` Xcode project
-- `@capgo/capacitor-social-login`, the GoogleSignIn handling in `AppDelegate.swift`, the reversed-client-ID URL scheme in `Info.plist`, `src/lib/authNative.ts`
+- `@capgo/capacitor-social-login`, GoogleSignIn handling in `AppDelegate.swift`, the reversed-client-ID URL scheme, `src/lib/authNative.ts`
+- **Push notification scaffolding** — `@capacitor/push-notifications`, `@capacitor/app`, the `PushNotifications` config block, `UIBackgroundModes: remote-notification`, and the APNs token-forwarding in `AppDelegate.swift`. Unwired today, but it's the annoying-to-redo part and check-in nudges fit the product. `docs/push-notifications-setup.md` stays too.
+- `next-themes` — `src/components/ui/sonner.tsx` uses `useTheme()` and is live in `App.tsx`
+- `claude.md` — already rewritten
 - `NSMicrophoneUsageDescription` and everything recording-related
-- Historical migrations (the old `people` / health-signal tables are already dropped by a later migration; rewriting history isn't worth the risk)
+- Historical migrations (old `people` / health-signal tables are already dropped by a later migration)
 
 ## Removed — abandoned integrations
 
-Verified: none of these are imported anywhere in `src/`.
-
 - `@perfood/capacitor-healthkit` (Apple Health experiment)
 - `@capacitor-community/contacts` (Contacts import)
-- `@capacitor/push-notifications` + `@capacitor/app`
-- `capacitor.config.ts`: the `Contacts` and `PushNotifications` plugin blocks
-- `Info.plist`: `UIBackgroundModes: remote-notification`
-- `AppDelegate.swift`: the two APNs token-forwarding methods
+- `capacitor.config.ts`: the `Contacts` plugin block
 
 ## Removed — other strays
 
-- `supabase/functions/transcribe-audio/` — zero references; transcription happens inside `process-note`. Also drops its `config.toml` entry.
-- `package.json` script `build:extension` — the `extension/` directory no longer exists
-- Unused frontend packages with no imports outside their own orphaned shadcn wrapper: `xlsx`, `recharts`, `embla-carousel-react`, `input-otp`, `react-day-picker`, `react-resizable-panels`, `vaul`, `next-themes` — and those wrappers (`chart`, `carousel`, `input-otp`, `calendar`, `resizable`, `drawer`)
-- Stale docs: `docs/push-notifications-setup.md`, `docs/google-auth-architecture.md` (Calendar OAuth flow that no longer exists), and the Contacts/Health sections of `docs/ios-deployment-plan.md`, `docs/lovable-brief.md`, `docs/app-store-submission.md`
-- `claude.md` — still describes the pre-v2 app (BrainCard, people, calendar, Chrome extension); rewritten to match anren v2
+- `supabase/functions/transcribe-audio/` + its `config.toml` entry — zero callers; `process-note` transcribes inline
+- `package.json` script `build:extension` — `extension/` is gone
+- Unused packages and their orphan shadcn wrappers: `xlsx`, `recharts`, `embla-carousel-react`, `input-otp`, `react-day-picker`, `react-resizable-panels`, `vaul` — plus `chart.tsx`, `carousel.tsx`, `input-otp.tsx`, `calendar.tsx`, `resizable.tsx`, `drawer.tsx`
+- `docs/google-auth-architecture.md`, and the Contacts/Health sections of `docs/ios-deployment-plan.md`, `docs/lovable-brief.md`, `docs/app-store-submission.md`
+
+## Also folding in: the dead Calendar OAuth scope
+
+`src/lib/authNative.ts` still requests `https://www.googleapis.com/auth/calendar` on every native sign-in, with no calendar feature behind it — real consent friction for nothing. Dropping it leaves `["email", "profile"]`. Reintroducing Calendar later is a one-line change, so I'd remove it now. Say the word if you'd rather leave it.
 
 ## Order of work
 
 1. Delete the `transcribe-audio` function and its config entry.
-2. Remove the four abandoned plugins and their config/Info.plist/AppDelegate hooks.
+2. Remove the HealthKit and Contacts plugins and the `Contacts` config block.
 3. Remove the unused frontend packages and orphan shadcn wrappers.
-4. Prune docs, rewrite `claude.md`, drop the dead script.
-5. Build and run tests to confirm the app is unchanged.
+4. Trim the calendar scope in `authNative.ts`.
+5. Prune the stale docs and the dead `build:extension` script.
+6. Build and run tests to confirm nothing changed behaviorally.
 
 ## After I'm done
 
-Since native dependencies change, your next iOS build needs a `git pull`, `npm install`, then `npx cap sync` before opening Xcode. The app itself will behave identically.
-
-## One question
-
-Push notifications: gone entirely, or keep the plugin installed as scaffolding for a future gentle "time to check in" reminder? Everything else above I'd remove outright.
+Native deps change, so your next iOS build needs `git pull`, `npm install`, then `npx cap sync` before opening Xcode. App behavior is otherwise identical.
