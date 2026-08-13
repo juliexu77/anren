@@ -26,13 +26,17 @@ Leaving tech · Wednesday coworking · friendship boundaries
 - One quiet aliveness line: "showing up more lately", "you returned to this after three weeks", "quiet for a week".
 - 2-3 actual phrases pulled from the notes — the reason it was noticed, in your words, not paraphrase.
 - The notes themselves as small tappable rows underneath (collapsed to the first few).
-- A single quiet action: **Make this a Project**, which creates the project and files those notes into it. No editing, no renaming, no deleting.
+- Two quiet actions only: **Make this a Project**, which creates the project and files those notes into it, and a small **Not this** dismiss. No renaming, no editing, no thread detail page.
+
+**Not this** sets the thread to `dismissed` and it leaves the page immediately. anren won't re-raise a near-identical thread for a few weeks (checked by embedding-free similarity on the name plus overlap of its note set), so a wrong inference can't sit there feeling authoritative.
 
 At most 3-6 active threads on the page, warmest first. Empty state before there's enough material: "Threads appear once a few thoughts start rhyming. Keep talking."
 
 ## How threads behave over time
 
-anren re-reads recent notes on a cadence (at most once a day, and only after enough notes exist) and returns the handful of threads currently alive. Existing threads are matched by name so they **evolve** rather than duplicate: notes get added, the aliveness line updates, `last_seen` moves. A thread with no new notes for ~3 weeks goes dormant and drops off the page (kept in the table, not deleted). Two threads that collapse into one merge under the surviving name. A thread promoted to a Project is retired so it can't shadow the project.
+Each thread has a **stable id**. When anren re-reads the notes (at most once a day, only once enough notes exist) it is given the active threads *with their ids*, and every cluster it returns must declare either `existing_thread_id` or `"new"`. Matching never happens on the name — so a thread can be renamed by the model as it clarifies ("Protecting my energy" → "Protecting my time") and still be the same thread, gaining notes, an updated blurb, and a moved `last_seen_at`.
+
+A thread with no new notes for ~3 weeks goes dormant and drops off the page (kept in the table, not deleted). Merges are also by id: `merges_into: "<thread_id>"` folds one thread's notes into the survivor and retires the absorbed one. A thread promoted to a Project is retired so it can't shadow the project.
 
 ## Note detail
 
