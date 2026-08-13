@@ -44,10 +44,22 @@ The note screen gains a single quiet line under Related: "Part of: Protecting my
 
 ## Technical notes
 
-**Data** — new `threads` table (`id, user_id, name, blurb, note_ids uuid[], quotes jsonb, status: active|dormant|promoted, project_id, first_seen_at, last_seen_at, created_at, updated_at`) with GRANTs to `authenticated`/`service_role`, RLS `auth.uid() = user_id`, index on `(user_id, status, last_seen_at desc)`. No changes to `notes`.
+**Data** — new `threads` table (`id uuid pk, user_id, name, blurb, note_ids uuid[], quotes jsonb, status text: active|dormant|dismissed|promoted|merged, merged_into uuid, project_id, first_seen_at, last_seen_at, dismissed_at, created_at, updated_at`) with GRANTs to `authenticated`/`service_role`, RLS `auth.uid() = user_id`, index on `(user_id, status, last_seen_at desc)`. No changes to `notes`.
 
-**Edge function** `notice-threads` — pulls the last ~60 ready notes (title, synthesis, recorded_at, project_id) plus the current active threads, asks Claude Sonnet 4.5 (existing `_shared/ai.ts` `chat`, same quota/own-key handling as `suggest-projects`) for 0-6 threads with `name`, `blurb`, `note_ids`, `quotes` (verbatim fragments, must appear in the source), and `merges_into` for consolidation. Upserts by lowercased name, marks stale threads dormant. Prompt inherits the voice rules from `suggest-projects`: no folder/organize/productivity language, second person, no diagnosis.
+**Edge function** `notice-threads` — pulls the last ~60 ready notes (id, title, synthesis, recorded_at) plus active threads **as `{ id, name, note_ids }`** and recently dismissed threads as a do-not-resurface list. Asks Claude Sonnet 4.5 (existing `_shared/ai.ts` `chat`, same quota/own-key handling as `suggest-projects`) for 0-6 clusters:
 
-**Frontend** — `src/pages/Threads.tsx`, `src/components/ThreadCard.tsx`, `src/hooks/useThreads.ts` (load + daily refresh trigger modelled on `useProjectSuggestions`), route `/threads` in `src/App.tsx`, nav row in `src/components/ProjectRail.tsx` between Notes and Search. Promotion reuses the existing project-create + note-association path from `ProjectSuggestion`. Styling stays borderless editorial: serif names, muted Inter meta, clay for quotes and the promote action.
+```text
+{ "threads": [ {
+    "existing_thread_id": "<uuid>" | null,   // null means new
+    "name": "...", "blurb": "...",
+    "note_ids": ["<uuid>", ...],
+    "quotes": ["verbatim fragment", ...],
+    "merges_into": "<uuid>" | null
+} ] }
+```
 
-Reflect, Search, and the notes feed are untouched.
+Server-side: ids are validated against the user's own rows (unknown ids are treated as new, never trusted blindly); `existing_thread_id` updates that row in place including its name; `merges_into` unions note ids into the target and marks the absorbed row `merged`; active threads the model didn't return and that haven't gained notes in ~3 weeks go `dormant`; clusters resembling a recent dismissal are dropped. Prompt inherits the voice rules from `suggest-projects`: no folder/organize/productivity language, second person, no diagnosis, quotes must appear verbatim in the source.
+
+**Frontend** — `src/pages/Threads.tsx`, `src/components/ThreadCard.tsx`, `src/hooks/useThreads.ts` (load, daily refresh trigger modelled on `useProjectSuggestions`, `promote`, `dismiss`), route `/threads` in `src/App.tsx`, nav row in `src/components/ProjectRail.tsx` between Notes and Search (Projects stay below; Search remains global utility). Promotion reuses the existing project-create + note-association path from `ProjectSuggestion`. Styling stays borderless editorial: serif names, muted Inter meta, clay for quotes and the promote action; "Not this" is muted, never red.
+
+Out of V1 on purpose: thread detail pages, graphs, relationship maps, related-threads, permanent thread history. Reflect, Search, and the notes feed are untouched.
