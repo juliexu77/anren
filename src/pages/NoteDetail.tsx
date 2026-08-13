@@ -85,6 +85,7 @@ const NoteDetail = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [related, setRelated] = useState<{ note_id: string; title: string | null; recorded_at: string }[] | null>(null);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const [threads, setThreads] = useState<{ id: string; name: string }[]>([]);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -136,6 +137,23 @@ const NoteDetail = () => {
       active = false;
     };
   }, [note?.audioPath]);
+
+  // Which threads this note turned out to be part of.
+  useEffect(() => {
+    if (!note?.id) return;
+    let active = true;
+    supabase
+      .from("threads")
+      .select("id, name")
+      .eq("status", "active")
+      .contains("note_ids", [note.id])
+      .then(({ data }) => {
+        if (active) setThreads(data ?? []);
+      });
+    return () => {
+      active = false;
+    };
+  }, [note?.id]);
 
   useEffect(() => {
     if (!note?.id || note.status !== "ready") return;
@@ -438,6 +456,23 @@ const NoteDetail = () => {
             </audio>
           )}
         </section>
+      )}
+
+      {threads.length > 0 && (
+        <p className="mt-10 text-[0.85rem] text-muted-foreground">
+          Part of{" "}
+          {threads.map((t, i) => (
+            <span key={t.id}>
+              {i > 0 && (i === threads.length - 1 ? " and " : ", ")}
+              <Link
+                to="/threads"
+                className="text-foreground underline decoration-hairline underline-offset-4"
+              >
+                {t.name}
+              </Link>
+            </span>
+          ))}
+        </p>
       )}
 
       {(related?.length || loadingRelated) && (

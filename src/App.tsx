@@ -15,6 +15,7 @@ import WriteCapture from "./pages/WriteCapture";
 import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
 import Reflect from "./pages/Reflect";
+import Threads from "./pages/Threads";
 import Settings from "./pages/Settings";
 import ClaudeKey from "./pages/ClaudeKey";
 import Auth from "./pages/Auth";
@@ -67,6 +68,7 @@ const App = () => (
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
+          <Route path="/threads" element={<ProtectedShell><Threads /></ProtectedShell>} />
           <Route path="/reflect" element={<ProtectedShell><Reflect /></ProtectedShell>} />
           <Route path="/on-my-mind" element={<Navigate to="/reflect" replace />} />
           <Route path="/settings" element={<ProtectedShell><Settings /></ProtectedShell>} />
