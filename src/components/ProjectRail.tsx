@@ -104,9 +104,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
         to="/"
         end
         onClick={onNavigate}
-        className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-ink px-4 py-3.5 text-[0.95rem] text-ink-foreground transition-opacity hover:opacity-90 md:mt-0 mt-10"
+        className="mb-5 flex items-center justify-center gap-2 rounded-[12px] bg-plum px-4 py-2.5 text-[0.92rem] text-plum-foreground transition-opacity hover:opacity-90 md:mt-0 mt-10"
       >
-        <Plus className="w-[17px] h-[17px]" strokeWidth={1.75} />
+        <Plus className="w-[16px] h-[16px]" strokeWidth={1.75} />
         New thought
       </NavLink>
 
