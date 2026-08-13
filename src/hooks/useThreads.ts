@@ -7,6 +7,7 @@ export interface ThreadNote {
   id: string;
   title: string | null;
   recordedAt: string;
+  projectId: string | null;
 }
 
 export interface Thread {
