@@ -154,7 +154,7 @@ export function useThreads() {
           .eq("id", thread.id);
         setThreads((prev) => (prev ?? []).filter((t) => t.id !== thread.id));
         notesChanged();
-        return created.id;
+        return target.id;
       } finally {
         setWorking(false);
       }
