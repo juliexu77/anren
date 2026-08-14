@@ -9,10 +9,10 @@ export interface ProjectSuggestion {
   name: string;
   projectId: string | null;
   noteIds: string[];
-  reason: string | null;
   /** The notes it would actually gather, so the decision is legible. */
   notes: { id: string; title: string | null }[];
 }
+
 
 /** A grouping named after the app itself is never a real grouping. */
 const NOT_A_NAME = new Set(["anren"]);
@@ -33,7 +33,7 @@ export function useProjectSuggestions(enabled: boolean) {
     if (!user) return null;
     const { data } = await supabase
       .from("project_suggestions")
-      .select("id, kind, name, project_id, note_ids, reason")
+      .select("id, kind, name, project_id, note_ids")
       .eq("user_id", user.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false })
@@ -58,7 +58,6 @@ export function useProjectSuggestions(enabled: boolean) {
       name: row.name,
       projectId: row.project_id,
       noteIds: noteIds.filter((id) => byId.has(id)),
-      reason: row.reason,
       notes: noteIds.filter((id) => byId.has(id)).map((id) => ({ id, title: byId.get(id) ?? null })),
     };
     setSuggestion(mapped);
