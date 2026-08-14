@@ -62,11 +62,6 @@ export function ProjectSuggestion({
         <p className="font-editorial text-[0.98rem] leading-snug">
           {existing ? `These belong in ${suggestion.name}` : `These sound like one thing — ${suggestion.name}`}
         </p>
-        {suggestion.reason && (
-          <p className="mt-1 text-[0.82rem] leading-[1.5] text-muted-foreground">
-            {suggestion.reason}
-          </p>
-        )}
         {titles}
         <div className="mt-2 flex items-center gap-3 text-[0.8rem]">
           <button
@@ -96,11 +91,6 @@ export function ProjectSuggestion({
       <p className="font-editorial text-[1.1rem] leading-snug">
         {existing ? `These belong in ${suggestion.name}` : `These sound like one thing — ${suggestion.name}`}
       </p>
-      {suggestion.reason && (
-        <p className="mt-1 text-[0.85rem] leading-relaxed text-muted-foreground">
-          {suggestion.reason}
-        </p>
-      )}
       {titles}
 
       <div className="mt-3 flex items-center gap-4 text-[0.85rem]">
