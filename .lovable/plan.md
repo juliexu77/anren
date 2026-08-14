@@ -57,18 +57,19 @@ Recently on your mind
   … (10 most recent unfiled notes)           see all notes →
 ```
 
-- **Taking shape** leads. Each item gets a small stack of overlapping paper edges whose thickness grows with the number of notes — you watch your own thinking thicken. Name in editorial serif, one line of count-and-span ("7 thoughts · since February"), anren's one-sentence read of what you keep circling, then the note titles as a faint inline trail. "See the pieces" expands the note rows in place; "Make this a project" gathers them; "Not this" dismisses. anren never declares something a project on its own.
+- **Taking shape** leads. Each item gets a small stack of overlapping paper edges whose thickness grows with the number of notes — you watch your own thinking thicken. Name in editorial serif, one line of count-and-span ("7 thoughts · since February"), the note titles as a faint inline trail, and at most one observational line naming what literally recurs ("The corner space keeps coming up."). No interpretation, no diagnosis — if there's nothing concrete to point at, the line is omitted; the count and the pieces are already enough. "See the pieces" expands the note rows in place; "Make this a project" gathers them; "Dismiss" hides this proposed grouping and nothing more. anren never declares something a project on its own.
 - **Projects** are the formed tier: stronger card container, glyph, count, last activity — what the current overview cards already do. They sit below because they no longer need discovering.
 - **Recently on your mind** is the loose tier: ten most recent unfiled notes as bare typographic rows, almost no container, then "see all notes →".
-- Empty states: no threads yet → "Nothing has started rhyming yet. Keep talking." No projects → single line, no card.
+- Empty states: nothing forming yet → "Nothing has started rhyming yet. Keep talking." No projects → single line, no card.
 
 ## Reflect goes away
 
-Delete the Reflect route, the weekly digest surface, and the standalone ask-your-notes chat. Reflection survives only where it's earned: inside a project, `Reflect on these notes` (unchanged). Search stays plain retrieval. `/reflect` and `/on-my-mind` redirect to the map.
+Delete the Reflect destination, the weekly digest surface, and the standalone ask-your-notes chat. Reflection survives only where it's earned: inside a project, `Reflect on these notes` (unchanged). Search stays plain retrieval. `/reflect` and `/on-my-mind` redirect to the map.
 
-## Project export to Markdown
+## Taking a project with you
 
-Each project screen gets a quiet `Export as Markdown` action next to the heading that downloads `<project-name>.md`: project title, then every note in date order with its date, anren's summary bullets, and your words — ready to hand to Claude or ChatGPT.
+The primary action on a project is **Take this project with you** — one tap downloads `<project-name>.md`: project title, then every note in date order with its date, anren's summary, and your words, ready to hand to Claude or ChatGPT. The mechanism (Markdown) is named in the ••• menu as "Export as Markdown", not in the primary label. The promise is that you never have to reconstruct your thinking when you're ready to make something.
+
 
 ## Technical notes
 
