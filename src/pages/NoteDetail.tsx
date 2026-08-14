@@ -465,12 +465,33 @@ const NoteDetail = () => {
               aria-label="Note body"
               className="w-full resize-none bg-transparent font-editorial text-[1.08rem] italic leading-[1.72] text-foreground/75 outline-none focus:text-foreground"
             />
-          ) : note.transcript ? (
-            <p className="whitespace-pre-line font-editorial text-[1.08rem] italic leading-[1.72] text-foreground/75">
-              {note.transcript}
-            </p>
           ) : (
-            <p className="text-[0.95rem] text-muted-foreground">No words captured for this one yet.</p>
+            <div className="flex items-start gap-3">
+              <textarea
+                value={transcriptDraft}
+                onChange={(e) => setTranscriptDraft(e.target.value)}
+                onBlur={() => {
+                  if (transcriptDraft !== (note.transcript ?? "")) void saveTranscript(transcriptDraft);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    void saveTranscript(transcriptDraft);
+                  }
+                }}
+                rows={Math.max(6, transcriptDraft.split("\n").length + 2)}
+                aria-label="Your words"
+                className="flex-1 resize-none bg-transparent font-editorial text-[1.08rem] italic leading-[1.72] text-foreground/75 outline-none focus:text-foreground"
+              />
+              {transcriptDraft !== (note.transcript ?? "") && (
+                <button
+                  onClick={() => saveTranscript(transcriptDraft)}
+                  aria-label="Save your words"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                >
+                  <Check className="h-4 w-4" strokeWidth={1.75} />
+                </button>
+              )}
+            </div>
           )}
 
           {ownWords && (
@@ -483,7 +504,7 @@ const NoteDetail = () => {
                 {stamp(note.recordedAt)}
                 {metaSuffix}
               </button>
-              {" · exactly as you said it"}
+              {note.source === "voice" && !transcriptEdited && " · exactly as you said it"}
             </p>
           )}
           {editingDate && <div className="mt-4">{dateLine}</div>}
