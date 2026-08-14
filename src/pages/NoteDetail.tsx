@@ -432,7 +432,6 @@ const NoteDetail = () => {
                 {stamp(note.recordedAt)}
                 {metaSuffix}
               </button>
-              {" · cleaned up by anren"}
             </p>
           )}
           {editingDate && <div className="mt-4">{dateLine}</div>}
