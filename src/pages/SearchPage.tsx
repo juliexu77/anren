@@ -12,6 +12,15 @@ interface SearchHit {
   recorded_at: string;
 }
 
+const QUESTION_OPENERS =
+  /^(what|why|how|when|where|who|did|do|does|have|has|should|am|is|was|were|can|could|would)\b/i;
+
+/** Search or ask — the field works out which one you meant. */
+function looksLikeQuestion(q: string) {
+  const t = q.trim();
+  return t.endsWith("?") || QUESTION_OPENERS.test(t);
+}
+
 const SearchPage = () => {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
@@ -25,8 +34,9 @@ const SearchPage = () => {
     setLoading(true);
     setAnswer(null);
     setShowAnswer(false);
+    const asking = looksLikeQuestion(query);
     const { data, error } = await supabase.functions.invoke("search-notes", {
-      body: { query: query.trim() },
+      body: { query: query.trim(), explain: asking },
     });
     setLoading(false);
     if (error) {
@@ -36,6 +46,7 @@ const SearchPage = () => {
     const payload = data as { results?: SearchHit[]; answer?: string | null };
     setHits(payload.results ?? []);
     setAnswer(payload.answer ?? null);
+    if (asking && payload.answer) setShowAnswer(true);
   };
 
   const explain = async () => {
@@ -59,7 +70,7 @@ const SearchPage = () => {
       <header className="mb-7">
         <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">Search</h1>
         <p className="mt-1.5 text-[0.9rem] leading-relaxed text-muted-foreground">
-          Exact words or a whole thought — ask it however it comes out.
+          Look for a note, or ask what you've been saying — either works here.
         </p>
       </header>
 
@@ -71,7 +82,7 @@ const SearchPage = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && run()}
-            placeholder="What have I said about wanting community?"
+            placeholder="A word, a title, or a question"
             className="flex-1 bg-transparent text-[0.94rem] outline-none placeholder:text-muted-foreground/55"
           />
           {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/70" />}
