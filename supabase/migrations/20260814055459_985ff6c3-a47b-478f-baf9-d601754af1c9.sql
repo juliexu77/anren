@@ -1,0 +1,1 @@
+update public.notes set deleted_at = now() where deleted_at is null and audio_path is null and (title is null or title = '') and (transcript is null or transcript = '') and (body is null or body = '') and status in ('failed','processing');
