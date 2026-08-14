@@ -1,17 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { useRecorder } from "@/contexts/RecorderContext";
-import { NoticingBeat } from "@/components/NoticingBeat";
-import { landingLine, noticeNote, type NoticeStage } from "@/lib/noticing";
 import { formatDuration } from "@/lib/wav";
 import { cn } from "@/lib/utils";
 
 const BARS = 21;
-/** How long the last line sits there before the screen lets go. */
-const HOLD_MS = 1400;
 
 /** A private room: time, a little movement, and what you're saying. */
 const VoiceCapture = () => {
@@ -21,11 +17,6 @@ const VoiceCapture = () => {
   const folderId = params.get("folder");
   const prompt = params.get("prompt");
   const began = useRef(false);
-
-
-  const [stage, setStage] = useState<NoticeStage | null>(null);
-  const [title, setTitle] = useState<string | null>(null);
-  const [landed, setLanded] = useState<string | null>(null);
 
   useEffect(() => {
     if (began.current) return;
@@ -39,29 +30,10 @@ const VoiceCapture = () => {
 
   const finish = async () => {
     if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Light });
-    const { noteId, openId } = await stop({ deferWriteUp: true });
-    if (!noteId) {
-      navigate("/notes");
-      return;
-    }
-
-    setStage("writing");
-    const noticed = await noticeNote(noteId, setStage);
-    setTitle(noticed.title);
-    const line = landingLine(noticed.landing);
-    setLanded(line);
-
-    const land = () =>
-      navigate("/capture", {
-        state: {
-          kept: openId ?? noteId,
-          filedInto: noticed.landing.projectId,
-          filedIntoName: noticed.landing.projectName,
-        },
-      });
-
-    if (line) window.setTimeout(land, HOLD_MS);
-    else land();
+    // The words are already written down — nothing to wait around for. anren
+    // finishes the write-up on its own while you carry on.
+    const { noteId, openId } = await stop();
+    navigate(noteId ? "/capture" : "/notes", noteId ? { state: { kept: openId ?? noteId } } : undefined);
   };
 
   const leave = () => {
@@ -70,8 +42,7 @@ const VoiceCapture = () => {
     navigate(-1);
   };
 
-  const saving = status === "saving" || stage !== null;
-  const noticing = stage !== null;
+  const saving = status === "saving";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
@@ -102,10 +73,7 @@ const VoiceCapture = () => {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-10">
-        {noticing ? (
-          <NoticingBeat stage={stage} title={title} landing={landed} />
-        ) : (
-          <>
+        <>
             {prompt && !liveText && status !== "saving" && (
               <div className="mx-auto mb-6 max-w-[36ch] text-center">
                 <p className="font-editorial text-[1.05rem] italic leading-[1.6] text-muted-foreground/80">
@@ -132,8 +100,7 @@ const VoiceCapture = () => {
             >
               {status === "saving" ? "anren is keeping it…" : liveText || "Listening…"}
             </p>
-          </>
-        )}
+        </>
       </div>
 
 
