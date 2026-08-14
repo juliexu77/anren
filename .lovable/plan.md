@@ -36,12 +36,14 @@ Taking shape
   Opening a café
   7 thoughts · since February
   ▤▤▤   the corner space · menu ideas · talking to my aunt…
-  See the pieces →    Make this a project →    Not this
+  The corner space keeps coming up.
+  See the pieces →    Make this a project →    Dismiss
 
   anren + relationships
   3 thoughts lately
   ▤▤    where AI could serve a relationship, not a person
   See the pieces →
+
 
 Projects
 
