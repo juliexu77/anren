@@ -157,7 +157,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         .eq("id", session.noteId);
     }
     await saveSession({ ...session });
-  }, []);
+    requestPartialTranscript(session.noteId, session.uploadedParts);
+  }, [requestPartialTranscript]);
+
 
   useEffect(() => () => teardownAudio(), [teardownAudio]);
 
