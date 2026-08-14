@@ -180,6 +180,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       const node = ctx.createScriptProcessor(4096, 1, 1);
       chunksRef.current = [];
       segmentIndexRef.current = 0;
+      askedTranscriptRef.current = 0;
+
       elapsedRef.current = 0;
       liveTextRef.current = "";
       setLiveText("");
