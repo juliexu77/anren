@@ -1,4 +1,6 @@
 import { useParams } from "react-router-dom";
+import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { NoteRow } from "@/components/NoteRow";
 import { FolderReflection } from "@/components/FolderReflection";
 import { useNotes } from "@/hooks/useNotes";
@@ -6,6 +8,13 @@ import { useProjects } from "@/hooks/useProjects";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
 import { CaptureLine } from "@/components/CaptureLine";
 import { StarterPrompts } from "@/components/StarterPrompts";
+import { downloadProjectMarkdown } from "@/lib/exportProject";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 
@@ -18,6 +27,18 @@ const Index = () => {
   const project = projectId ? projects.find((p) => p.id === projectId) : undefined;
   const heading = projectId ? project?.name ?? "Project" : "All notes";
   const autoFiled = projectId ? notes.filter((n) => n.autoFiledAt).length : 0;
+
+  // Everything you've said in here, in one file you can hand to anything else.
+  const takeWithYou = () => {
+    if (!project) return;
+    if (!notes.length) {
+      toast("Nothing in here to take yet.");
+      return;
+    }
+    downloadProjectMarkdown(project, notes);
+    toast(`${project.name} saved as a markdown file.`);
+  };
+
 
   return (
     <div>
