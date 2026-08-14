@@ -91,6 +91,8 @@ const NoteDetail = () => {
   const [titleDraft, setTitleDraft] = useState("");
   const [synthesisDraft, setSynthesisDraft] = useState("");
   const [bodyDraft, setBodyDraft] = useState("");
+  const [transcriptDraft, setTranscriptDraft] = useState("");
+  const [transcriptEdited, setTranscriptEdited] = useState(false);
   const [rewriting, setRewriting] = useState(false);
   const [editingSynthesis, setEditingSynthesis] = useState(false);
 
