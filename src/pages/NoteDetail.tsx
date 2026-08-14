@@ -208,6 +208,37 @@ const NoteDetail = () => {
     reload();
   };
 
+  /** Editing a voice note's transcript is the same idea: the write-up rebuilds. */
+  const saveTranscript = async (next: string) => {
+    if (!note || note.source !== "voice") return;
+    const trimmed = next.trim();
+    await patch({
+      transcript: next,
+      audioPath: trimmed ? null : note.audioPath,
+      status: trimmed ? "processing" : note.status,
+    });
+    if (!trimmed) return;
+    setTranscriptEdited(true);
+
+    setRewriting(true);
+    setRelated(null);
+    const { error } = await supabase.functions.invoke("process-note", {
+      body: { noteId: note.id, regenerate: true },
+    });
+    setRewriting(false);
+    if (error) {
+      if (isNeedsKeyError(error)) {
+        toast(NEEDS_KEY_MESSAGE);
+        reload();
+        return;
+      }
+      await patch({ status: "ready" });
+      toast.error("Saved your words, but the write-up didn't refresh.");
+      return;
+    }
+    reload();
+  };
+
   const remove = async () => {
     if (!note) return;
     await softDeleteNote(note, () => reload());
