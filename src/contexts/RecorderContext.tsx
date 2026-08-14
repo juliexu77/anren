@@ -9,7 +9,7 @@ import {
   saveSession,
   type RecordingSession,
 } from "@/lib/recordingStore";
-import { finishSession, partsPrefix, uploadPart } from "@/lib/recordingFinish";
+import { ensureNote, finishSession, partsPrefix, uploadPart } from "@/lib/recordingFinish";
 import { mergeAndResample } from "@/lib/wav";
 import { keepScreenAwake, type WakeLockHandle } from "@/lib/wakeLock";
 import { toast } from "sonner";
