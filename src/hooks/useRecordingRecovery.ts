@@ -35,13 +35,11 @@ async function resumeStalledNotes(userId: string): Promise<void> {
     if (note.audio_path) {
       requestWriteUp(note.id as string);
     } else if (age > ABANDONED_MS) {
-      // No audio ever arrived and nothing is left to send — stop it spinning.
+      // No audio ever arrived, so there's no note here to show anyone — let it
+      // go quietly rather than leaving an untitled shell in the feed.
       await supabase
         .from("notes")
-        .update({
-          status: "failed",
-          error_message: "anren never got the audio for this one.",
-        })
+        .update({ deleted_at: new Date().toISOString() })
         .eq("id", note.id);
     }
   }
