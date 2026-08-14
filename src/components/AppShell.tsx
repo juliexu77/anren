@@ -40,11 +40,19 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
               onClick={() => setRailOpen(false)}
             />
-            <aside className="relative w-[80%] max-w-[300px] h-full bg-paper border-r border-hairline animate-fade-up">
+            <aside
+              className="relative w-[80%] max-w-[300px] h-full overflow-y-auto bg-paper border-r border-hairline animate-fade-up"
+              style={{
+                paddingTop: "env(safe-area-inset-top, 0px)",
+                paddingBottom: "env(safe-area-inset-bottom, 0px)",
+                paddingLeft: "env(safe-area-inset-left, 0px)",
+              }}
+            >
               <button
                 onClick={() => setRailOpen(false)}
                 aria-label="Close menu"
-                className="absolute top-4 right-4 p-1 text-muted-foreground"
+                className="absolute right-4 p-1 text-muted-foreground"
+                style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
               >
                 <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
