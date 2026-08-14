@@ -6,64 +6,42 @@ import { useThreads } from "@/hooks/useThreads";
 import { useProjectOverview } from "@/hooks/useProjectOverview";
 import { StarterPrompts } from "@/components/StarterPrompts";
 
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="mb-3.5 text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
+    {children}
+  </h2>
+);
 
-const Threads = () => {
+/**
+ * Home: one map of your thinking, from loose to claimed. No page title — you
+ * open the app and simply see what's taking shape.
+ */
+const MindMap = () => {
   const { threads, noticing, working, notice, dismiss, promote } = useThreads();
-  const { overviews, looseCount } = useProjectOverview();
+  const { overviews, looseCount, looseRecent } = useProjectOverview();
 
-  // Only groupings made of notes that haven't found a home count here.
-  const groupings = (threads ?? []).filter(
+  // Only groupings made of notes that haven't found a home take shape here.
+  const forming = (threads ?? []).filter(
     (t) => t.notes.filter((n) => !n.projectId).length >= 2,
   );
-  const grouped = new Set(
-    groupings.flatMap((t) => t.notes.filter((n) => !n.projectId).map((n) => n.id)),
-  );
-  const ungrouped = Math.max(0, looseCount - grouped.size);
 
   return (
-    <div>
-      <header className="mb-8">
-        <h1 className="font-editorial text-[1.9rem] leading-tight tracking-[-0.01em]">Threads</h1>
-        <div className="mt-1.5 flex items-center gap-3 text-[0.9rem] text-muted-foreground">
-          <span>What you have going on in here</span>
+    <div className="pb-6">
+      <section className="mb-14">
+        <div className="mb-3.5 flex items-baseline justify-between gap-3">
+          <h2 className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
+            Taking shape
+          </h2>
           {!noticing && (
-            <>
-              <span className="text-muted-foreground/40">·</span>
-              <button
-                onClick={() => notice(true)}
-                className="flex items-center gap-1.5 text-[0.85rem] text-muted-foreground/80 transition-colors hover:text-foreground"
-              >
-                <RefreshCw className="w-3 h-3" strokeWidth={1.5} />
-                Look again
-              </button>
-            </>
+            <button
+              onClick={() => notice(true)}
+              className="flex items-center gap-1.5 text-[0.78rem] text-muted-foreground/70 transition-colors hover:text-foreground"
+            >
+              <RefreshCw className="w-3 h-3" strokeWidth={1.5} />
+              Look again
+            </button>
           )}
         </div>
-      </header>
-
-      <section className="mb-12">
-        <h2 className="mb-3 text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
-          Your projects
-        </h2>
-        {overviews === null ? (
-          <p className="text-[0.9rem] text-muted-foreground">Opening…</p>
-        ) : overviews.length === 0 ? (
-          <p className="max-w-[42ch] text-[0.92rem] leading-relaxed text-muted-foreground">
-            Nothing gathered on purpose yet — anren will point out what's clumping together.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {overviews.map((o) => (
-              <ProjectOverviewCard key={o.project.id} overview={o} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
-          Outside your projects
-        </h2>
 
         {noticing ? (
           <p className="flex items-center gap-2 text-[0.9rem] text-muted-foreground">
@@ -72,17 +50,18 @@ const Threads = () => {
           </p>
         ) : threads === null ? (
           <p className="text-[0.9rem] text-muted-foreground">Opening…</p>
-        ) : looseCount === 0 ? (
+        ) : forming.length === 0 ? (
           <div>
-            <p className="max-w-[38ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-              Everything you've kept has found a home.
+            <p className="max-w-[40ch] text-[0.95rem] leading-relaxed text-muted-foreground">
+              {looseCount === 0
+                ? "Everything you've kept has found a home."
+                : "Nothing has started rhyming yet. Keep talking."}
             </p>
             <StarterPrompts surface="threads" className="mt-5 justify-start" />
           </div>
-
         ) : (
-          <div className="flex flex-col gap-10">
-            {groupings.map((thread) => (
+          <div className="flex flex-col gap-11">
+            {forming.map((thread) => (
               <ThreadCard
                 key={thread.id}
                 thread={thread}
@@ -91,25 +70,50 @@ const Threads = () => {
                 onPromoted={promote}
               />
             ))}
-
-            {ungrouped > 0 && (
-              <div>
-                <Link
-                  to="/notes"
-                  className="font-editorial text-[1.05rem] leading-tight text-foreground/80 transition-opacity hover:opacity-80"
-                >
-                  {ungrouped} other loose note{ungrouped === 1 ? "" : "s"}
-                </Link>
-                <p className="mt-1 text-[0.8rem] text-muted-foreground/70">
-                  {groupings.length ? "Not enough connection yet." : "Nothing rhyming across these yet."}
-                </p>
-              </div>
-            )}
           </div>
         )}
       </section>
+
+      {overviews !== null && overviews.length > 0 && (
+        <section className="mb-14">
+          <SectionLabel>Projects</SectionLabel>
+          <div className="flex flex-col gap-3">
+            {overviews.map((o) => (
+              <ProjectOverviewCard key={o.project.id} overview={o} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {looseRecent.length > 0 && (
+        <section>
+          <SectionLabel>Recently on your mind</SectionLabel>
+          <div>
+            {looseRecent.map((n) => (
+              <Link
+                key={n.id}
+                to={`/note/${n.id}`}
+                className="flex items-baseline justify-between gap-3 py-[0.32rem] transition-colors hover:text-foreground"
+              >
+                <span className="truncate text-[0.875rem] leading-snug text-foreground/70">
+                  {n.title ?? "Untitled note"}
+                </span>
+                <span className="shrink-0 text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground/50">
+                  {new Date(n.recordedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <Link
+            to="/notes"
+            className="mt-3 inline-block text-[0.82rem] text-muted-foreground/70 transition-colors hover:text-foreground"
+          >
+            See all notes →
+          </Link>
+        </section>
+      )}
     </div>
   );
 };
 
-export default Threads;
+export default MindMap;
