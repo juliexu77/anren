@@ -77,6 +77,8 @@ export function useProjects() {
 
       const created = data as Project;
       setProjects((prev) => (prev.some((p) => p.id === created.id) ? prev : [...prev, created]));
+      // Every other rail and the map on Home hear about it too.
+      notesChanged();
 
       // Suggest an emoji in the background; silent on failure.
       supabase.functions
