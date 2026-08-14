@@ -1,0 +1,16 @@
+# Screenshot capture only — no deliver/upload lane. Run with `fastlane screenshots`.
+# Device names must match simulator runtimes installed on the build machine;
+# verify with `xcrun simctl list devicetypes` if a run fails to find a device.
+
+devices([
+  "iPhone 17 Pro Max",  # 6.9" class
+  "iPhone 17 Pro",      # 6.3" class
+])
+
+languages(["en-US"])
+
+project("./ios/App/App.xcodeproj")
+scheme("App")
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+override_status_bar(true)

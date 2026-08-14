@@ -75,6 +75,7 @@ export function NoteRailItem({
       <div className="group/rail relative flex items-center">
         <NavLink
           to={`/note/${note.id}`}
+          aria-label={`Open note: ${label}`}
           onClick={(e) => {
             handlers.onClick(e);
             if (!e.defaultPrevented) onNavigate?.();

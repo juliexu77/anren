@@ -102,6 +102,7 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       <NavLink
         to="/capture"
         onClick={onNavigate}
+        aria-label="New thought"
         className="mb-5 flex items-center justify-center gap-2 rounded-[12px] bg-plum px-4 py-2.5 text-[0.92rem] text-plum-foreground transition-opacity hover:opacity-90"
       >
         <Plus className="w-[16px] h-[16px]" strokeWidth={1.75} />
@@ -110,19 +111,19 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex flex-col gap-1.5">
 
-        <NavLink to="/notes" className={navItemClass} onClick={onNavigate}>
+        <NavLink to="/notes" className={navItemClass} onClick={onNavigate} aria-label="Notes">
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
         </NavLink>
-        <NavLink to="/" end className={navItemClass} onClick={onNavigate}>
+        <NavLink to="/" end className={navItemClass} onClick={onNavigate} aria-label="Threads">
           <GitBranch className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Threads
         </NavLink>
-        <NavLink to="/search" className={navItemClass} onClick={onNavigate}>
+        <NavLink to="/search" className={navItemClass} onClick={onNavigate} aria-label="Search">
           <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Search
         </NavLink>
-        <NavLink to="/reflect" className={navItemClass} onClick={onNavigate}>
+        <NavLink to="/reflect" className={navItemClass} onClick={onNavigate} aria-label="Reflect">
           <Sparkles className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Reflect
         </NavLink>

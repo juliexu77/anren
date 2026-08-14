@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
-import { signInWithGoogleNative } from "@/lib/authNative";
+import { signInWithGoogleNative, signInWithAppleNative } from "@/lib/authNative";
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -40,6 +40,14 @@ const Auth = () => {
 
   const handleAppleSignIn = async () => {
     try {
+      if (Capacitor.getPlatform() === "ios") {
+        const result = await signInWithAppleNative();
+        if (!result.success) {
+          toast.error("message" in result ? result.message : "Sign in failed. Please try again.");
+        }
+        return;
+      }
+
       const { error } = await lovable.auth.signInWithOAuth("apple", {
         redirect_uri: window.location.origin,
       });

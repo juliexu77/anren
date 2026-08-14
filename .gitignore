@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# fastlane build output (screenshots, test reports) — regenerate, don't commit
+fastlane/screenshots/
+fastlane/report.xml
+fastlane/test_output/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

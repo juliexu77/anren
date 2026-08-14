@@ -1,6 +1,15 @@
 import { Capacitor } from "@capacitor/core";
-import { SocialLogin, type GoogleLoginOptions, type GoogleLoginResponseOnline } from "@capgo/capacitor-social-login";
+import {
+  SocialLogin,
+  type GoogleLoginOptions,
+  type GoogleLoginResponseOnline,
+  type AppleProviderOptions,
+  type AppleProviderResponse,
+} from "@capgo/capacitor-social-login";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Bundle ID — Apple's idToken `aud` claim is the app's bundle ID for native Sign in with Apple. */
+const IOS_BUNDLE_ID = "com.anrenapp.anren";
 
 type AuthResult = { success: true } | { success: false; message: string };
 
@@ -146,6 +155,65 @@ export async function signInWithGoogleNative(): Promise<AuthResult> {
   const { data, error } = await supabase.auth.signInWithIdToken(signInOptions);
   if (error) {
     console.error("Supabase signInWithIdToken error:", error);
+    return { success: false, message: error.message || "Failed to sign in with Supabase." };
+  }
+
+  if (!data.user) {
+    return { success: false, message: "Supabase did not return a user after sign-in." };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Native Sign in with Apple for iOS. Uses Capgo Social Login's system-API-backed Apple
+ * provider (no client ID/redirect URL needed on iOS), then signs in to Supabase with
+ * signInWithIdToken — mirrors signInWithGoogleNative above.
+ */
+export async function signInWithAppleNative(): Promise<AuthResult> {
+  if (!isNativeApp()) {
+    return { success: false, message: "Not running in a native Capacitor shell" };
+  }
+
+  const { rawNonce, nonceDigest } = await getNoncePair();
+
+  await SocialLogin.initialize({
+    apple: {},
+  });
+
+  const response = await SocialLogin.login({
+    provider: "apple",
+    options: {
+      scopes: ["email", "name"],
+      nonce: nonceDigest,
+    } as AppleProviderOptions,
+  });
+
+  const appleResponse = response.result as AppleProviderResponse;
+  if (!appleResponse.idToken) {
+    return { success: false, message: "Apple login did not return an idToken." };
+  }
+
+  const validation = validateJwtAudienceAndNonce(appleResponse.idToken, nonceDigest, [IOS_BUNDLE_ID]);
+  if (!validation.ok) {
+    console.warn("Apple idToken validation failed:", validation.error);
+    return { success: false, message: validation.error || "Apple token validation failed." };
+  }
+
+  const decoded = decodeJwt(appleResponse.idToken);
+
+  const signInOptions: { provider: "apple"; token: string; nonce?: string } = {
+    provider: "apple",
+    token: appleResponse.idToken,
+  };
+
+  if (decoded?.nonce) {
+    signInOptions.nonce = rawNonce;
+  }
+
+  const { data, error } = await supabase.auth.signInWithIdToken(signInOptions);
+  if (error) {
+    console.error("Supabase signInWithIdToken (apple) error:", error);
     return { success: false, message: error.message || "Failed to sign in with Supabase." };
   }
 

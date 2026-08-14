@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { useRecorder } from "@/contexts/RecorderContext";
 import { NoticingBeat } from "@/components/NoticingBeat";
 import { landingLine, noticeNote, type NoticeStage } from "@/lib/noticing";
@@ -28,11 +30,15 @@ const VoiceCapture = () => {
   useEffect(() => {
     if (began.current) return;
     began.current = true;
-    if (status === "idle") void start(folderId);
+    if (status === "idle") {
+      void start(folderId);
+      if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Medium });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const finish = async () => {
+    if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Light });
     const { noteId, openId } = await stop({ deferWriteUp: true });
     if (!noteId) {
       navigate("/notes");
@@ -59,6 +65,7 @@ const VoiceCapture = () => {
   };
 
   const leave = () => {
+    if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Light });
     cancel();
     navigate(-1);
   };

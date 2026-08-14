@@ -1,9 +1,13 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { SplashScreen } from "@capacitor/splash-screen";
 import { useAuth } from "@/hooks/useAuth";
 import { RecorderProvider } from "@/contexts/RecorderContext";
 import { AppShell } from "@/components/AppShell";
@@ -45,7 +49,23 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-const App = () => (
+const App = () => {
+  const { loading } = useAuth();
+
+  // Set the status bar style once on native platforms — the app is light-themed only today.
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== "ios") return;
+    void StatusBar.setStyle({ style: Style.Light });
+  }, []);
+
+  // Hide the launch splash once the initial auth check resolves, regardless of which
+  // route renders first (protected shell or /auth) — SplashScreen.launchAutoHide is off
+  // in capacitor.config.ts so this is the only thing that dismisses it.
+  useEffect(() => {
+    if (!loading && Capacitor.isNativePlatform()) void SplashScreen.hide();
+  }, [loading]);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -79,6 +99,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

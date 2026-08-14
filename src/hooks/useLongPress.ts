@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 
 /**
  * A press that lingers opens the menu; a quick tap still follows the link.
@@ -25,6 +27,7 @@ export function useLongPress(onLongPress: () => void, delay = 500) {
         setFired(false);
         timer.current = window.setTimeout(() => {
           setFired(true);
+          if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Light });
           onLongPress();
         }, delay);
       },
