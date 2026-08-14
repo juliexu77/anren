@@ -9,9 +9,8 @@ import { mapNote, type Note } from "@/types/note";
 
 
 type NoteEdits = Partial<
-  Pick<Note, "title" | "synthesis" | "projectId" | "body" | "recordedAt" | "status">
+  Pick<Note, "title" | "synthesis" | "projectId" | "body" | "transcript" | "audioPath" | "recordedAt" | "status">
 >;
-
 
 export function noteUpdatePayload(updates: NoteEdits) {
   const payload: Record<string, unknown> = {};
@@ -19,6 +18,8 @@ export function noteUpdatePayload(updates: NoteEdits) {
   if (updates.synthesis !== undefined) payload.synthesis = updates.synthesis;
   if (updates.projectId !== undefined) payload.project_id = updates.projectId;
   if (updates.body !== undefined) payload.body = updates.body;
+  if (updates.transcript !== undefined) payload.transcript = updates.transcript;
+  if (updates.audioPath !== undefined) payload.audio_path = updates.audioPath;
   if (updates.recordedAt !== undefined) payload.recorded_at = updates.recordedAt;
   if (updates.status !== undefined) payload.status = updates.status;
 

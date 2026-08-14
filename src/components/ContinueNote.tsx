@@ -1,27 +1,31 @@
 import { useState } from "react";
-import { Loader2, Mic, ArrowUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, Mic, ArrowUp, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useRecorder } from "@/contexts/RecorderContext";
+import { useAuth } from "@/hooks/useAuth";
 import { isNeedsKeyError, NEEDS_KEY_MESSAGE } from "@/lib/aiAccess";
 import type { Note } from "@/types/note";
 
 /**
- * Carry on a note that's already been written up. Speaking hands the new audio
- * to the recorder with this note attached; typing appends straight to the words
- * already there. Either way the whole note is read over again afterwards.
+ * Carry on a note that's already been written up. Speaking opens the same
+ * full-screen recording room as a new thought; typing appends straight to the
+ * words already there. Either way the whole note is read over again afterwards.
  */
 export function ContinueNote({ note, onDone }: { note: Note; onDone: () => void }) {
-  const { status, start } = useRecorder();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const busy = saving || status !== "idle";
+  const busy = saving;
 
-  const speak = async () => {
-    if (status !== "idle") return;
-    await start(note.projectId, note.id);
+  const speak = () => {
+    const params = new URLSearchParams();
+    if (note.projectId) params.set("folder", note.projectId);
+    params.set("continues", note.id);
+    navigate(`/capture/voice?${params.toString()}`);
   };
 
   const send = async () => {
@@ -100,8 +104,10 @@ export function ContinueNote({ note, onDone }: { note: Note; onDone: () => void 
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : text.trim() ? (
             <ArrowUp className="h-4 w-4" strokeWidth={1.75} />
-          ) : (
+          ) : user ? (
             <Mic className="h-4 w-4" strokeWidth={1.75} />
+          ) : (
+            <Check className="h-4 w-4" strokeWidth={1.75} />
           )}
         </button>
       </div>
