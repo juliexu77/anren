@@ -22,7 +22,7 @@ Return strict JSON, and nothing else:
 
 Rules:
 - Return AT MOST 6 threads, and only ones that are genuinely alive right now. Returning fewer, or none, is correct when nothing rhymes.
-- Every thread needs at least 3 notes that truly belong together. Not "both are about work" — the same worry, the same question, the same body of thinking.
+- Every thread needs at least 2 notes that truly belong together. Not "both are about work" — the same worry, the same question, the same errand, the same body of thinking. Two notes about the same practical thing (this week's meals and the grocery run) is a real thread; say it plainly.
 - If a thread you were given is still alive, return it with its existing_thread_id, its full current note set, and a name you'd use now. You may rename it as it clarifies.
 - If two threads you were given are really one thing, return the survivor and set merges_into on the other to the survivor's id.
 - quotes must be copied verbatim from the notes you were given. 1-3 per thread, short. Never paraphrase, never invent.
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     for (const cluster of clusters) {
       const name = (cluster.name ?? '').trim();
       const noteIds = [...new Set((cluster.note_ids ?? []).filter((id) => noteIndex.has(id)))];
-      if (!name || noteIds.length < 3) continue;
+      if (!name || noteIds.length < 2) continue;
 
       // A shape recently waved away shouldn't come straight back.
       if (dismissed.some((d) => resembles(name, noteIds, { name: d.name, note_ids: d.note_ids ?? [] }))) {
