@@ -117,7 +117,15 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
    */
   const pushPart = useCallback(async (index: number, samples: Float32Array) => {
     const session = sessionRef.current;
-    if (!session?.noteId || !samples.length) return;
+    if (!session || !samples.length) return;
+    // The row is born the moment there's actually audio to hang on it — never
+    // before, or an abandoned recording leaves an empty note behind.
+    if (!session.noteId) {
+      const created = await ensureNote(session);
+      if (!created) return;
+      session.noteId = created;
+      await saveSession({ ...session });
+    }
     const ok = await uploadPart(session.userId, session.noteId, index, [samples], STORE_RATE);
     if (!ok) return;
     session.uploadedParts = Math.max(session.uploadedParts ?? 0, index + 1);
