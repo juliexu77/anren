@@ -75,7 +75,7 @@ const VoiceCapture = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <div className="flex items-center justify-between px-6 pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)]">
         <button
           onClick={leave}
           disabled={saving}
@@ -137,7 +137,7 @@ const VoiceCapture = () => {
       </div>
 
 
-      <div className="flex justify-center px-6 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1.5rem))]">
+      <div className="flex justify-center px-6 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)]">
         <button
           onClick={finish}
           disabled={saving}

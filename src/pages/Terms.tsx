@@ -10,7 +10,7 @@ const Section = ({ heading, children }: { heading: string; children: React.React
 
 export default function Terms() {
   return (
-    <main className="min-h-screen px-6 py-10">
+    <main className="min-h-screen px-6 py-10 pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-[calc(env(safe-area-inset-bottom,0px)+2.5rem)]">
       <div className="mx-auto w-full max-w-2xl">
         <Link
           to="/"

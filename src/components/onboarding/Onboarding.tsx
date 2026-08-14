@@ -263,7 +263,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-paper">
-      <div className="flex items-center justify-between px-6 pt-6">
+      <div className="flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]">
         <div className="flex gap-1.5" aria-hidden>
           {Array.from({ length: CARDS }).map((_, i) => (
             <span
@@ -341,7 +341,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-between gap-4 px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
         {replayable ? (
           <button
             onClick={() => setRunKey((k) => k + 1)}
