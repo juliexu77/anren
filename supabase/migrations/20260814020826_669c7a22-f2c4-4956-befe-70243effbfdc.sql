@@ -1,0 +1,1 @@
+ALTER TABLE public.project_suggestions DROP COLUMN IF EXISTS reason;

@@ -9,8 +9,7 @@ Return strict JSON, and nothing else:
   "kind": "new" | "existing" | "none",
   "name": "the project name, 1-3 words, sentence case",
   "project_id": "id of the existing project, only when kind is existing",
-  "note_ids": ["uuid", "uuid"],
-  "reason": "one short sentence naming what these notes have in common"
+  "note_ids": ["uuid", "uuid"]
 }
 
 Rules:
@@ -20,15 +19,13 @@ Rules:
 - NEVER name a grouping "anren" or after the app itself. Never name it after the medium: "Notes", "Thoughts", "Journal", "Voice memos".
 - Names are things a person would say out loud: "Meals & cooking", "Dream journal", "The novel", "House", "Writing concepts". Never "Miscellaneous", "Personal", "Ideas", "Notes", "Thoughts", "General".
 - Never use the words folder, organize, file, category, tag, or productivity language of any kind.
-- note_ids must be ids you were given. Never invent one.
-- "reason" is plain and specific, second person, no throat-clearing. One sentence.`;
+- note_ids must be ids you were given. Never invent one.`;
 
 interface Suggestion {
   kind?: string;
   name?: string;
   project_id?: string;
   note_ids?: string[];
-  reason?: string;
 }
 
 Deno.serve(async (req) => {
@@ -52,7 +49,7 @@ Deno.serve(async (req) => {
       .select('id')
       .eq('status', 'pending')
       .limit(1);
-    if (pending?.length) return jsonResponse({ ok: true, suggestion: null, reason: 'pending' });
+    if (pending?.length) return jsonResponse({ ok: true, suggestion: null });
 
     const { data: projects } = await supabase
       .from('projects')
@@ -69,7 +66,7 @@ Deno.serve(async (req) => {
       .limit(40);
 
     const loose = (notes ?? []).filter((n) => !n.project_id);
-    if (loose.length < 5) return jsonResponse({ ok: true, suggestion: null, reason: 'too_few' });
+    if (loose.length < 5) return jsonResponse({ ok: true, suggestion: null });
 
     // Shapes already waved away shouldn't come back around.
     const { data: dismissed } = await supabase
@@ -97,23 +94,23 @@ Deno.serve(async (req) => {
     const parsed = parseJsonBlock<Suggestion>(raw);
     const kind = parsed?.kind === 'existing' ? 'existing' : parsed?.kind === 'new' ? 'new' : 'none';
     const name = (parsed?.name ?? '').trim();
-    if (kind === 'none' || !name) return jsonResponse({ ok: true, suggestion: null, reason: 'none' });
+    if (kind === 'none' || !name) return jsonResponse({ ok: true, suggestion: null });
     if (name.trim().toLowerCase() === 'anren') {
-      return jsonResponse({ ok: true, suggestion: null, reason: 'named_after_app' });
+      return jsonResponse({ ok: true, suggestion: null });
     }
     if (asleep.has(name.toLowerCase())) {
-      return jsonResponse({ ok: true, suggestion: null, reason: 'asleep' });
+      return jsonResponse({ ok: true, suggestion: null });
     }
 
     const looseIds = new Set(loose.map((n) => n.id));
     const noteIds = [...new Set((parsed?.note_ids ?? []).filter((id) => looseIds.has(id)))];
-    if (noteIds.length < 2) return jsonResponse({ ok: true, suggestion: null, reason: 'thin' });
+    if (noteIds.length < 2) return jsonResponse({ ok: true, suggestion: null });
 
     const projectId = kind === 'existing'
       ? (projects ?? []).find((p) => p.id === parsed?.project_id)?.id ?? null
       : null;
     if (kind === 'existing' && !projectId) {
-      return jsonResponse({ ok: true, suggestion: null, reason: 'unknown_project' });
+      return jsonResponse({ ok: true, suggestion: null });
     }
 
     const { data: saved, error } = await supabase
@@ -124,10 +121,9 @@ Deno.serve(async (req) => {
         name: projectId ? (projects ?? []).find((p) => p.id === projectId)!.name : name,
         project_id: projectId,
         note_ids: noteIds,
-        reason: (parsed?.reason ?? '').trim() || null,
         status: 'pending',
       })
-      .select('id, kind, name, project_id, note_ids, reason')
+      .select('id, kind, name, project_id, note_ids')
       .single();
     if (error) throw error;
 

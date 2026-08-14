@@ -257,7 +257,6 @@ export type Database = {
           name: string
           note_ids: string[]
           project_id: string | null
-          reason: string | null
           status: string
           updated_at: string
           user_id: string
@@ -269,7 +268,6 @@ export type Database = {
           name: string
           note_ids?: string[]
           project_id?: string | null
-          reason?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -281,7 +279,6 @@ export type Database = {
           name?: string
           note_ids?: string[]
           project_id?: string | null
-          reason?: string | null
           status?: string
           updated_at?: string
           user_id?: string
