@@ -59,9 +59,31 @@ const Index = () => {
             {`anren added ${autoFiled} of these here`}
           </p>
         )}
+        {project && (
+          <div className="mt-2.5 flex items-center gap-3 text-[0.85rem]">
+            <button
+              onClick={takeWithYou}
+              className="text-primary transition-opacity hover:opacity-80"
+            >
+              Take this project with you →
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="More project actions"
+                className="rounded-full p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
+              >
+                <MoreHorizontal className="w-[15px] h-[15px]" strokeWidth={1.5} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={takeWithYou}>Export as Markdown</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         {projectId && notes.length >= 2 && (
           <FolderReflection projectId={projectId} notes={notes} />
         )}
+
       </header>
 
       <CaptureLine projectId={projectId ?? null} />
