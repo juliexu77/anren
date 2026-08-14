@@ -18,8 +18,8 @@ import WriteCapture from "./pages/WriteCapture";
 
 import NoteDetail from "./pages/NoteDetail";
 import SearchPage from "./pages/SearchPage";
-import Reflect from "./pages/Reflect";
-import Threads from "./pages/Threads";
+import MindMap from "./pages/Map";
+
 import Settings from "./pages/Settings";
 import ClaudeKey from "./pages/ClaudeKey";
 import Auth from "./pages/Auth";
@@ -80,7 +80,7 @@ const App = () => {
           <Route path="/delete-account" element={<ProtectedShell><DeleteAccount /></ProtectedShell>} />
 
 
-          <Route path="/" element={<ProtectedShell><Threads /></ProtectedShell>} />
+          <Route path="/" element={<ProtectedShell><MindMap /></ProtectedShell>} />
           <Route path="/capture" element={<ProtectedShell><Home /></ProtectedShell>} />
           <Route path="/capture/voice" element={<ProtectedShell><VoiceCapture /></ProtectedShell>} />
           <Route path="/capture/write" element={<ProtectedShell><WriteCapture /></ProtectedShell>} />
@@ -90,8 +90,9 @@ const App = () => {
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
           <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
           <Route path="/threads" element={<Navigate to="/" replace />} />
-          <Route path="/reflect" element={<ProtectedShell><Reflect /></ProtectedShell>} />
-          <Route path="/on-my-mind" element={<Navigate to="/reflect" replace />} />
+          <Route path="/reflect" element={<Navigate to="/" replace />} />
+          <Route path="/on-my-mind" element={<Navigate to="/" replace />} />
+
           <Route path="/settings" element={<ProtectedShell><Settings /></ProtectedShell>} />
           <Route path="/settings/claude" element={<ProtectedShell><ClaudeKey /></ProtectedShell>} />
           <Route path="*" element={<NotFound />} />
