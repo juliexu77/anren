@@ -35,8 +35,11 @@ const RecorderContext = createContext<RecorderValue | undefined>(undefined);
 
 /** How often the samples in memory are written to the device. */
 const FLUSH_MS = 5000;
+/** Slices between passes of writing the words down (six × 5s ≈ half a minute). */
+const TRANSCRIBE_EVERY = 6;
 /** The rate everything is stored and uploaded at. */
 const STORE_RATE = 16000;
+
 
 export function RecorderProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -59,6 +62,21 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const elapsedRef = useRef(0);
   const liveTextRef = useRef("");
   const flushingRef = useRef(false);
+  const askedTranscriptRef = useRef(0);
+
+  /**
+   * Ask the server to write down the slices that have landed so far. Fire and
+   * forget: it runs while the person keeps talking, so by the time they stop
+   * there is almost nothing left to transcribe and no spinner to sit through.
+   */
+  const requestPartialTranscript = useCallback((noteId: string, uploadedParts: number) => {
+    if (uploadedParts - askedTranscriptRef.current < TRANSCRIBE_EVERY) return;
+    askedTranscriptRef.current = uploadedParts;
+    void supabase.functions
+      .invoke("transcribe-part", { body: { noteId } })
+      .catch(() => undefined);
+  }, []);
+
 
   const teardownAudio = useCallback(() => {
     if (timerRef.current) window.clearInterval(timerRef.current);
@@ -139,7 +157,9 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         .eq("id", session.noteId);
     }
     await saveSession({ ...session });
-  }, []);
+    requestPartialTranscript(session.noteId, session.uploadedParts);
+  }, [requestPartialTranscript]);
+
 
   useEffect(() => () => teardownAudio(), [teardownAudio]);
 
@@ -160,6 +180,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       const node = ctx.createScriptProcessor(4096, 1, 1);
       chunksRef.current = [];
       segmentIndexRef.current = 0;
+      askedTranscriptRef.current = 0;
+
       elapsedRef.current = 0;
       liveTextRef.current = "";
       setLiveText("");

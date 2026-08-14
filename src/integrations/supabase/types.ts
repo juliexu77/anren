@@ -135,6 +135,8 @@ export type Database = {
           status: string
           synthesis: string | null
           title: string | null
+          transcribe_lock_at: string | null
+          transcribed_parts: number
           transcript: string | null
           updated_at: string
           user_id: string
@@ -156,6 +158,8 @@ export type Database = {
           status?: string
           synthesis?: string | null
           title?: string | null
+          transcribe_lock_at?: string | null
+          transcribed_parts?: number
           transcript?: string | null
           updated_at?: string
           user_id: string
@@ -177,6 +181,8 @@ export type Database = {
           status?: string
           synthesis?: string | null
           title?: string | null
+          transcribe_lock_at?: string | null
+          transcribed_parts?: number
           transcript?: string | null
           updated_at?: string
           user_id?: string
