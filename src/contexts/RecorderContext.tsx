@@ -59,6 +59,21 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const elapsedRef = useRef(0);
   const liveTextRef = useRef("");
   const flushingRef = useRef(false);
+  const askedTranscriptRef = useRef(0);
+
+  /**
+   * Ask the server to write down the slices that have landed so far. Fire and
+   * forget: it runs while the person keeps talking, so by the time they stop
+   * there is almost nothing left to transcribe and no spinner to sit through.
+   */
+  const requestPartialTranscript = useCallback((noteId: string, uploadedParts: number) => {
+    if (uploadedParts - askedTranscriptRef.current < TRANSCRIBE_EVERY) return;
+    askedTranscriptRef.current = uploadedParts;
+    void supabase.functions
+      .invoke("transcribe-part", { body: { noteId } })
+      .catch(() => undefined);
+  }, []);
+
 
   const teardownAudio = useCallback(() => {
     if (timerRef.current) window.clearInterval(timerRef.current);
