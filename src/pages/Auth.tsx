@@ -70,7 +70,7 @@ const Auth = () => {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6">
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]">
       <div className="w-full max-w-sm text-center">
         <h1 className="font-editorial text-[2.4rem] leading-tight tracking-[-0.01em] lowercase">anren</h1>
         <p className="mt-3 text-[0.95rem] leading-relaxed text-muted-foreground">
