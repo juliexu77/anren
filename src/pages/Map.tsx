@@ -40,7 +40,7 @@ const SectionHeader = ({
   children: React.ReactNode;
   count?: number;
 }) => (
-  <AccordionTrigger className="group mb-3.5 flex w-full items-baseline justify-between gap-3 py-0 text-left hover:no-underline">
+  <AccordionTrigger className="group flex w-full items-baseline justify-between gap-3 py-0 text-left hover:no-underline">
     <span className="flex items-baseline gap-2">
       <h2 className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
         {children}
