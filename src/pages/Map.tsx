@@ -145,7 +145,9 @@ const MindMap = () => {
 
         {overviews !== null && overviews.length > 0 && (
           <AccordionItem value="projects" className="border-0">
-            <SectionHeader count={overviews.length}>Projects</SectionHeader>
+            <div className="mb-3.5">
+              <SectionHeader count={overviews.length}>Projects</SectionHeader>
+            </div>
             <AccordionContent className="pb-0 pt-0">
               <div className="flex flex-col gap-3">
                 {overviews.map((o) => (
