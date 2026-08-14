@@ -15,16 +15,16 @@ import { StarterPrompts } from "@/components/StarterPrompts";
 
 const SECTIONS_KEY = "anren.mapSections";
 
-function readExpanded(): { takingShape?: boolean; projects?: boolean } {
+function readExpanded(): { takingShape?: boolean } {
   try {
     const raw = localStorage.getItem(SECTIONS_KEY);
-    return raw ? (JSON.parse(raw) as { takingShape?: boolean; projects?: boolean }) : {};
+    return raw ? (JSON.parse(raw) as { takingShape?: boolean }) : {};
   } catch {
     return {};
   }
 }
 
-function writeExpanded(patch: { takingShape?: boolean; projects?: boolean }) {
+function writeExpanded(patch: { takingShape?: boolean }) {
   try {
     const next = { ...readExpanded(), ...patch };
     localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
@@ -69,18 +69,12 @@ const MindMap = () => {
 
   useEffect(() => {
     const saved = readExpanded();
-    setExpanded([
-      saved.takingShape !== false ? "taking-shape" : "",
-      saved.projects === true ? "projects" : "",
-    ].filter(Boolean));
+    setExpanded(saved.takingShape !== false ? ["taking-shape"] : []);
   }, []);
 
   const onValueChange = (value: string[]) => {
     setExpanded(value);
-    writeExpanded({
-      takingShape: value.includes("taking-shape"),
-      projects: value.includes("projects"),
-    });
+    writeExpanded({ takingShape: value.includes("taking-shape") });
   };
 
   // Only groupings made of notes that haven't found a home take shape here.
@@ -142,22 +136,25 @@ const MindMap = () => {
             )}
           </AccordionContent>
         </AccordionItem>
-
-        {overviews !== null && overviews.length > 0 && (
-          <AccordionItem value="projects" className="border-0">
-            <div className="mb-3.5">
-              <SectionHeader count={overviews.length}>Projects</SectionHeader>
-            </div>
-            <AccordionContent className="pb-0 pt-0">
-              <div className="flex flex-col gap-3">
-                {overviews.map((o) => (
-                  <ProjectOverviewCard key={o.project.id} overview={o} />
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        )}
       </Accordion>
+
+      {overviews !== null && overviews.length > 0 && (
+        <section className="mt-14">
+          <div className="mb-3.5 flex items-baseline gap-2">
+            <h2 className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
+              Projects
+            </h2>
+            <span className="text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/50">
+              {overviews.length}
+            </span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {overviews.map((o) => (
+              <ProjectOverviewCard key={o.project.id} overview={o} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {looseRecent.length > 0 && (
         <section className="mt-14">
