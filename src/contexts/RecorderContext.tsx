@@ -183,26 +183,10 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       sessionRef.current = session;
       await saveSession(session);
 
-      // The note exists from the first word, so every slice recorded after this
-      // has somewhere to go and nothing can be orphaned later.
-      const { data: created, error: createError } = await supabase
-        .from("notes")
-        .insert({
-          user_id: user.id,
-          project_id: projectId ?? null,
-          continues_note_id: continuesNoteId ?? null,
-          duration_seconds: 0,
-          recorded_at: new Date(session.startedAt).toISOString(),
-          status: "processing",
-        })
-        .select("id")
-        .single();
-      if (createError || !created) {
-        console.error("Couldn't create the note row up front:", createError?.message);
-      } else {
-        session.noteId = created.id as string;
-        await saveSession({ ...session });
-      }
+      // No note row yet: it's created on the first uploaded slice of audio, so
+      // a recording that's abandoned before a word lands leaves nothing behind.
+
+
 
 
       node.onaudioprocess = (e) => {
