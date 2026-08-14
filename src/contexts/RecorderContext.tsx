@@ -35,8 +35,11 @@ const RecorderContext = createContext<RecorderValue | undefined>(undefined);
 
 /** How often the samples in memory are written to the device. */
 const FLUSH_MS = 5000;
+/** Slices between passes of writing the words down (six × 5s ≈ half a minute). */
+const TRANSCRIBE_EVERY = 6;
 /** The rate everything is stored and uploaded at. */
 const STORE_RATE = 16000;
+
 
 export function RecorderProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
