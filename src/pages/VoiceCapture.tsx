@@ -16,13 +16,14 @@ const VoiceCapture = () => {
   const [params] = useSearchParams();
   const folderId = params.get("folder");
   const prompt = params.get("prompt");
+  const continues = params.get("continues");
   const began = useRef(false);
 
   useEffect(() => {
     if (began.current) return;
     began.current = true;
     if (status === "idle") {
-      void start(folderId);
+      void start(folderId, continues);
       if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Medium });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,13 +34,23 @@ const VoiceCapture = () => {
     // The words are already written down — nothing to wait around for. anren
     // finishes the write-up on its own while you carry on.
     const { noteId, openId } = await stop();
-    navigate(noteId ? "/capture" : "/notes", noteId ? { state: { kept: openId ?? noteId } } : undefined);
+    if (continues && openId) {
+      navigate(`/note/${openId}`, { replace: true });
+    } else if (noteId) {
+      navigate("/capture", { state: { kept: openId ?? noteId } });
+    } else {
+      navigate("/notes");
+    }
   };
 
   const leave = () => {
     if (Capacitor.isNativePlatform()) void Haptics.impact({ style: ImpactStyle.Light });
     cancel();
-    navigate(-1);
+    if (continues) {
+      navigate(`/note/${continues}`, { replace: true });
+    } else {
+      navigate(-1);
+    }
   };
 
   const saving = status === "saving";
@@ -84,6 +95,7 @@ const VoiceCapture = () => {
                     cancel();
                     const p = new URLSearchParams({ prompt });
                     if (folderId) p.set("folder", folderId);
+                    if (continues) p.set("continues", continues);
                     navigate(`/capture/write?${p.toString()}`, { replace: true });
                   }}
                   className="mt-2 text-[0.78rem] text-muted-foreground/70 underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
@@ -98,7 +110,11 @@ const VoiceCapture = () => {
                 liveText ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              {status === "saving" ? "anren is keeping it…" : liveText || "Listening…"}
+              {status === "saving"
+                ? continues
+                  ? "Keeping this with your note…"
+                  : "anren is keeping it…"
+                : liveText || "Listening…"}
             </p>
         </>
       </div>
