@@ -54,3 +54,28 @@ Continuing a note by voice currently starts recording silently in the background
 - `src/components/ContinueNote.tsx` drops its `useRecorder().start` usage for the speak path.
 - Keep the existing "words are already saved, synthesis finishes in the background" behavior — no change to `process-note`.
 
+
+---
+
+# Editing a voice note's own words
+
+Typed notes are already editable under "Your words" — editing the body saves it and re-runs the write-up. Voice notes render the transcript as read-only text, so a mis-transcribed word can't be fixed.
+
+## Goals
+
+- Under "Your words", the transcript of a voice note is editable the same way a typed note's body is.
+- Saving an edit re-runs the write-up so the Notes tab summary reflects the corrected words.
+- While it re-runs, the existing "You changed the words — reading it over again." state shows.
+- If the write-up fails, the edited words are still kept.
+
+## Proposed changes
+
+1. **NoteDetail**: replace the read-only transcript paragraph with a textarea mirroring the typed-note editor (same editorial italic styling, auto-growing rows). Keep a draft in state, seeded from `note.transcript`, and commit on blur when it changed.
+2. **Save path**: generalize the existing `saveBody` helper so it writes `transcript` for voice notes and `body` for typed ones, then sets status to `processing` and invokes `process-note` with `regenerate: true` exactly as it does today.
+3. **Meta line**: the "exactly as you said it" caption no longer fits an edited transcript — show it only when the words are unedited, otherwise drop it.
+
+## Technical notes
+
+- `src/pages/NoteDetail.tsx` around the `words` tab and the `saveBody` function.
+- Reuse the existing `patch` + `process-note` + `reload` flow; no edge function or schema changes needed.
+- Keep the audio player below the editor untouched — the original recording stays available.
