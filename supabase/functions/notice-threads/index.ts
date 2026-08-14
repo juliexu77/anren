@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     for (const cluster of clusters) {
       const name = (cluster.name ?? '').trim();
       const noteIds = [...new Set((cluster.note_ids ?? []).filter((id) => noteIndex.has(id)))];
-      if (!name || noteIds.length < 3) continue;
+      if (!name || noteIds.length < 2) continue;
 
       // A shape recently waved away shouldn't come straight back.
       if (dismissed.some((d) => resembles(name, noteIds, { name: d.name, note_ids: d.note_ids ?? [] }))) {
