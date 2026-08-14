@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Loader2, MoreHorizontal } from "lucide-react";
+import { Check, ChevronLeft, Loader2, MoreHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNote, softDeleteNote } from "@/hooks/useNotes";
 import { ContinueNote } from "@/components/ContinueNote";
