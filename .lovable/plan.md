@@ -11,8 +11,8 @@ Sidebar becomes:
 
 ```text
 + New thought
+Home        ← the map, at "/"
 Notes
-Threads      ← the map, at "/"
 Search
 
 PROJECTS
@@ -23,7 +23,8 @@ PROJECTS
 Settings
 ```
 
-Reflect leaves the sidebar entirely.
+Reflect leaves the sidebar entirely, and so does "Threads" as a product noun — the map contains threads, projects and loose thoughts, so it isn't named after one of them. Being Home, it carries no page title at all: you open the app and see Taking shape → Projects → Recently on your mind.
+
 
 ## The map
 
