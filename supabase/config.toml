@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.suggest-folder-emoji]
 verify_jwt = false
+
+[functions.transcribe-part]
+verify_jwt = false
