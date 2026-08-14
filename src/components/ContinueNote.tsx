@@ -73,7 +73,7 @@ export function ContinueNote({ note, onDone }: { note: Note; onDone: () => void 
 
   return (
     <div className="mt-8">
-      <div className="flex items-end gap-2 rounded-[20px] border border-hairline bg-paper px-4 py-2.5">
+      <div className="flex items-end gap-3 border-b border-hairline pb-3">
         <textarea
           autoFocus
           value={text}
@@ -88,13 +88,13 @@ export function ContinueNote({ note, onDone }: { note: Note; onDone: () => void 
           rows={1}
           placeholder="Pick the thought back up…"
           aria-label="Continue this note"
-          className="flex-1 resize-none bg-transparent py-1.5 text-[0.95rem] leading-[1.6] outline-none placeholder:text-muted-foreground/60"
+          className="flex-1 resize-none bg-transparent py-1 font-editorial text-[1.15rem] italic leading-[1.5] text-muted-foreground/80 outline-none placeholder:text-muted-foreground/60 transition-colors hover:text-foreground focus:text-foreground"
         />
         <button
           onClick={() => (text.trim() ? void send() : void speak())}
           disabled={busy && !text.trim()}
           aria-label={text.trim() ? "Add to this note" : "Speak more into this note"}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
         >
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
