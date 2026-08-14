@@ -57,7 +57,7 @@ const WriteCapture = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <div className="flex items-center justify-between px-6 pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)]">
         <button
           onClick={() => navigate(-1)}
           disabled={noticing}
@@ -101,7 +101,7 @@ const WriteCapture = () => {
             }}
             aria-label="Type or paste your thought"
             placeholder="Type it, or paste it from wherever it lives…"
-            className="mt-4 w-full flex-1 resize-none bg-transparent px-6 pb-[max(2rem,env(safe-area-inset-bottom))] text-[1.05rem] leading-[1.75] outline-none placeholder:text-muted-foreground/60"
+            className="mt-4 w-full flex-1 resize-none bg-transparent px-6 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)] text-[1.05rem] leading-[1.75] outline-none placeholder:text-muted-foreground/60"
           />
         </div>
       )}
