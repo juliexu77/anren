@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Loader2, MoreHorizontal, Sparkles } from "lucide-react";
+import { ChevronLeft, Loader2, MoreHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNote, softDeleteNote } from "@/hooks/useNotes";
 import { ContinueNote } from "@/components/ContinueNote";
@@ -86,9 +86,6 @@ const NoteDetail = () => {
   const [related, setRelated] = useState<{ note_id: string; title: string | null; recorded_at: string }[] | null>(null);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [threads, setThreads] = useState<{ id: string; name: string }[]>([]);
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
 
   // Draft fields — seeded from the note, saved on blur.
   const [titleDraft, setTitleDraft] = useState("");
@@ -212,21 +209,6 @@ const NoteDetail = () => {
     if (!note) return;
     await softDeleteNote(note, () => reload());
     navigate("/notes");
-  };
-
-  const ask = async () => {
-    if (!note || !question.trim()) return;
-    setAsking(true);
-    setAnswer(null);
-    const { data, error } = await supabase.functions.invoke("ask-note", {
-      body: { noteId: note.id, question: question.trim() },
-    });
-    setAsking(false);
-    if (error) {
-      toast.error("Couldn't answer that just now.");
-      return;
-    }
-    setAnswer((data as { answer?: string })?.answer ?? null);
   };
 
   if (loading) {
