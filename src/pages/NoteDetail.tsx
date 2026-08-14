@@ -514,19 +514,19 @@ const NoteDetail = () => {
           <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
             Ask about this note
           </h2>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex items-end gap-3 border-b border-hairline pb-3">
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && ask()}
               placeholder="What did I decide here?"
-              className="flex-1 rounded-full border border-hairline bg-paper px-4 py-2.5 text-[0.92rem] outline-none focus:border-primary/40 placeholder:text-muted-foreground/60"
+              className="flex-1 bg-transparent py-1 font-editorial text-[1.15rem] italic leading-[1.5] text-muted-foreground/80 outline-none placeholder:text-muted-foreground/60 transition-colors hover:text-foreground focus:text-foreground"
             />
             <button
               onClick={ask}
               disabled={asking || !question.trim()}
               aria-label="Ask"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
             >
               {asking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
             </button>
