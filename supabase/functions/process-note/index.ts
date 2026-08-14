@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 
     const { data: note, error: noteError } = await admin
       .from('notes')
-      .select('id, user_id, audio_path, source, body, title, transcript, continues_note_id, duration_seconds')
+      .select('id, user_id, audio_path, source, body, title, transcript, transcribed_parts, continues_note_id, duration_seconds')
       .eq('id', noteId)
       .maybeSingle();
 
@@ -152,25 +152,13 @@ Deno.serve(async (req) => {
       transcript = (note.transcript ?? '').trim();
       if (!transcript) return jsonResponse({ error: 'Note has no audio yet' }, 400);
     } else {
-      // Each finished stretch is written to the note as it lands, so a long
-      // recording shows its words arriving and a failure never costs the lot.
-      const saveProgress = async (partial: string) => {
-        if (partial) await admin.from('notes').update({ transcript: partial }).eq('id', noteId);
-      };
-
-      if (note.audio_path.endsWith('/')) {
-        transcript = await transcribeParts(admin, note.audio_path, saveProgress);
-      } else {
-        const { data } = await admin.storage.from('voice-notes').download(note.audio_path);
-        if (data) {
-          const bytes = new Uint8Array(await data.arrayBuffer());
-          transcript = await transcribePcm(bytes.subarray(WAV_HEADER), saveProgress);
-        } else {
-          // Older path: the single file never landed, but the slices did.
-          transcript = await transcribeParts(admin, `${note.user_id}/${noteId}/`, saveProgress);
-        }
-      }
-
+      transcript = await finishTranscript(admin, {
+        id: noteId,
+        user_id: note.user_id as string,
+        audio_path: note.audio_path as string,
+        transcript: note.transcript as string | null,
+        transcribed_parts: note.transcribed_parts as number | null,
+      });
 
       if (!transcript) {
         await admin
@@ -185,119 +173,131 @@ Deno.serve(async (req) => {
         await discardAudio(admin, note.user_id, noteId, note.audio_path);
         return jsonResponse({ ok: true, transcript: '' });
       }
+
+      await admin.from('notes').update({ transcript }).eq('id', noteId);
     }
 
-    // A continuation: the new words join the note they carry on from, and the
-    // whole thing is written up again.
-    const continuesId = (note as { continues_note_id?: string | null }).continues_note_id ?? null;
-    let targetId = noteId;
-    let targetTitle = typeof note.title === 'string' ? note.title.trim() : '';
-    let rewriteTitle = regenerate;
+    /**
+     * The words are safe. Everything below — merging a continuation, the title,
+     * the bullets, throwing the recording away, indexing for search — happens
+     * after the reply, so nobody has to stand there watching a spinner. The
+     * note is already in the feed and fills in where it sits.
+     */
+    const capturedId = noteId;
+    const writeUp = async () => {
+      let workingId = capturedId;
+      let text = transcript;
+      try {
+        const continuesId = (note as { continues_note_id?: string | null }).continues_note_id ?? null;
+        let targetTitle = typeof note.title === 'string' ? note.title.trim() : '';
+        let rewriteTitle = regenerate;
 
-    if (continuesId) {
-      const { data: parent } = await admin
-        .from('notes')
-        .select('id, user_id, transcript, title, duration_seconds')
-        .eq('id', continuesId)
-        .maybeSingle();
+        if (continuesId) {
+          const { data: parent } = await admin
+            .from('notes')
+            .select('id, user_id, transcript, title, duration_seconds')
+            .eq('id', continuesId)
+            .maybeSingle();
 
-      if (!parent || parent.user_id !== user.id) {
-        return jsonResponse({ error: 'The note this continues is gone' }, 404);
-      }
+          if (!parent || parent.user_id !== user.id) {
+            throw new Error('The note this continues is gone');
+          }
 
-      const earlier = (parent.transcript ?? '').trim();
-      transcript = [earlier, transcript].filter(Boolean).join('\n\n');
-      targetId = parent.id as string;
-      targetTitle = typeof parent.title === 'string' ? parent.title.trim() : '';
-      rewriteTitle = true;
+          const earlier = (parent.transcript ?? '').trim();
+          text = [earlier, text].filter(Boolean).join('\n\n');
+          targetTitle = typeof parent.title === 'string' ? parent.title.trim() : '';
+          rewriteTitle = true;
 
-      const added = (note as { duration_seconds?: number | null }).duration_seconds ?? 0;
-      const before = (parent.duration_seconds as number | null) ?? 0;
-      await admin
-        .from('notes')
-        .update({ duration_seconds: before + added, status: 'processing' })
-        .eq('id', targetId);
+          const added = (note as { duration_seconds?: number | null }).duration_seconds ?? 0;
+          const before = (parent.duration_seconds as number | null) ?? 0;
+          await admin
+            .from('notes')
+            .update({ duration_seconds: before + added, status: 'processing' })
+            .eq('id', parent.id);
 
-      // The audio is already transcribed, so the placeholder row it was
-      // captured on has nothing left to hold.
-      if (note.audio_path) await discardAudio(admin, note.user_id, noteId, note.audio_path);
-      await admin.from('note_passages').delete().eq('note_id', noteId);
-      await admin.from('notes').delete().eq('id', noteId);
-      noteId = targetId;
-    }
+          // The audio is already transcribed, so the placeholder row it was
+          // captured on has nothing left to hold.
+          if (note.audio_path) await discardAudio(admin, note.user_id, workingId, note.audio_path);
+          await admin.from('note_passages').delete().eq('note_id', workingId);
+          await admin.from('notes').delete().eq('id', workingId);
+          workingId = parent.id as string;
+        }
 
-    let raw: string;
-    try {
-      raw = await chat([
-        { role: 'system', content: typed ? TYPED_SYSTEM_PROMPT : SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: typed ? `Written note:\n\n${transcript}` : `Voice memo transcript:\n\n${transcript}`,
-        },
-      ], { temperature: 0.6, userId: user.id });
-    } catch (error) {
-      // The words are safe either way — only the write-up needs a key.
-      if (error instanceof QuotaError) {
+        let raw: string;
+        try {
+          raw = await chat([
+            { role: 'system', content: typed ? TYPED_SYSTEM_PROMPT : SYSTEM_PROMPT },
+            {
+              role: 'user',
+              content: typed ? `Written note:\n\n${text}` : `Voice memo transcript:\n\n${text}`,
+            },
+          ], { temperature: 0.6, userId: user.id });
+        } catch (error) {
+          // The words are safe either way — only the write-up needs a key.
+          if (error instanceof QuotaError) {
+            await admin
+              .from('notes')
+              .update({
+                transcript: text,
+                status: 'needs_key',
+                error_message: null,
+                title: targetTitle || text.split(/[.?!]/)[0].slice(0, 70),
+              })
+              .eq('id', workingId);
+            return;
+          }
+          throw error;
+        }
+
+        const parsed = parseJsonBlock<Synthesis>(raw);
+        // On a regeneration the source text changed, so the old title is stale too.
+        const title = (rewriteTitle ? '' : targetTitle) || parsed?.title?.trim()
+          || text.split(/[.?!]/)[0].slice(0, 70);
+
+        const synthesis = parsed?.synthesis?.trim() || text.slice(0, 400);
+
         await admin
           .from('notes')
-          .update({
-            transcript,
-            status: 'needs_key',
-            error_message: null,
-            title: targetTitle || transcript.split(/[.?!]/)[0].slice(0, 70),
-          })
-          .eq('id', noteId);
-        return needsOwnKeyResponse();
-      }
-      throw error;
-    }
+          .update({ transcript: text, title, synthesis, status: 'ready', error_message: null })
+          .eq('id', workingId);
 
-    const parsed = parseJsonBlock<Synthesis>(raw);
-    // On a regeneration the source text changed, so the old title is stale too.
-    const title = (rewriteTitle ? '' : targetTitle) || parsed?.title?.trim()
-      || transcript.split(/[.?!]/)[0].slice(0, 70);
-
-    const synthesis = parsed?.synthesis?.trim() || transcript.slice(0, 400);
-
-    await admin
-      .from('notes')
-      .update({ transcript, title, synthesis, status: 'ready', error_message: null })
-      .eq('id', noteId);
-
-    // Everything left is housekeeping the person never sees: throwing the
-    // recording away, and indexing the words for search. Doing it after the
-    // reply means the note lands as soon as it's readable.
-    const settledId = noteId;
-    const tidyUp = async () => {
-      if (!typed && !continuesId && note.audio_path) {
-        await discardAudio(admin, note.user_id, settledId, note.audio_path);
-      }
-      try {
-        const passages = chunkText(`${title}\n\n${synthesis}\n\n${transcript}`);
-        if (passages.length) {
-          const vectors = await embed(passages);
-          await admin.from('note_passages').delete().eq('note_id', settledId);
-          await admin.from('note_passages').insert(
-            passages.map((content, index) => ({
-              note_id: settledId,
-              user_id: user.id,
-              chunk_index: index,
-              content,
-              embedding: vectors[index] ? JSON.stringify(vectors[index]) : null,
-            })),
-          );
+        if (!typed && !continuesId && note.audio_path) {
+          await discardAudio(admin, note.user_id, workingId, note.audio_path);
         }
-      } catch (embedError) {
-        console.error('embedding failed:', (embedError as Error).message);
+
+        try {
+          const passages = chunkText(`${title}\n\n${synthesis}\n\n${text}`);
+          if (passages.length) {
+            const vectors = await embed(passages);
+            await admin.from('note_passages').delete().eq('note_id', workingId);
+            await admin.from('note_passages').insert(
+              passages.map((content, index) => ({
+                note_id: workingId,
+                user_id: user.id,
+                chunk_index: index,
+                content,
+                embedding: vectors[index] ? JSON.stringify(vectors[index]) : null,
+              })),
+            );
+          }
+        } catch (embedError) {
+          console.error('embedding failed:', (embedError as Error).message);
+        }
+      } catch (error) {
+        console.error('write-up failed:', (error as Error).message);
+        await admin
+          .from('notes')
+          .update({ status: 'failed', error_message: 'anren couldn\'t finish writing this up.' })
+          .eq('id', workingId);
       }
     };
 
     const runner = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } })
       .EdgeRuntime;
-    if (runner?.waitUntil) runner.waitUntil(tidyUp());
-    else await tidyUp();
+    if (runner?.waitUntil) runner.waitUntil(writeUp());
+    else void writeUp();
 
-    return jsonResponse({ ok: true, title, synthesis });
+    return jsonResponse({ ok: true, transcript });
 
   } catch (error) {
     const message = (error as Error).message ?? 'Processing failed';
@@ -311,3 +311,4 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: message }, 500);
   }
 });
+
