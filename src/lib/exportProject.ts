@@ -22,7 +22,7 @@ export function projectMarkdown(project: Project, notes: Note[]) {
   lines.push(`${ordered.length} note${ordered.length === 1 ? "" : "s"}, kept in anren.`, "");
 
   for (const note of ordered) {
-    lines.push(`## ${note.title ?? "Untitled note"}`, "", `*${fmt(note.recordedAt)}*", "`.slice(0, 0) + `*${fmt(note.recordedAt)}*`, "");
+    lines.push(`## ${note.title ?? "Untitled note"}`, "", `*${fmt(note.recordedAt)}*`, "");
     if (note.synthesis) {
       lines.push("### Summary", "", note.synthesis.trim(), "");
     }
