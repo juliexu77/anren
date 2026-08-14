@@ -12,11 +12,11 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
 
   return (
     <article className="rounded-[18px] border border-hairline bg-paper/70 px-5 py-4">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
         <Link
           to={`/folder/${project.id}`}
           onClick={seen}
-          className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80"
+          className="flex min-w-0 max-w-full items-center gap-2 transition-opacity hover:opacity-80 sm:max-w-[70%]"
         >
           {newSinceLooked > 0 && (
             <span
@@ -29,11 +29,11 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
             {project.name}
           </h3>
         </Link>
-        <span className="shrink-0 text-[0.72rem] uppercase tracking-[0.12em] text-muted-foreground/60">
-          {count} note{count === 1 ? "" : "s"}
-          {active && " · active this week"}
-        </span>
-
+        {active && (
+          <span className="text-[0.72rem] uppercase tracking-[0.12em] text-muted-foreground/60">
+            Active this week
+          </span>
+        )}
       </div>
 
       {count === 0 ? (
