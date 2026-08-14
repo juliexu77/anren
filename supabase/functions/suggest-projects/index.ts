@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       .select('id')
       .eq('status', 'pending')
       .limit(1);
-    if (pending?.length) return jsonResponse({ ok: true, suggestion: null, reason: 'pending' });
+    if (pending?.length) return jsonResponse({ ok: true, suggestion: null });
 
     const { data: projects } = await supabase
       .from('projects')
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       .limit(40);
 
     const loose = (notes ?? []).filter((n) => !n.project_id);
-    if (loose.length < 5) return jsonResponse({ ok: true, suggestion: null, reason: 'too_few' });
+    if (loose.length < 5) return jsonResponse({ ok: true, suggestion: null });
 
     // Shapes already waved away shouldn't come back around.
     const { data: dismissed } = await supabase
@@ -94,23 +94,23 @@ Deno.serve(async (req) => {
     const parsed = parseJsonBlock<Suggestion>(raw);
     const kind = parsed?.kind === 'existing' ? 'existing' : parsed?.kind === 'new' ? 'new' : 'none';
     const name = (parsed?.name ?? '').trim();
-    if (kind === 'none' || !name) return jsonResponse({ ok: true, suggestion: null, reason: 'none' });
+    if (kind === 'none' || !name) return jsonResponse({ ok: true, suggestion: null });
     if (name.trim().toLowerCase() === 'anren') {
-      return jsonResponse({ ok: true, suggestion: null, reason: 'named_after_app' });
+      return jsonResponse({ ok: true, suggestion: null });
     }
     if (asleep.has(name.toLowerCase())) {
-      return jsonResponse({ ok: true, suggestion: null, reason: 'asleep' });
+      return jsonResponse({ ok: true, suggestion: null });
     }
 
     const looseIds = new Set(loose.map((n) => n.id));
     const noteIds = [...new Set((parsed?.note_ids ?? []).filter((id) => looseIds.has(id)))];
-    if (noteIds.length < 2) return jsonResponse({ ok: true, suggestion: null, reason: 'thin' });
+    if (noteIds.length < 2) return jsonResponse({ ok: true, suggestion: null });
 
     const projectId = kind === 'existing'
       ? (projects ?? []).find((p) => p.id === parsed?.project_id)?.id ?? null
       : null;
     if (kind === 'existing' && !projectId) {
-      return jsonResponse({ ok: true, suggestion: null, reason: 'unknown_project' });
+      return jsonResponse({ ok: true, suggestion: null });
     }
 
     const { data: saved, error } = await supabase
