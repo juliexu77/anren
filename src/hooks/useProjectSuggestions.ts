@@ -13,7 +13,6 @@ export interface ProjectSuggestion {
   notes: { id: string; title: string | null }[];
 }
 
-
 /** A grouping named after the app itself is never a real grouping. */
 const NOT_A_NAME = new Set(["anren"]);
 
