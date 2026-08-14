@@ -73,12 +73,13 @@ The primary action on a project is **Take this project with you** — one tap do
 
 ## Technical notes
 
-**Removed** — `src/pages/Reflect.tsx`, `src/components/AskNotes.tsx`, `src/hooks/useLookBack.ts`, `ProjectSuggestion` on Reflect (the rail suggestion stays), the `weekly-digest` edge function invocation and its route; the `weekly_digests` table is left in place, unread. The thread link `/reflect?thread=…` becomes an in-card "See the pieces" expander instead.
+**Removed (frontend only)** — `src/pages/Reflect.tsx`, `src/components/AskNotes.tsx`, `src/hooks/useLookBack.ts`, and `ProjectSuggestion` on Reflect (the rail suggestion stays). The client stops invoking the `weekly-digest` function; the deployed function, its `config.toml` entry, and the `weekly_digests` table all stay exactly as they are, simply unread — no decommissioning, no migration. The thread link `/reflect?thread=…` becomes an in-card "See the pieces" expander instead.
 
-**Map** — rewrite `src/pages/Threads.tsx` as the three-tier map. `ThreadCard.tsx` gains the paper-stack visual (2-4 stacked, rotated hairline rects sized by note count), the collapsed/expanded pieces list, and drops the reflect link; keeps the existing gather animation, "Add to <project>" suggestion, and dismiss. `ProjectOverviewCard.tsx` keeps its container, gains "active this week" phrasing from `lastActivityAt`. `useProjectOverview` additionally returns the 10 most recent loose notes for the bottom tier (it already fetches every note, so no new query). Thread copy tweaks: `blurb` is shown (it currently isn't) and the count reads "N thoughts · since <month>" from `firstSeenAt`.
+**Map** — `src/pages/Threads.tsx` becomes the untitled three-tier map (file renamed to `src/pages/Map.tsx`, still mounted at `/`). `ThreadCard.tsx` gains the paper-stack visual (2-4 stacked, rotated hairline rects sized by note count), the collapsed/expanded pieces list, "Dismiss" in place of "Not this", and drops the reflect link; keeps the existing gather animation and the "Add to <project>" suggestion. `ProjectOverviewCard.tsx` keeps its container, gains "active this week" phrasing from `lastActivityAt`. `useProjectOverview` additionally returns the 10 most recent loose notes for the bottom tier (it already fetches every note, so no new query). Thread copy: the count reads "N thoughts · since <month>" from `firstSeenAt`; the recurrence line uses the existing `quotes`/`blurb` data only when it names something concrete, truncated to one short sentence.
 
-**Rail** — `ProjectRail.tsx`: drop the Reflect NavLink and the `Sparkles` import.
+**Rail** — `ProjectRail.tsx`: rename the `/` item to "Home", drop the Reflect NavLink and the `Sparkles` import.
 
-**Export** — new `src/lib/exportProject.ts` builds the markdown string from notes already loaded by `useNotes(projectId)` (title, `recorded_at`, `synthesis`, `transcript`/`body`) and triggers a Blob download; small trigger in `src/pages/Index.tsx` header, visible only in a project. No backend work.
+**Export** — new `src/lib/exportProject.ts` builds the markdown string from notes already loaded by `useNotes(projectId)` (title, `recorded_at`, `synthesis`, `transcript`/`body`) and triggers a Blob download; "Take this project with you" in `src/pages/Index.tsx`'s project header, with "Export as Markdown" in an adjacent ••• menu. No backend work.
 
-No database migrations and no edge-function changes in this plan.
+No database migrations and no edge-function code or deployment changes in this plan.
+
