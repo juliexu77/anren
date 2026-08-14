@@ -28,6 +28,7 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [explaining, setExplaining] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [asked, setAsked] = useState(false);
 
   const run = async () => {
     if (!query.trim()) return;
@@ -35,6 +36,7 @@ const SearchPage = () => {
     setAnswer(null);
     setShowAnswer(false);
     const asking = looksLikeQuestion(query);
+    setAsked(asking);
     const { data, error } = await supabase.functions.invoke("search-notes", {
       body: { query: query.trim(), explain: asking },
     });
@@ -89,6 +91,12 @@ const SearchPage = () => {
         </div>
       </div>
 
+      {asked && answer && (
+        <div className="mt-8 rounded-[20px] border border-hairline bg-paper/70 px-6 py-6">
+          <p className="whitespace-pre-line font-editorial text-[1.02rem] leading-[1.7]">{answer}</p>
+        </div>
+      )}
+
       {hits && (
         <div className="mt-8">
           {!hits.length ? (
@@ -119,7 +127,7 @@ const SearchPage = () => {
         </div>
       )}
 
-      {hits && hits.length > 0 && (
+      {!asked && hits && hits.length > 0 && (
         <div className="mt-8">
           {!showAnswer && !answer ? (
             <button
