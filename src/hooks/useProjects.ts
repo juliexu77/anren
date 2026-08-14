@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { useAuth } from "@/hooks/useAuth";
 import { undoableDelete } from "@/lib/undo";
+import { notesChanged, onNotesChanged } from "@/lib/noteEvents";
 import type { Project } from "@/types/note";
 
 const SELECT = "id, name, position, emoji";
