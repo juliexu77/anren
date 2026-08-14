@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
+import { onNotesChanged } from "@/lib/noteEvents";
 import type { Project } from "@/types/note";
 
 export interface OverviewNote {
