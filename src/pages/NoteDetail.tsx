@@ -509,33 +509,6 @@ const NoteDetail = () => {
 
       {note.status !== "processing" && <ContinueNote note={note} onDone={reload} />}
 
-      {(note.transcript || note.body) && (
-        <section className="mt-12">
-          <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
-            Ask about this note
-          </h2>
-          <div className="mt-3 flex items-end gap-3 border-b border-hairline pb-3">
-            <input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ask()}
-              placeholder="What did I decide here?"
-              className="flex-1 bg-transparent py-1 font-editorial text-[1.15rem] italic leading-[1.5] text-muted-foreground/80 outline-none placeholder:text-muted-foreground/60 transition-colors hover:text-foreground focus:text-foreground"
-            />
-            <button
-              onClick={ask}
-              disabled={asking || !question.trim()}
-              aria-label="Ask"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
-            >
-              {asking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
-            </button>
-          </div>
-          {answer && (
-            <p className="mt-4 whitespace-pre-line text-[0.95rem] leading-[1.75] text-foreground/90">{answer}</p>
-          )}
-        </section>
-      )}
     </article>
   );
 };
