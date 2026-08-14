@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { useAuth } from "@/hooks/useAuth";
 import { undoableDelete } from "@/lib/undo";
+import { notesChanged, onNotesChanged } from "@/lib/noteEvents";
 import type { Project } from "@/types/note";
 
 const SELECT = "id, name, position, emoji";
@@ -38,6 +39,7 @@ export function useProjects() {
 
   useEffect(() => {
     load();
+    return onNotesChanged(() => void load());
   }, [load]);
 
   const setProjectEmoji = useCallback(async (id: string, emoji: string) => {
@@ -77,6 +79,8 @@ export function useProjects() {
 
       const created = data as Project;
       setProjects((prev) => (prev.some((p) => p.id === created.id) ? prev : [...prev, created]));
+      // Every other rail and the map on Home hear about it too.
+      notesChanged();
 
       // Suggest an emoji in the background; silent on failure.
       supabase.functions
