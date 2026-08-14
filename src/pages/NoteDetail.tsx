@@ -113,7 +113,8 @@ const NoteDetail = () => {
     setTitleDraft(note.title ?? "");
     setSynthesisDraft(note.synthesis ?? "");
     setBodyDraft(note.body ?? "");
-  }, [note?.id, note?.title, note?.synthesis, note?.body]);
+    setTranscriptDraft(note.transcript ?? "");
+  }, [note?.id, note?.title, note?.synthesis, note?.body, note?.transcript]);
 
   // Title wraps instead of running off-canvas.
   useEffect(() => {
