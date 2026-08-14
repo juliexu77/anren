@@ -9,8 +9,7 @@ Return strict JSON, and nothing else:
   "kind": "new" | "existing" | "none",
   "name": "the project name, 1-3 words, sentence case",
   "project_id": "id of the existing project, only when kind is existing",
-  "note_ids": ["uuid", "uuid"],
-  "reason": "one short sentence naming what these notes have in common"
+  "note_ids": ["uuid", "uuid"]
 }
 
 Rules:
@@ -20,15 +19,13 @@ Rules:
 - NEVER name a grouping "anren" or after the app itself. Never name it after the medium: "Notes", "Thoughts", "Journal", "Voice memos".
 - Names are things a person would say out loud: "Meals & cooking", "Dream journal", "The novel", "House", "Writing concepts". Never "Miscellaneous", "Personal", "Ideas", "Notes", "Thoughts", "General".
 - Never use the words folder, organize, file, category, tag, or productivity language of any kind.
-- note_ids must be ids you were given. Never invent one.
-- "reason" is plain and specific, second person, no throat-clearing. One sentence.`;
+- note_ids must be ids you were given. Never invent one.`;
 
 interface Suggestion {
   kind?: string;
   name?: string;
   project_id?: string;
   note_ids?: string[];
-  reason?: string;
 }
 
 Deno.serve(async (req) => {
@@ -124,10 +121,9 @@ Deno.serve(async (req) => {
         name: projectId ? (projects ?? []).find((p) => p.id === projectId)!.name : name,
         project_id: projectId,
         note_ids: noteIds,
-        reason: (parsed?.reason ?? '').trim() || null,
         status: 'pending',
       })
-      .select('id, kind, name, project_id, note_ids, reason')
+      .select('id, kind, name, project_id, note_ids')
       .single();
     if (error) throw error;
 
