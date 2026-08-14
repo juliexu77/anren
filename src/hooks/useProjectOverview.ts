@@ -108,6 +108,7 @@ export function useProjectOverview() {
   useEffect(() => {
     if (projectsLoading) return;
     void load();
+    return onNotesChanged(() => void load());
   }, [load, projectsLoading]);
 
   return { overviews, looseCount, looseRecent, loading: overviews === null, reload: load };
