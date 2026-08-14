@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Loader2, MoreHorizontal, Sparkles } from "lucide-react";
+import { ChevronLeft, Loader2, MoreHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNote, softDeleteNote } from "@/hooks/useNotes";
 import { ContinueNote } from "@/components/ContinueNote";
@@ -86,9 +86,6 @@ const NoteDetail = () => {
   const [related, setRelated] = useState<{ note_id: string; title: string | null; recorded_at: string }[] | null>(null);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [threads, setThreads] = useState<{ id: string; name: string }[]>([]);
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
 
   // Draft fields — seeded from the note, saved on blur.
   const [titleDraft, setTitleDraft] = useState("");
@@ -212,21 +209,6 @@ const NoteDetail = () => {
     if (!note) return;
     await softDeleteNote(note, () => reload());
     navigate("/notes");
-  };
-
-  const ask = async () => {
-    if (!note || !question.trim()) return;
-    setAsking(true);
-    setAnswer(null);
-    const { data, error } = await supabase.functions.invoke("ask-note", {
-      body: { noteId: note.id, question: question.trim() },
-    });
-    setAsking(false);
-    if (error) {
-      toast.error("Couldn't answer that just now.");
-      return;
-    }
-    setAnswer((data as { answer?: string })?.answer ?? null);
   };
 
   if (loading) {
@@ -509,33 +491,6 @@ const NoteDetail = () => {
 
       {note.status !== "processing" && <ContinueNote note={note} onDone={reload} />}
 
-      {(note.transcript || note.body) && (
-        <section className="mt-12">
-          <h2 className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground/70">
-            Ask about this note
-          </h2>
-          <div className="mt-3 flex items-end gap-3 border-b border-hairline pb-3">
-            <input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ask()}
-              placeholder="What did I decide here?"
-              className="flex-1 bg-transparent py-1 font-editorial text-[1.15rem] italic leading-[1.5] text-muted-foreground/80 outline-none placeholder:text-muted-foreground/60 transition-colors hover:text-foreground focus:text-foreground"
-            />
-            <button
-              onClick={ask}
-              disabled={asking || !question.trim()}
-              aria-label="Ask"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
-            >
-              {asking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" strokeWidth={1.5} />}
-            </button>
-          </div>
-          {answer && (
-            <p className="mt-4 whitespace-pre-line text-[0.95rem] leading-[1.75] text-foreground/90">{answer}</p>
-          )}
-        </section>
-      )}
     </article>
   );
 };
