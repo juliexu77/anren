@@ -50,8 +50,27 @@ async function finishTranscript(
   admin: any,
   note: { id: string; user_id: string; audio_path: string; transcript: string | null; transcribed_parts: number | null },
 ): Promise<string> {
+  // A pass started during the recording may still be running; let it land so
+  // the same words don't get written down twice.
+  for (let wait = 0; wait < 10; wait++) {
+    const { data: state } = await admin
+      .from('notes')
+      .select('transcript, transcribed_parts, transcribe_lock_at')
+      .eq('id', note.id)
+      .maybeSingle();
+    if (state) {
+      note.transcript = state.transcript;
+      note.transcribed_parts = state.transcribed_parts;
+    }
+    const lock = state?.transcribe_lock_at ? Date.parse(state.transcribe_lock_at) : 0;
+    if (!lock || Date.now() - lock > 120_000) break;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+
   const already = (note.transcript ?? '').trim();
   const from = note.transcribed_parts ?? 0;
+
+
 
   if (note.audio_path.endsWith('/') || from > 0) {
     const prefix = note.audio_path.endsWith('/') ? note.audio_path : `${note.user_id}/${note.id}/`;
