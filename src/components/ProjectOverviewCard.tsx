@@ -31,7 +31,9 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
         </Link>
         <span className="shrink-0 text-[0.72rem] uppercase tracking-[0.12em] text-muted-foreground/60">
           {count} note{count === 1 ? "" : "s"}
+          {active && " · active this week"}
         </span>
+
       </div>
 
       {count === 0 ? (
