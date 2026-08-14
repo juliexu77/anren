@@ -336,7 +336,7 @@ const NoteDetail = () => {
           {threads.map((t) => (
             <Link
               key={t.id}
-              to="/threads"
+              to="/"
               className="rounded-full border border-hairline px-2.5 py-1 text-[0.75rem] text-muted-foreground transition-colors hover:text-foreground"
             >
               part of {t.name}

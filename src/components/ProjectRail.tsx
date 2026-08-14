@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Sparkles, LayoutList, Plus, Settings, Check, MoreHorizontal , GitBranch} from "lucide-react";
+import { Search, Home, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
@@ -110,24 +110,20 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
       </NavLink>
 
       <nav className="flex flex-col gap-1.5">
-
+        <NavLink to="/" end className={navItemClass} onClick={onNavigate} aria-label="Home">
+          <Home className="w-[17px] h-[17px]" strokeWidth={1.5} />
+          Home
+        </NavLink>
         <NavLink to="/notes" className={navItemClass} onClick={onNavigate} aria-label="Notes">
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
-        </NavLink>
-        <NavLink to="/" end className={navItemClass} onClick={onNavigate} aria-label="Threads">
-          <GitBranch className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          Threads
         </NavLink>
         <NavLink to="/search" className={navItemClass} onClick={onNavigate} aria-label="Search">
           <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Search
         </NavLink>
-        <NavLink to="/reflect" className={navItemClass} onClick={onNavigate} aria-label="Reflect">
-          <Sparkles className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          Reflect
-        </NavLink>
       </nav>
+
 
       <div className="mt-8 flex-1 min-h-0 overflow-y-auto">
         <div className="flex items-center justify-between px-3 mb-2">

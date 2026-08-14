@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 import { FolderMark } from "@/components/folder-glyphs";
 import { markProjectLooked, type ProjectOverview } from "@/hooks/useProjectOverview";
 
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+
 export function ProjectOverviewCard({ overview }: { overview: ProjectOverview }) {
-  const { project, count, recent, newSinceLooked } = overview;
+  const { project, count, recent, newSinceLooked, lastActivityAt } = overview;
   const seen = () => markProjectLooked(project.id);
+  const active = lastActivityAt > 0 && Date.now() - lastActivityAt < WEEK;
+
 
   return (
     <article className="rounded-[18px] border border-hairline bg-paper/70 px-5 py-4">
@@ -27,7 +31,9 @@ export function ProjectOverviewCard({ overview }: { overview: ProjectOverview })
         </Link>
         <span className="shrink-0 text-[0.72rem] uppercase tracking-[0.12em] text-muted-foreground/60">
           {count} note{count === 1 ? "" : "s"}
+          {active && " · active this week"}
         </span>
+
       </div>
 
       {count === 0 ? (

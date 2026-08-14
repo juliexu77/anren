@@ -11,15 +11,32 @@ const DAY = 24 * 60 * 60 * 1000;
 const GATHER_MS = 620;
 const SUGGEST_KEY = "anren.clusterSuggestions";
 
-/** A plain read of the shape of this little pile — never a metric. */
-function shapeLine(notes: ThreadNote[]) {
+/** Plain count and span — never a metric, never a verdict. */
+function countLine(notes: ThreadNote[]) {
   const dates = notes.map((n) => +new Date(n.recordedAt)).sort((a, b) => b - a);
-  if (dates.length < 2) return "These seem to belong together";
-  const stretch = (dates[0] - dates[dates.length - 1]) / DAY;
-  const gap = (dates[0] - dates[1]) / DAY;
-  if (gap > 18) return "You came back to this";
-  if (stretch > 14) return "These have been accumulating";
-  return "These seem to belong together";
+  const count = `${notes.length} thought${notes.length === 1 ? "" : "s"}`;
+  if (dates.length < 2) return count;
+  const oldest = new Date(dates[dates.length - 1]);
+  const spanDays = (dates[0] - dates[dates.length - 1]) / DAY;
+  if (spanDays < 9) return `${count} lately`;
+  if (spanDays < 40) {
+    return `${count} over ${Math.max(2, Math.round(spanDays / 7))} weeks`;
+  }
+  return `${count} · since ${oldest.toLocaleDateString([], { month: "long" })}`;
+}
+
+/**
+ * At most one observational line, and only when it names something concrete
+ * that literally recurs. Anything reading like a diagnosis is dropped.
+ */
+function recurringLine(thread: Thread) {
+  const phrase = thread.quotes
+    .map((q) => q.trim().replace(/^["“']|["”']$/g, ""))
+    .filter((q) => q.length >= 8 && q.length <= 60)
+    .sort((a, b) => a.length - b.length)[0];
+  if (!phrase) return null;
+  const lower = phrase.charAt(0).toLowerCase() + phrase.slice(1);
+  return `${lower.replace(/[.…]+$/, "")} keeps coming up.`;
 }
 
 interface Suggestion {
@@ -45,9 +62,28 @@ function writeCache(threadId: string, value: Suggestion | null) {
   }
 }
 
+/** Overlapping paper edges — the pile thickens as you keep talking about it. */
+function PaperStack({ count }: { count: number }) {
+  const sheets = Math.min(4, Math.max(2, count - 1));
+  return (
+    <span aria-hidden className="inline-flex shrink-0 items-end">
+      {Array.from({ length: sheets }).map((_, i) => (
+        <span
+          key={i}
+          className="h-[13px] w-[10px] rounded-[2px] border border-hairline bg-paper-sunk/70"
+          style={{
+            marginLeft: i ? "-4px" : 0,
+            transform: `rotate(${(i - (sheets - 1) / 2) * 5}deg)`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 /**
- * A loose grouping outside your projects: anren has gathered these together
- * provisionally. Lighter than a project on purpose.
+ * Something taking shape: anren has noticed these keep rhyming, but nothing has
+ * been claimed yet. Lighter than a project on purpose.
  */
 export function ThreadCard({
   thread,
@@ -67,6 +103,7 @@ export function ThreadCard({
   const { createProject, projects } = useProjects();
   const navigate = useNavigate();
   const [gathering, setGathering] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
 
   const loose = thread.notes.filter((n) => !n.projectId);
@@ -93,8 +130,8 @@ export function ThreadCard({
 
   if (loose.length < 2) return null;
 
-  const shown = loose.slice(0, 5);
-  const rest = loose.length - shown.length;
+  const trail = loose.slice(0, 3).map((n) => n.title ?? "Untitled note");
+  const recurring = recurringLine(thread);
 
   const gather = async (existingProjectId?: string, label?: string) => {
     setGathering(label ?? thread.name);
@@ -115,39 +152,54 @@ export function ThreadCard({
   };
 
   return (
-    <article>
-      <h3 className="font-editorial text-[1.1rem] leading-tight tracking-[-0.01em]">
+    <article className={cn(gathering && "motion-safe:animate-gather")}>
+      <h3 className="font-editorial text-[1.15rem] leading-tight tracking-[-0.01em]">
         {gathering ?? thread.name}
-        <span className="ml-2 font-sans text-[0.72rem] uppercase tracking-[0.12em] text-muted-foreground/60">
-          {loose.length} notes
-        </span>
       </h3>
-      <p className="mt-1 text-[0.8rem] text-muted-foreground/75">
-        {gathering ? "Gathering these together…" : shapeLine(loose)}
+      <p className="mt-1 text-[0.78rem] uppercase tracking-[0.12em] text-muted-foreground/60">
+        {gathering ? "Gathering these together…" : countLine(loose)}
       </p>
 
-      <div className={cn("thread-cluster mt-2.5", gathering && "motion-safe:animate-gather")}>
-        {shown.map((n) => (
-          <Link
-            key={n.id}
-            to={`/note/${n.id}`}
-            className="flex items-baseline justify-between gap-3 py-[0.28rem] transition-colors hover:text-foreground"
-          >
-            <span className="truncate text-[0.865rem] leading-snug text-foreground/75">
-              {n.title ?? "Untitled note"}
-            </span>
-            <span className="shrink-0 text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground/50">
-              {new Date(n.recordedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
-            </span>
-          </Link>
-        ))}
-        {rest > 0 && (
-          <p className="py-[0.28rem] text-[0.8rem] text-muted-foreground/60">and {rest} more</p>
-        )}
+      <div className="mt-2 flex items-center gap-2.5">
+        <PaperStack count={loose.length} />
+        <p className="min-w-0 truncate text-[0.85rem] text-muted-foreground/75">
+          {trail.join(" · ")}
+          {loose.length > trail.length && ` · and ${loose.length - trail.length} more`}
+        </p>
       </div>
 
+      {recurring && !gathering && (
+        <p className="mt-1.5 text-[0.88rem] leading-relaxed text-foreground/70">{recurring}</p>
+      )}
+
+      {open && (
+        <div className="mt-2.5 border-l border-hairline pl-4 motion-safe:animate-fade-in">
+          {loose.map((n) => (
+            <Link
+              key={n.id}
+              to={`/note/${n.id}`}
+              className="flex items-baseline justify-between gap-3 py-[0.28rem] transition-colors hover:text-foreground"
+            >
+              <span className="truncate text-[0.865rem] leading-snug text-foreground/75">
+                {n.title ?? "Untitled note"}
+              </span>
+              <span className="shrink-0 text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground/50">
+                {new Date(n.recordedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {!gathering && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 pl-4 text-[0.82rem]">
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.82rem]">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="text-muted-foreground/80 transition-colors hover:text-foreground"
+          >
+            {open ? "Hide the pieces" : "See the pieces →"}
+          </button>
           {suggestion && (
             <button
               onClick={() => gather(suggestion.projectId, suggestion.projectName)}
@@ -165,24 +217,17 @@ export function ThreadCard({
               suggestion ? "text-muted-foreground/80 hover:text-foreground" : "text-primary",
             )}
           >
-            {suggestion ? "Start a project instead →" : "Gather into a project →"}
+            {suggestion ? "Make its own project →" : "Make this a project →"}
           </button>
           <button
             onClick={onDismiss}
             disabled={working}
             className="text-muted-foreground/60 transition-colors hover:text-foreground disabled:opacity-50"
           >
-            Not this
+            Dismiss
           </button>
         </div>
       )}
-
-      <Link
-        to={`/reflect?thread=${thread.id}`}
-        className="mt-2 inline-block pl-4 text-[0.8rem] italic text-muted-foreground/70 underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
-      >
-        What's going on in this?
-      </Link>
     </article>
   );
 }

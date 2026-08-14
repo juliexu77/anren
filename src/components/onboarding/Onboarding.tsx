@@ -320,14 +320,15 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
           {card === 3 && (
             <div className="animate-fade-up">
-              <h2 className="font-editorial text-[1.5rem] leading-snug">Your week, read back</h2>
+              <h2 className="font-editorial text-[1.5rem] leading-snug">Watch it take shape</h2>
               <p className="mb-5 mt-2 text-[0.92rem] leading-[1.6] text-muted-foreground">
-                Once a week, without being asked, anren reads everything back in Reflect — and you
-                can ask it anything about your own thinking.
+                When you keep circling something, anren says so on your home screen — and you decide
+                whether it's a project worth keeping.
               </p>
               <ReflectDemo runKey={runKey} />
             </div>
           )}
+
 
           {card === 4 && (
             <div className="text-center animate-fade-up">
