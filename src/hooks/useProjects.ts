@@ -39,6 +39,7 @@ export function useProjects() {
 
   useEffect(() => {
     load();
+    return onNotesChanged(() => void load());
   }, [load]);
 
   const setProjectEmoji = useCallback(async (id: string, emoji: string) => {
