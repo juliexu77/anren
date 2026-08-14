@@ -13,7 +13,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen w-full">
       {/* Mobile top bar */}
-      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 bg-background/85 backdrop-blur-xl border-b border-hairline">
+      <div
+        className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 box-content bg-background/85 backdrop-blur-xl border-b border-hairline"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <button
           onClick={() => setRailOpen(true)}
           aria-label="Open menu"
