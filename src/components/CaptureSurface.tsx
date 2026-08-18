@@ -89,10 +89,12 @@ export function CaptureSurface() {
           </div>
         ) : (
           <>
+            <HomeNote />
             <HomeCaptureLine />
             <StarterPrompts surface="home" className="mt-7 max-w-[380px] mx-auto" />
           </>
         )}
+
 
 
       </div>
