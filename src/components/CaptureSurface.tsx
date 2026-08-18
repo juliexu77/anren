@@ -76,7 +76,13 @@ export function CaptureSurface() {
 
       <div className="min-h-[3.5rem] text-center">
         {kept ? (
-          <div onClick={() => setKept(null)}>
+          <div
+            onClick={(e) => {
+              // A tap anywhere else lets it go; the links and "not that?" keep working.
+              if (!(e.target as HTMLElement).closest("a,button")) setKept(null);
+            }}
+          >
+
             <KeptEcho noteId={kept} onSomethingNew={holdLonger} />
           </div>
         ) : (
