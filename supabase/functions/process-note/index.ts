@@ -278,11 +278,16 @@ Deno.serve(async (req) => {
           || text.split(/[.?!]/)[0].slice(0, 70);
 
         const synthesis = parsed?.synthesis?.trim() || text.slice(0, 400);
+        // The one thing said back to them the moment they stop talking. When
+        // the model has nothing true to say, this stays empty and the capture
+        // screen simply doesn't show a line.
+        const echo = parsed?.echo?.trim() || null;
 
         await admin
           .from('notes')
-          .update({ transcript: text, title, synthesis, status: 'ready', error_message: null })
+          .update({ transcript: text, title, synthesis, echo, status: 'ready', error_message: null })
           .eq('id', workingId);
+
 
         if (!typed && !continuesId && note.audio_path) {
           await discardAudio(admin, note.user_id, workingId, note.audio_path);
