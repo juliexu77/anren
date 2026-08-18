@@ -9,13 +9,14 @@ import { mapNote, type Note } from "@/types/note";
 
 
 type NoteEdits = Partial<
-  Pick<Note, "title" | "synthesis" | "projectId" | "body" | "transcript" | "audioPath" | "recordedAt" | "status">
+  Pick<Note, "title" | "synthesis" | "echo" | "projectId" | "body" | "transcript" | "audioPath" | "recordedAt" | "status">
 >;
 
 export function noteUpdatePayload(updates: NoteEdits) {
   const payload: Record<string, unknown> = {};
   if (updates.title !== undefined) payload.title = updates.title;
   if (updates.synthesis !== undefined) payload.synthesis = updates.synthesis;
+  if (updates.echo !== undefined) payload.echo = updates.echo;
   if (updates.projectId !== undefined) payload.project_id = updates.projectId;
   if (updates.body !== undefined) payload.body = updates.body;
   if (updates.transcript !== undefined) payload.transcript = updates.transcript;

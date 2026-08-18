@@ -6,6 +6,8 @@ export interface Note {
   projectId: string | null;
   title: string | null;
   synthesis: string | null;
+  /** One or two sentences anren says back the moment you keep a note. */
+  echo: string | null;
   transcript: string | null;
   body: string | null;
   source: NoteSource;
@@ -34,6 +36,7 @@ export function mapNote(row: any): Note {
     projectId: row.project_id ?? null,
     title: row.title ?? null,
     synthesis: row.synthesis ?? null,
+    echo: row.echo ?? null,
     transcript: row.transcript ?? null,
     body: row.body ?? null,
     source: (row.source as NoteSource) ?? "voice",
