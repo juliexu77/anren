@@ -10,7 +10,8 @@ const SYSTEM_PROMPT = `You turn a person's spoken voice memo into a short writte
 Return strict JSON:
 {
   "title": "one line, max 9 words, in their own voice, naming the actual thought — never 'Voice note' or a date",
-  "synthesis": "3-6 bullet points, one per line, each starting with '- '. Each bullet is one short sentence: what they were working out, any decision or intention, anything they said they'd do. No headings, no nested bullets, no prose paragraphs."
+  "synthesis": "3-6 bullet points, one per line, each starting with '- '. Each bullet is one short sentence: what they were working out, any decision or intention, anything they said they'd do. No headings, no nested bullets, no prose paragraphs.",
+  "echo": "one or two sentences said back to them, right after they finish speaking, naming what they were actually working out. Second person, settled and plain. Never praise them, never diagnose them, never ask a question, never use productivity language, never say 'this note'."
 }
 
 Rules:
@@ -18,14 +19,15 @@ Rules:
 - State what happened in the memo. Do not speculate, diagnose, or infer what it means about them.
 - Keep their words and specifics; never invent detail that wasn't said.
 - Warm, plain, unhurried. No corporate or productivity language. No emojis.
-- If the recording is too short or unclear, say so plainly in the synthesis.`;
+- If the recording is too short or unclear, say so plainly in the synthesis and leave "echo" as an empty string.`;
 
 const TYPED_SYSTEM_PROMPT = `You turn something a person wrote or pasted into their own archive into a short written record they will read later.
 
 Return strict JSON:
 {
   "title": "one line, max 9 words, in their own voice, naming the actual thought — never 'Note' or a date",
-  "synthesis": "3-6 bullet points, one per line, each starting with '- '. Each bullet is one short sentence: what they were working out, any decision or intention, anything they said they'd do. No headings, no nested bullets, no prose paragraphs."
+  "synthesis": "3-6 bullet points, one per line, each starting with '- '. Each bullet is one short sentence: what they were working out, any decision or intention, anything they said they'd do. No headings, no nested bullets, no prose paragraphs.",
+  "echo": "one or two sentences said back to them, right after they finish writing, naming what they were actually working out. Second person, settled and plain. Never praise them, never diagnose them, never ask a question, never use productivity language, never say 'this note'."
 }
 
 Rules:
@@ -33,12 +35,14 @@ Rules:
 - These are their written words, not speech. Never say "you said", "in this recording", or "you mentioned out loud".
 - Keep their words and specifics; never invent detail that wasn't there.
 - Warm, plain, unhurried. No corporate or productivity language. No emojis.
-- If the text is very short, keep the synthesis just as short rather than padding it.`;
+- If the text is very short, keep the synthesis just as short rather than padding it, and leave "echo" as an empty string.`;
 
 interface Synthesis {
   title: string;
   synthesis: string;
+  echo?: string;
 }
+
 
 /**
  * Almost every recording is already written down by the time this runs — the
@@ -274,11 +278,16 @@ Deno.serve(async (req) => {
           || text.split(/[.?!]/)[0].slice(0, 70);
 
         const synthesis = parsed?.synthesis?.trim() || text.slice(0, 400);
+        // The one thing said back to them the moment they stop talking. When
+        // the model has nothing true to say, this stays empty and the capture
+        // screen simply doesn't show a line.
+        const echo = parsed?.echo?.trim() || null;
 
         await admin
           .from('notes')
-          .update({ transcript: text, title, synthesis, status: 'ready', error_message: null })
+          .update({ transcript: text, title, synthesis, echo, status: 'ready', error_message: null })
           .eq('id', workingId);
+
 
         if (!typed && !continuesId && note.audio_path) {
           await discardAudio(admin, note.user_id, workingId, note.audio_path);

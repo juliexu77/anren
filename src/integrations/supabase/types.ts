@@ -126,6 +126,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           duration_seconds: number | null
+          echo: string | null
           error_message: string | null
           id: string
           project_id: string | null
@@ -149,6 +150,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           duration_seconds?: number | null
+          echo?: string | null
           error_message?: string | null
           id?: string
           project_id?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           duration_seconds?: number | null
+          echo?: string | null
           error_message?: string | null
           id?: string
           project_id?: string | null
