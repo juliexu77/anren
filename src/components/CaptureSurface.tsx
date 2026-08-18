@@ -76,34 +76,8 @@ export function CaptureSurface() {
 
       <div className="min-h-[3.5rem] text-center">
         {kept ? (
-          <div className="motion-safe:animate-fade-in">
-            <p className="text-[0.95rem] text-muted-foreground">
-              Kept it.{" "}
-              <Link
-                to={`/note/${kept}`}
-                className="italic underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
-              >
-                open it
-              </Link>
-            </p>
-            {filed && (
-              <p className="mt-1 text-[0.82rem] text-muted-foreground/75">
-                Filed into{" "}
-                <Link
-                  to={`/folder/${filed.id}`}
-                  className="underline decoration-hairline underline-offset-[3px] transition-colors hover:text-foreground"
-                >
-                  {filed.name}
-                </Link>
-                <span className="mx-1.5 text-muted-foreground/40">·</span>
-                <button
-                  onClick={notThat}
-                  className="italic underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
-                >
-                  not that?
-                </button>
-              </p>
-            )}
+          <div onClick={() => setKept(null)}>
+            <KeptEcho noteId={kept} onSomethingNew={holdLonger} />
           </div>
         ) : (
           <>
@@ -111,6 +85,7 @@ export function CaptureSurface() {
             <StarterPrompts surface="home" className="mt-7 max-w-[380px] mx-auto" />
           </>
         )}
+
 
       </div>
     </div>
