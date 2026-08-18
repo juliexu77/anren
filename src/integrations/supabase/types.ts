@@ -79,6 +79,42 @@ export type Database = {
           },
         ]
       }
+      home_notes: {
+        Row: {
+          computed_at: string
+          created_at: string
+          dismissed_at: string | null
+          kind: string
+          line: string | null
+          note_ids: string[]
+          notes_analyzed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          created_at?: string
+          dismissed_at?: string | null
+          kind?: string
+          line?: string | null
+          note_ids?: string[]
+          notes_analyzed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          created_at?: string
+          dismissed_at?: string | null
+          kind?: string
+          line?: string | null
+          note_ids?: string[]
+          notes_analyzed?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       note_passages: {
         Row: {
           chunk_index: number
