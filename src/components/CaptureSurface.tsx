@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { HomeCaptureLine } from "@/components/HomeCaptureLine";
+import { HomeNote } from "@/components/HomeNote";
 import { StarterPrompts } from "@/components/StarterPrompts";
 import { KeptEcho } from "@/components/KeptEcho";
+
 
 import { useRecordingRecovery } from "@/hooks/useRecordingRecovery";
 
