@@ -17,7 +17,7 @@ import VoiceCapture from "./pages/VoiceCapture";
 import WriteCapture from "./pages/WriteCapture";
 
 import NoteDetail from "./pages/NoteDetail";
-import SearchPage from "./pages/SearchPage";
+import AskPage from "./pages/AskPage";
 import MindMap from "./pages/Map";
 
 import Settings from "./pages/Settings";
