@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Home, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
+import { Sparkles, Home, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
