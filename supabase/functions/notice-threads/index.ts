@@ -206,16 +206,55 @@ Deno.serve(async (req) => {
       keptIds.delete(from);
     }
 
-    // Threads anren didn't see this time, and that haven't moved in weeks, go quiet.
-    const stale = active.filter(
-      (t) => !keptIds.has(t.id) && Date.now() - new Date(t.last_seen_at).getTime() > DORMANT_AFTER,
-    );
+    // A thread anren looked at this time and no longer sees goes quiet right away —
+    // otherwise last week's grouping sits next to this week's and the same note
+    // shows up twice. Threads made of older notes it wasn't shown are left alone.
+    const stale = active.filter((t) => {
+      if (keptIds.has(t.id)) return false;
+      const wasVisible = (t.note_ids ?? []).some((id) => noteIndex.has(id));
+      if (!wasVisible) return false;
+      return Date.now() - new Date(t.last_seen_at).getTime() > DORMANT_AFTER;
+    });
     if (stale.length) {
       await supabase
         .from('threads')
         .update({ status: 'dormant', updated_at: now })
         .in('id', stale.map((t) => t.id));
     }
+
+    // One note belongs to one thread taking shape. Tighter, fresher groupings claim
+    // their notes first; anything left with fewer than two notes goes quiet.
+    const { data: keptRows } = await supabase
+      .from('threads')
+      .select('id, note_ids, last_seen_at')
+      .eq('status', 'active');
+
+    const ordered = (keptRows ?? []).slice().sort((a, b) => {
+      const seen = new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime();
+      if (seen !== 0) return seen;
+      return (a.note_ids ?? []).length - (b.note_ids ?? []).length;
+    });
+
+    const claimed = new Set<string>();
+    for (const t of ordered) {
+      const mine = (t.note_ids ?? []).filter((id) => !claimed.has(id));
+      if (mine.length < 2) {
+        await supabase
+          .from('threads')
+          .update({ status: 'dormant', updated_at: now })
+          .eq('id', t.id);
+        keptIds.delete(t.id);
+        continue;
+      }
+      mine.forEach((id) => claimed.add(id));
+      if (mine.length !== (t.note_ids ?? []).length) {
+        await supabase
+          .from('threads')
+          .update({ note_ids: mine, updated_at: now })
+          .eq('id', t.id);
+      }
+    }
+
 
     return jsonResponse({ ok: true, noticed: keptIds.size });
   } catch (error) {
