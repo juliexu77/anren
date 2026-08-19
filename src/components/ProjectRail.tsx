@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Home, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
+import { Sparkles, Home, LayoutList, Plus, Settings, Check, MoreHorizontal } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { useNotes } from "@/hooks/useNotes";
 import { FolderEmojiPicker } from "@/components/FolderEmojiPicker";
@@ -118,9 +118,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
         </NavLink>
-        <NavLink to="/search" className={navItemClass} onClick={onNavigate} aria-label="Search">
-          <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          Search
+        <NavLink to="/ask" className={navItemClass} onClick={onNavigate} aria-label="Ask">
+          <Sparkles className="w-[17px] h-[17px]" strokeWidth={1.5} />
+          Ask
         </NavLink>
       </nav>
 

@@ -54,11 +54,11 @@ export default function Support() {
             </p>
           </Section>
 
-          <Section heading="Search and related notes">
+          <Section heading="Ask and related notes">
             <p>
-              Search shows your own notes first. If you want anren&rsquo;s read on what those notes have in common, tap
-              &ldquo;See what these have in common&rdquo;. On a note page, &ldquo;Related&rdquo; quietly links earlier
-              notes on the same subject.
+              Ask puts a question to your own notes. anren answers in a few sentences, leaning only on what you actually
+              said, and lists the notes it drew on underneath so you can read the originals. On a note page,
+              &ldquo;Related&rdquo; quietly links earlier notes on the same subject.
             </p>
           </Section>
 

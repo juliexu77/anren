@@ -17,7 +17,7 @@ import VoiceCapture from "./pages/VoiceCapture";
 import WriteCapture from "./pages/WriteCapture";
 
 import NoteDetail from "./pages/NoteDetail";
-import SearchPage from "./pages/SearchPage";
+import AskPage from "./pages/AskPage";
 import MindMap from "./pages/Map";
 
 import Settings from "./pages/Settings";
@@ -88,7 +88,8 @@ const App = () => {
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
-          <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
+          <Route path="/ask" element={<ProtectedShell><AskPage /></ProtectedShell>} />
+          <Route path="/search" element={<Navigate to="/ask" replace />} />
           <Route path="/threads" element={<Navigate to="/" replace />} />
           <Route path="/reflect" element={<Navigate to="/" replace />} />
           <Route path="/on-my-mind" element={<Navigate to="/" replace />} />
