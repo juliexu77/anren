@@ -76,7 +76,7 @@ async function isExempt(userId: string): Promise<boolean> {
   const { data } = await admin
     .from('profiles')
     .select('ai_exempt')
-    .eq('id', userId)
+    .eq('user_id', userId)
     .maybeSingle();
   return Boolean(data?.ai_exempt);
 }
