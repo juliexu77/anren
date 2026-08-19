@@ -88,7 +88,8 @@ const App = () => {
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
-          <Route path="/search" element={<ProtectedShell><SearchPage /></ProtectedShell>} />
+          <Route path="/ask" element={<ProtectedShell><AskPage /></ProtectedShell>} />
+          <Route path="/search" element={<Navigate to="/ask" replace />} />
           <Route path="/threads" element={<Navigate to="/" replace />} />
           <Route path="/reflect" element={<Navigate to="/" replace />} />
           <Route path="/on-my-mind" element={<Navigate to="/" replace />} />
