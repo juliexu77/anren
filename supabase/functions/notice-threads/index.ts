@@ -206,13 +206,10 @@ Deno.serve(async (req) => {
       keptIds.delete(from);
     }
 
-    // A thread anren looked at this time and no longer sees goes quiet right away —
-    // otherwise last week's grouping sits next to this week's and the same note
-    // shows up twice. Threads made of older notes it wasn't shown are left alone.
+    // Threads anren didn't see this time, and that haven't moved in weeks, go quiet.
+    // Ones built from older notes it wasn't shown are left alone.
     const stale = active.filter((t) => {
       if (keptIds.has(t.id)) return false;
-      const wasVisible = (t.note_ids ?? []).some((id) => noteIndex.has(id));
-      if (!wasVisible) return false;
       return Date.now() - new Date(t.last_seen_at).getTime() > DORMANT_AFTER;
     });
     if (stale.length) {
