@@ -118,9 +118,9 @@ export function ProjectRail({ onNavigate }: { onNavigate?: () => void }) {
           <LayoutList className="w-[17px] h-[17px]" strokeWidth={1.5} />
           Notes
         </NavLink>
-        <NavLink to="/search" className={navItemClass} onClick={onNavigate} aria-label="Search">
-          <Search className="w-[17px] h-[17px]" strokeWidth={1.5} />
-          Search
+        <NavLink to="/ask" className={navItemClass} onClick={onNavigate} aria-label="Ask">
+          <Sparkles className="w-[17px] h-[17px]" strokeWidth={1.5} />
+          Ask
         </NavLink>
       </nav>
 
