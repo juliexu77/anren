@@ -122,11 +122,11 @@ export function HomeNote() {
   };
 
   return (
-    <div className="mb-8 text-center animate-fade-up">
+    <div className="mb-10 animate-fade-up">
       <p
         onClick={observing ? letGo : undefined}
         className={cn(
-          "mx-auto max-w-[34ch] font-editorial leading-[1.65] text-muted-foreground",
+          "max-w-[46ch] font-editorial leading-[1.65] text-muted-foreground",
           observing ? "text-[1.05rem] cursor-pointer" : "text-[0.95rem]",
         )}
       >
