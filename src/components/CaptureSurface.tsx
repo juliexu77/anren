@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { HomeCaptureLine } from "@/components/HomeCaptureLine";
-import { HomeNote } from "@/components/HomeNote";
 import { StarterPrompts } from "@/components/StarterPrompts";
 import { KeptEcho } from "@/components/KeptEcho";
 
@@ -89,7 +88,6 @@ export function CaptureSurface() {
           </div>
         ) : (
           <>
-            <HomeNote />
             <HomeCaptureLine />
             <StarterPrompts surface="home" className="mt-7 max-w-[380px] mx-auto" />
           </>

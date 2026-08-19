@@ -12,6 +12,7 @@ import { ProjectOverviewCard } from "@/components/ProjectOverviewCard";
 import { useThreads } from "@/hooks/useThreads";
 import { useProjectOverview } from "@/hooks/useProjectOverview";
 import { StarterPrompts } from "@/components/StarterPrompts";
+import { HomeNote } from "@/components/HomeNote";
 
 const SECTIONS_KEY = "anren.mapSections";
 
@@ -84,6 +85,7 @@ const MindMap = () => {
 
   return (
     <div className="pb-6">
+      <HomeNote />
       <Accordion
         type="multiple"
         value={expanded}
