@@ -1,0 +1,1 @@
+UPDATE public.profiles SET ai_exempt = true, updated_at = now() WHERE email = 'juliexubi@gmail.com';
