@@ -2,7 +2,7 @@
 
 Right now the line and the texture words are the same reading twice — both come from one prompt over the same week of notes, so the words just restate the sentence in shorthand. This splits them into two concepts that don't overlap:
 
-- **The line — what you keep returning to.** One or two sentences, shorter and plainer than today's paragraph. No "from 3 notes" link underneath; if it isn't trustworthy enough to stand alone, it shouldn't be shown. Tapping it still lets it go for the day.
+- **The line — what you keep returning to.** One or two sentences, shorter and plainer than today's paragraph. No "from 3 notes" link underneath; if it isn't trustworthy enough to stand alone, it shouldn't be shown. It stays on the Home until the current reading is replaced by a new one.
 - **The words — how you sound.** Your energy and state across the week, not its subject matter: `drained`, `restless`, `steady`, `energized after Tuesday`, `running on fumes`. This is register, not content — the thing you'd hear in someone's voice rather than read in their notes. These persist and re-read themselves as new notes land.
 
 The rule that keeps them separate: a word may never name a topic, a person, or anything the line already names. If the line says you keep circling maintenance, the words say what that circling sounds like.
