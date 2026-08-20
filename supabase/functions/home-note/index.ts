@@ -7,8 +7,11 @@ const PROMPT = `You are the first line someone sees when they open their private
 Return strict JSON:
 {
   "observation": "one or two sentences, or null",
-  "note_ids": ["the ids of the notes this comes from"]
+  "note_ids": ["the ids of the notes this comes from"],
+  "textures": [{ "title": "one or two words", "detail": "one sentence of evidence", "note_ids": ["ids"] }]
 }
+
+"textures" is the feel of their week: 3 to 6 short words or two-word phrases that, read side by side, give the atmosphere of these days. All lowercase, no punctuation. Mix registers: a mood or texture ("low static", "held breath", "warm dread"), a recurring shape ("borrowed urgency", "quiet deferral"), an image or object that genuinely keeps returning. Never a topic label ("work", "family"), never a fact or a count. A texture is felt, not filed — but every one must be traceable to something actually in the notes, and "detail" is one sentence of that evidence. Return fewer only if the week is genuinely thin; return [] if there is nothing honest to name.
 
 What earns an observation:
 - Something that keeps returning across more than one note — a person, a decision, a worry, a shape of thinking.
@@ -31,9 +34,16 @@ Hard prohibitions:
 
 If nothing genuinely runs through the week, return {"observation": null, "note_ids": []}. An empty answer is much better than a padded one. Only include note_ids you were actually given.`;
 
+interface Texture {
+  title?: string;
+  detail?: string;
+  note_ids?: string[];
+}
+
 interface Reflection {
   observation: string | null;
   note_ids?: string[];
+  textures?: Texture[];
 }
 
 Deno.serve(async (req) => {
@@ -65,7 +75,7 @@ Deno.serve(async (req) => {
 
     // Below this there's nothing to see a current in, and a line would be invented.
     if (!notes || notes.length < 4) {
-      return jsonResponse({ observation: null, noteIds: [], notesAnalyzed: notes?.length ?? 0 });
+      return jsonResponse({ observation: null, noteIds: [], textures: [], notesAnalyzed: notes?.length ?? 0 });
     }
 
     const [{ data: projects }, { data: threads }] = await Promise.all([
@@ -108,11 +118,21 @@ Deno.serve(async (req) => {
     // A reading that can't point at anything is a reading we don't trust.
     const observation = line && noteIds.length ? line : null;
 
+    const textures = (Array.isArray(parsed?.textures) ? parsed.textures : [])
+      .map((t) => ({
+        title: (t?.title ?? '').trim().toLowerCase(),
+        detail: (t?.detail ?? '').trim(),
+        note_ids: [...new Set((t?.note_ids ?? []).filter((id) => valid.has(id)))].slice(0, 4),
+      }))
+      .filter((t) => t.title && t.title.split(/\s+/).length <= 2)
+      .slice(0, 6);
+
     const { error: saveError } = await supabase
       .from('home_notes')
       .upsert({
         user_id: user.id,
         line: observation,
+        textures,
         kind: 'observation',
         note_ids: noteIds,
         notes_analyzed: notes.length,
@@ -122,7 +142,7 @@ Deno.serve(async (req) => {
       }, { onConflict: 'user_id' });
     if (saveError) throw saveError;
 
-    return jsonResponse({ observation, noteIds, notesAnalyzed: notes.length });
+    return jsonResponse({ observation, noteIds, textures, notesAnalyzed: notes.length });
   } catch (error) {
     if (error instanceof QuotaError) return needsOwnKeyResponse();
     console.error('home-note error:', (error as Error).message);
