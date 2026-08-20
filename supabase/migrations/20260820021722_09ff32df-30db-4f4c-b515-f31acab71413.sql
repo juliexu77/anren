@@ -1,0 +1,1 @@
+ALTER TABLE public.home_notes ADD COLUMN IF NOT EXISTS textures jsonb NOT NULL DEFAULT '[]'::jsonb;
