@@ -88,6 +88,7 @@ export type Database = {
           line: string | null
           note_ids: string[]
           notes_analyzed: number
+          textures: Json
           updated_at: string
           user_id: string
         }
@@ -99,6 +100,7 @@ export type Database = {
           line?: string | null
           note_ids?: string[]
           notes_analyzed?: number
+          textures?: Json
           updated_at?: string
           user_id: string
         }
@@ -110,6 +112,7 @@ export type Database = {
           line?: string | null
           note_ids?: string[]
           notes_analyzed?: number
+          textures?: Json
           updated_at?: string
           user_id?: string
         }
