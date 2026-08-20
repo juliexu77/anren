@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { greetingLine } from "@/lib/greeting";
 import { ThemePills, type ThemePill } from "@/components/ThemePills";
-import { cn } from "@/lib/utils";
 
 /** How stale a reading can get before anren has another look. */
 const RECOMPUTE_AFTER_MS = 6 * 60 * 60 * 1000;
@@ -23,8 +21,6 @@ interface Said {
   textures: Texture[];
 }
 
-const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
-
 const asTextures = (raw: unknown): Texture[] =>
   Array.isArray(raw)
     ? (raw as Texture[]).filter((t) => t && typeof t.title === "string" && t.title.trim())
@@ -32,16 +28,14 @@ const asTextures = (raw: unknown): Texture[] =>
 
 /**
  * One quiet line above the blank page, and beneath it the texture of the week —
- * a few felt words drawn from what you've been saying, each one traceable back
- * to the notes it came from, so it's never a claim you can't check.
+ * a few felt words drawn from how you sound, not what you've been saying.
+ * The line stays until a new reading replaces it; the words are there to be tapped
+ * for the one sentence of evidence behind them.
  */
 export function HomeNote() {
   const { user } = useAuth();
   const [greeting, setGreeting] = useState<string | null>(null);
   const [said, setSaid] = useState<Said>({ observation: null, noteIds: [], textures: [] });
-  const [dismissed, setDismissed] = useState(false);
-  const [showSources, setShowSources] = useState(false);
-  const [sources, setSources] = useState<{ id: string; title: string | null }[]>([]);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -66,17 +60,16 @@ export function HomeNote() {
 
       const { data: stored } = await supabase
         .from("home_notes")
-        .select("line, note_ids, textures, dismissed_at, computed_at")
+        .select("line, textures, computed_at")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (!alive) return;
 
-      if (stored?.dismissed_at && isToday(stored.dismissed_at)) setDismissed(true);
       if (stored) {
         setSaid({
           observation: stored.line ?? null,
-          noteIds: (stored.note_ids ?? []) as string[],
+          noteIds: [],
           textures: asTextures(stored.textures),
         });
       }
@@ -102,10 +95,9 @@ export function HomeNote() {
       if (!alive || error) return;
       const observation = (data?.observation as string | undefined) ?? null;
       const textures = asTextures(data?.textures);
-      if (observation) setDismissed(false);
       setSaid({
         observation,
-        noteIds: observation ? ((data?.noteIds as string[] | undefined) ?? []) : [],
+        noteIds: [],
         textures,
       });
     };
@@ -115,15 +107,6 @@ export function HomeNote() {
       alive = false;
     };
   }, [user]);
-
-  useEffect(() => {
-    if (!showSources || !said.noteIds.length || sources.length) return;
-    void supabase
-      .from("notes")
-      .select("id, title")
-      .in("id", said.noteIds)
-      .then(({ data }) => setSources(data ?? []));
-  }, [showSources, said.noteIds, sources.length]);
 
   const textureNoteIds = useMemo(
     () => [...new Set(said.textures.flatMap((t) => t.note_ids ?? []))],
@@ -141,8 +124,7 @@ export function HomeNote() {
       );
   }, [textureNoteIds]);
 
-  const observing = Boolean(said.observation) && !dismissed;
-  const line = observing ? said.observation : greeting;
+  const line = said.observation || greeting;
   const pills: ThemePill[] = said.textures.map((t) => ({
     label: t.title,
     detail: t.detail,
@@ -151,60 +133,18 @@ export function HomeNote() {
 
   if (!line && !pills.length) return null;
 
-  const letGo = async () => {
-    setDismissed(true);
-    setShowSources(false);
-    if (user) {
-      await supabase
-        .from("home_notes")
-        .update({ dismissed_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-    }
-  };
-
   return (
     <div className="mb-10 animate-fade-up">
       {line && (
-        <p
-          onClick={observing ? letGo : undefined}
-          className={cn(
-            "max-w-[46ch] font-editorial leading-[1.65] text-muted-foreground",
-            observing ? "text-[1.05rem] cursor-pointer" : "text-[0.95rem]",
-          )}
-        >
+        <p className="max-w-[46ch] font-editorial text-[1.05rem] leading-[1.65] text-muted-foreground">
           {line}
         </p>
       )}
 
-      {observing && said.noteIds.length > 0 && (
-        <div className="mt-2">
-          <button
-            onClick={() => setShowSources((s) => !s)}
-            className="text-[0.72rem] text-muted-foreground/70 underline decoration-[0.5px] underline-offset-[3px] transition-colors hover:text-foreground"
-          >
-            {showSources ? "hide" : `from ${said.noteIds.length} notes`}
-          </button>
-          {showSources && (
-            <ul className="mt-2 space-y-1">
-              {sources.map((n) => (
-                <li key={n.id}>
-                  <Link
-                    to={`/note/${n.id}`}
-                    className="text-[0.8rem] text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {n.title ?? "Untitled"}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
       {pills.length > 0 && (
-        <div className="mt-5">
+        <div className="mt-6">
           <h2 className="mb-2.5 text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground/70">
-            The texture of your week
+            How this week sounds
           </h2>
           <ThemePills items={pills} titleById={titles} />
         </div>

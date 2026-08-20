@@ -2,28 +2,27 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, parseJsonBlock, jsonResponse, QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
-const PROMPT = `You are the first line someone sees when they open their private notes app. You have their notes from the last week. If something is genuinely running through them, you say it — once, plainly, the way a friend who has been paying attention would when they sit down across from you.
+const PROMPT = `You are the first line someone sees when they open their private notes app. You have their notes from the last week. Read them twice: once for what keeps returning, and once for how they sound across the week. Return both as strict JSON.
 
 Return strict JSON:
 {
   "observation": "one or two sentences, or null",
   "note_ids": ["the ids of the notes this comes from"],
-  "textures": [{ "title": "one or two words", "detail": "one sentence of evidence", "note_ids": ["ids"] }]
+  "textures": [{ "title": "one to three words", "detail": "one sentence of evidence", "note_ids": ["ids"] }]
 }
 
-"textures" is the feel of their week: 3 to 6 short words or two-word phrases that, read side by side, give the atmosphere of these days. All lowercase, no punctuation. Mix registers: a mood or texture ("low static", "held breath", "warm dread"), a recurring shape ("borrowed urgency", "quiet deferral"), an image or object that genuinely keeps returning. Never a topic label ("work", "family"), never a fact or a count. A texture is felt, not filed — but every one must be traceable to something actually in the notes, and "detail" is one sentence of that evidence. Return fewer only if the week is genuinely thin; return [] if there is nothing honest to name.
-
-What earns an observation:
+## observation
+What earns a line:
 - Something that keeps returning across more than one note — a person, a decision, a worry, a shape of thinking.
 - A place where the way they talk about something has shifted across the week.
 - Something they keep circling and leaving unfinished.
 
 Voice:
 - Second person, settled, plain, unhurried. Their words over yours.
-- Name the actual thing. "Marcus keeps coming up — three notes this week and each one lands on the timing rather than the decision."
-- It is fine to say the friend thing: "this seems like it's really been sitting with you." But only when the notes carry it.
+- Name the actual thing. "You keep landing on trapped — the routine you chose, the days going into logistics."
+- One or two sentences. Cut the second sentence if it weakens the first.
 
-Hard prohibitions:
+Hard prohibitions for observation:
 - Never summarise the notes. Summarising is not noticing.
 - Never praise, diagnose, advise, or ask a question.
 - No throat-clearing ("I notice that", "It seems like there's"). Start with the substance.
@@ -32,7 +31,23 @@ Hard prohibitions:
 - Never mention the app, "your notes", "this note", or how many notes there are as the point.
 - Never open with a greeting.
 
-If nothing genuinely runs through the week, return {"observation": null, "note_ids": []}. An empty answer is much better than a padded one. Only include note_ids you were actually given.`;
+If nothing genuinely runs through the week, return {"observation": null, "note_ids": []}. An empty answer is much better than a padded one.
+
+## textures
+These are the *feel* of the week, not the content. Read the notes for emotional register: how they sound, not what they're about. Energy, tone, state of being.
+
+Examples of good texture words:
+- "drained", "running on fumes", "bracing", "quietly steady", "briefly lit up", "restless", "heavy but clear", "winding down", "after Tuesday"
+
+Rules:
+- 3 to 6 words. One to three words each. Lowercase, no punctuation.
+- A word is a register, not a topic. Never "work", "family", "meeting", "Marcus", or any proper noun or subject that appears in the observation.
+- A word must never name a topic, person, place, or anything the observation already names. If the observation says "trapped in logistics", the words must not say "trapped", "logistics", or "maintenance" — they should say what that feeling sounds like instead ("drained", "bracing", "circling").
+- Mix registers: some name energy level ("drained", "wound up"), some name a mood ("wistful", "restless"), some name a shift in tone ("briefly lit up", "going quiet"). A day may be named when it carries a real shift ("after Tuesday", "by Thursday"), but only when the shift is genuine.
+- Each texture must be traceable to something in the notes. "detail" is one tight sentence of that evidence. If it can't be grounded, don't return it.
+- Return fewer only if the week is genuinely thin; return [] if there is nothing honest to name.
+
+If the observation is null, the textures can still exist if there is an honest atmosphere to name. If there is none, return [] for both.`;
 
 interface Texture {
   title?: string;
@@ -108,15 +123,14 @@ Deno.serve(async (req) => {
         role: 'user',
         content: `${vocabulary ? `${vocabulary}\n\n` : ''}Their notes from the last week:\n\n${context}`,
       },
-    ], { temperature: 0.7, maxTokens: 700, userId: user.id });
+    ], { temperature: 0.7, maxTokens: 900, userId: user.id });
 
     const parsed = parseJsonBlock<Reflection>(raw);
     const line = parsed?.observation?.trim() || null;
     const valid = new Set(notes.map((n) => n.id));
     const noteIds = [...new Set((parsed?.note_ids ?? []).filter((id) => valid.has(id)))].slice(0, 8);
 
-    // A reading that can't point at anything is a reading we don't trust.
-    const observation = line && noteIds.length ? line : null;
+    const observation = line || null;
 
     const textures = (Array.isArray(parsed?.textures) ? parsed.textures : [])
       .map((t) => ({
@@ -124,7 +138,11 @@ Deno.serve(async (req) => {
         detail: (t?.detail ?? '').trim(),
         note_ids: [...new Set((t?.note_ids ?? []).filter((id) => valid.has(id)))].slice(0, 4),
       }))
-      .filter((t) => t.title && t.title.split(/\s+/).length <= 2)
+      .filter((t) => {
+        if (!t.title) return false;
+        const words = t.title.split(/\s+/);
+        return words.length >= 1 && words.length <= 3;
+      })
       .slice(0, 6);
 
     const { error: saveError } = await supabase
