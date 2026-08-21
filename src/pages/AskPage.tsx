@@ -33,12 +33,14 @@ const AskPage = () => {
     if (!question || pending) return;
     setQuery("");
     setPending(question);
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     const history = turns.slice(-4).map((t) => ({ question: t.question, answer: t.answer }));
     const { data, error } = await supabase.functions.invoke("ask-notes", {
       body: { question, history },
     });
     setPending(null);
+
 
     if (error) {
       toast.error(isNeedsKeyError(error) ? NEEDS_KEY_MESSAGE : "That didn't come back. Try again?");
@@ -99,32 +101,6 @@ const AskPage = () => {
       )}
 
       <div className="mt-9 flex flex-col gap-9">
-        {turns.map((turn, i) => (
-          <div key={`${i}-${turn.question}`} className="animate-fade-up">
-            <p className="text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">You asked</p>
-            <p className="mt-1.5 text-[0.94rem] leading-relaxed text-muted-foreground">{turn.question}</p>
-
-            <p className="mt-5 whitespace-pre-line font-editorial text-[1.05rem] leading-[1.75]">{turn.answer}</p>
-
-            {turn.sources.length > 0 && (
-              <div className="mt-5 border-t border-hairline pt-4">
-                <p className="text-[0.7rem] uppercase tracking-[0.13em] text-muted-foreground/60">From your notes</p>
-                <div className="mt-2 flex flex-col gap-1.5">
-                  {turn.sources.map((s) => (
-                    <Link
-                      key={s.noteId}
-                      to={`/note/${s.noteId}`}
-                      className="text-[0.9rem] text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {s.title ?? "Untitled note"}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-
         {pending && (
           <div className="animate-fade-up">
             <p className="text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">You asked</p>
@@ -135,7 +111,37 @@ const AskPage = () => {
             </div>
           </div>
         )}
+
+        {turns
+          .map((turn, i) => ({ turn, i }))
+          .reverse()
+          .map(({ turn, i }) => (
+            <div key={`${i}-${turn.question}`} className="animate-fade-up">
+              <p className="text-[0.72rem] uppercase tracking-[0.13em] text-muted-foreground/60">You asked</p>
+              <p className="mt-1.5 text-[0.94rem] leading-relaxed text-muted-foreground">{turn.question}</p>
+
+              <p className="mt-5 whitespace-pre-line font-editorial text-[1.05rem] leading-[1.75]">{turn.answer}</p>
+
+              {turn.sources.length > 0 && (
+                <div className="mt-5 border-t border-hairline pt-4">
+                  <p className="text-[0.7rem] uppercase tracking-[0.13em] text-muted-foreground/60">From your notes</p>
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    {turn.sources.map((s) => (
+                      <Link
+                        key={s.noteId}
+                        to={`/note/${s.noteId}`}
+                        className="text-[0.9rem] text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {s.title ?? "Untitled note"}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
       </div>
+
     </div>
   );
 };
