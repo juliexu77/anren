@@ -33,12 +33,14 @@ const AskPage = () => {
     if (!question || pending) return;
     setQuery("");
     setPending(question);
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     const history = turns.slice(-4).map((t) => ({ question: t.question, answer: t.answer }));
     const { data, error } = await supabase.functions.invoke("ask-notes", {
       body: { question, history },
     });
     setPending(null);
+
 
     if (error) {
       toast.error(isNeedsKeyError(error) ? NEEDS_KEY_MESSAGE : "That didn't come back. Try again?");
