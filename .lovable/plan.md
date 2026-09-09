@@ -4,6 +4,17 @@ Ask waits for a question. Patterns doesn't. It's a small stack of written observ
 
 Deliberately open-ended: it surfaces patterns without committing to a frame (energy, decisions, moods). Once you've lived with it a week, we can narrow it.
 
+## Starting point: Plum Tarot Journal's pattern engine
+
+I reviewed the tarot app (`Plum Tarot Journal`, `/patterns` route + `prompts.server.ts`). Worth borrowing, translated to notes:
+
+- **One flagship write-up per period.** Their engine writes a cached "letter" for the month; ours writes a small stack of pattern cards for the recent stretch.
+- **The letter prompt's best ideas.** Read the input as an ordered sequence, not a list; name the arc plainly, including when it's uncomfortable; end with one honest line naming what the reading is *not* asking of you. Our pattern prompt adopts that voice.
+- **Cheap deterministic recurrences alongside the AI layer.** Their "cards that return" and "words you keep using" are pure counting, no model. We get the equivalent for free: a quiet "Words you keep using" strip computed client-side from note transcripts (stop-word filtered, recurs across notes), rendered below the cards. It grounds the page even when the AI reading is thin.
+- **Cached result + explicit rewrite** (`reflections` table upsert, "Rewrite the letter" button) — matches the cached-row + "Look again" design below.
+
+What we don't take: tarot framing, month pickers, card counts/bars.
+
 ## What you see
 
 New sidebar item **Patterns**, directly above Ask.
@@ -61,7 +72,9 @@ New edge function `supabase/functions/notice-patterns/index.ts`:
 Frontend:
 - `src/hooks/usePatterns.ts` — loads cached rows, applies the staleness rule, invokes the function, exposes `{ patterns, loading, working, lookAgain }`.
 - `src/components/PatternCard.tsx` — title, reading, quote, note links (titles fetched by id, same approach as `HomeNote`).
-- `src/pages/Patterns.tsx` — header line, "Look again", card stack, empty and thin states.
+- `src/pages/Patterns.tsx` — header line, "Look again", card stack, empty and thin states, plus the deterministic **Words you keep using** strip: transcripts tokenized client-side, stop-word filtered, only words appearing in 2+ notes, shown as quiet bordered chips with a small count (adapted from the tarot app's `words` computation).
 - `src/App.tsx` route `/patterns`; `src/components/ProjectRail.tsx` nav entry above Ask.
+
+Prompt voice (adapted from the tarot letter engine): read the notes as an ordered sequence with a shape, not a list; name each pattern plainly including when it's uncomfortable; close the stack with one line naming what the patterns are *not* asking of you, so the read stays honest rather than tidy.
 
 No changes to `home-note`, `notice-threads`, or the Map — Patterns is additive.
