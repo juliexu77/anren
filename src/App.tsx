@@ -18,6 +18,7 @@ import WriteCapture from "./pages/WriteCapture";
 
 import NoteDetail from "./pages/NoteDetail";
 import AskPage from "./pages/AskPage";
+import Patterns from "./pages/Patterns";
 import MindMap from "./pages/Map";
 
 import Settings from "./pages/Settings";
@@ -88,6 +89,7 @@ const App = () => {
           <Route path="/folder/:projectId" element={<ProtectedShell><Index /></ProtectedShell>} />
           
           <Route path="/note/:noteId" element={<ProtectedShell><NoteDetail /></ProtectedShell>} />
+          <Route path="/patterns" element={<ProtectedShell><Patterns /></ProtectedShell>} />
           <Route path="/ask" element={<ProtectedShell><AskPage /></ProtectedShell>} />
           <Route path="/search" element={<Navigate to="/ask" replace />} />
           <Route path="/threads" element={<Navigate to="/" replace />} />
