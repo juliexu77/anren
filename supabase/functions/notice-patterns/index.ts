@@ -2,22 +2,26 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, parseJsonBlock, jsonResponse, QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
-const PROMPT = `You are reading a run of someone's private notes as a single sequence, and writing them a letter about it. Speak directly to them, in second person.
+const PROMPT = `You are reading everything someone has kept in their private notes and writing them a letter about where their energy actually is. Speak directly to them, in second person.
 
-Read the notes as an ordered stretch of time, not as a list of separate entries. Notice the movement: what keeps returning, what shifts, where the register stops matching the content, what they circle and leave unfinished, what is conspicuously absent. Say what that drift suggests about where their attention is going.
+Read for charge, not chronology. From the words themselves — pace, specificity, hedging, how much detail a subject earns, whether they are describing something or defending it — work out what lights up and what goes flat. Vivid, concrete, forward-leaning language is energy. Abstract, dutiful, obligation-shaped language ("should", "need to", "just have to get through") is drain. Something can matter to them and still be flat; say so when it is.
 
-Stay at the synthesis layer. Read the notes closely and let them inform the arc, but do NOT recap note by note and do NOT simply reflect their own sentences back at them.
+Then notice direction. Compare the earlier block against the recent block: is that charge rising, cooling, or converting into something else? What has lost heat, and what picked it up? This is a comparison across the whole run, not a walk through it.
 
-A pattern only earns a place in the letter if it shows up across two or more notes. A single clever observation from one note is cut, however good it is.
+Weight the recent block heaviest. Close by naming where their energy is actually pointing now and what that suggests they lean into or set down — one or two things, plainly, no plan, no encouragement, no steps.
 
-Write 4 to 6 short paragraphs of plain prose. No headings, no bullet points, no numbering, no emoji. Open with the strongest thing you see — no throat-clearing, never "I notice that" or "It seems like there's". Name each pattern plainly, including when it is uncomfortable.
+Then one final short paragraph beginning "What this is not asking of you:" — one or two sentences naming what the reading does not demand, so it stays honest rather than tidy.
 
-End with one final paragraph beginning "What this is not asking of you:" — one or two sentences naming what the reading does not demand, so it stays honest rather than tidy.
+Write 4 to 6 short paragraphs of plain prose. No headings, no bullet points, no numbering, no emoji. Open with the strongest thing you see — no throat-clearing, never "I notice that" or "It seems like there's".
+
+A pattern only earns a place if it shows up across two or more notes. A single clever observation from one note is cut, however good it is.
 
 Hard prohibitions:
+- Do NOT recap notes, and do NOT narrate note by note or day by day. Never write "you started by… then later…". Never name a weekday or a date. Never list topics.
+- If a paragraph could be replaced by a summary of one note, it does not belong.
 - Never describe what kind of notes these are, what format they're in, or how many there are.
-- No therapy voice, no advice unless they asked for it in a note, no scores, metrics, productivity language, or praise.
-- Never invent a person, place, detail, or day. Only name a weekday if a note is from that day.
+- No therapy voice, no scores, metrics, productivity language, or praise.
+- Never invent a person, place, or detail.
 - Never mention the app or "your notes" as the subject.
 
 You are also given the names of their projects and loose groupings. Use those names literally when they help; never invent a name that isn't in the list.
@@ -27,6 +31,7 @@ Return strict JSON:
   "body": "the letter, paragraphs separated by blank lines",
   "note_ids": ["the ids of the notes the patterns you named rest on"]
 }`;
+
 
 interface Letter {
   body?: string;
@@ -76,25 +81,32 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join('\n');
 
-    const context = ordered
-      .map((n) => {
-        const day = new Date(n.recorded_at).toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-          timeZone: 'UTC',
-        });
-        return `id: ${n.id}\n[${day}] ${n.title ?? 'Untitled'}\n${(n.synthesis ?? '').slice(0, 1000)}\n${(n.transcript ?? '').slice(0, 1500)}`;
-      })
-      .join('\n\n---\n\n');
+    const render = (n: typeof ordered[number]) =>
+      `id: ${n.id}\n${n.title ?? 'Untitled'}\n${(n.synthesis ?? '').slice(0, 1000)}\n${(n.transcript ?? '').slice(0, 1500)}`;
+
+    // Two blocks, not one timeline: the model needs something to compare, not narrate.
+    const recentCount = Math.max(5, Math.round(ordered.length / 3));
+    const earlier = ordered.slice(0, Math.max(0, ordered.length - recentCount));
+    const recent = ordered.slice(Math.max(0, ordered.length - recentCount));
+
+    const block = (label: string, rows: typeof ordered) =>
+      rows.length ? `${label}\n\n${rows.map(render).join('\n\n---\n\n')}` : '';
+
+    const context = [
+      block('EARLIER — the wider run behind them:', earlier),
+      block('RECENT — where they are now (weight this heaviest):', recent),
+    ]
+      .filter(Boolean)
+      .join('\n\n=====\n\n');
 
     const raw = await chat([
       { role: 'system', content: PROMPT },
       {
         role: 'user',
-        content: `${vocabulary ? `${vocabulary}\n\n` : ''}Their notes, oldest first:\n\n${context}`,
+        content: `${vocabulary ? `${vocabulary}\n\n` : ''}${context}`,
       },
     ], { temperature: 0.75, maxTokens: 2000, userId: user.id });
+
 
     const parsed = parseJsonBlock<Letter>(raw);
     const body = parsed?.body?.trim();
