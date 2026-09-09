@@ -1,4 +1,4 @@
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { chat, parseJsonBlock, jsonResponse, QuotaError, needsOwnKeyResponse } from '../_shared/ai.ts';
 
@@ -8,11 +8,13 @@ Read for charge, not chronology. From the words themselves — pace, specificity
 
 Then notice direction. Compare the earlier block against the recent block: is that charge rising, cooling, or converting into something else? What has lost heat, and what picked it up? This is a comparison across the whole run, not a walk through it.
 
-Weight the recent block heaviest. Close by naming where their energy is actually pointing now and what that suggests they lean into or set down — one or two things, plainly, no plan, no encouragement, no steps.
+Weight the recent block heaviest. Name where their energy is actually pointing now and what that suggests they lean into or set down — one or two things, plainly, no plan, no encouragement, no steps.
 
-Then one final short paragraph beginning "What this is not asking of you:" — one or two sentences naming what the reading does not demand, so it stays honest rather than tidy.
+Then a short paragraph beginning "What this is not asking of you:" — one or two sentences naming what the reading does not demand, so it stays honest rather than tidy.
 
-Write 4 to 6 short paragraphs of plain prose. No headings, no bullet points, no numbering, no emoji. Open with the strongest thing you see — no throat-clearing, never "I notice that" or "It seems like there's".
+End with a short paragraph beginning "What this is asking of you:" — one or two sentences naming what the reading is genuinely asking of them, the small honest thing their own words keep pointing toward. Not a plan, not a step, not encouragement. Keep it specific to what surfaced, never generic advice.
+
+Write 5 to 7 short paragraphs of plain prose. No headings, no bullet points, no numbering, no emoji. Open with the strongest thing you see — no throat-clearing, never "I notice that" or "It seems like there's".
 
 A pattern only earns a place if it shows up across two or more notes. A single clever observation from one note is cut, however good it is.
 
