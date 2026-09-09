@@ -81,25 +81,32 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join('\n');
 
-    const context = ordered
-      .map((n) => {
-        const day = new Date(n.recorded_at).toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-          timeZone: 'UTC',
-        });
-        return `id: ${n.id}\n[${day}] ${n.title ?? 'Untitled'}\n${(n.synthesis ?? '').slice(0, 1000)}\n${(n.transcript ?? '').slice(0, 1500)}`;
-      })
-      .join('\n\n---\n\n');
+    const render = (n: typeof ordered[number]) =>
+      `id: ${n.id}\n${n.title ?? 'Untitled'}\n${(n.synthesis ?? '').slice(0, 1000)}\n${(n.transcript ?? '').slice(0, 1500)}`;
+
+    // Two blocks, not one timeline: the model needs something to compare, not narrate.
+    const recentCount = Math.max(5, Math.round(ordered.length / 3));
+    const earlier = ordered.slice(0, Math.max(0, ordered.length - recentCount));
+    const recent = ordered.slice(Math.max(0, ordered.length - recentCount));
+
+    const block = (label: string, rows: typeof ordered) =>
+      rows.length ? `${label}\n\n${rows.map(render).join('\n\n---\n\n')}` : '';
+
+    const context = [
+      block('EARLIER — the wider run behind them:', earlier),
+      block('RECENT — where they are now (weight this heaviest):', recent),
+    ]
+      .filter(Boolean)
+      .join('\n\n=====\n\n');
 
     const raw = await chat([
       { role: 'system', content: PROMPT },
       {
         role: 'user',
-        content: `${vocabulary ? `${vocabulary}\n\n` : ''}Their notes, oldest first:\n\n${context}`,
+        content: `${vocabulary ? `${vocabulary}\n\n` : ''}${context}`,
       },
     ], { temperature: 0.75, maxTokens: 2000, userId: user.id });
+
 
     const parsed = parseJsonBlock<Letter>(raw);
     const body = parsed?.body?.trim();
