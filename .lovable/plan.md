@@ -72,7 +72,9 @@ New edge function `supabase/functions/notice-patterns/index.ts`:
 Frontend:
 - `src/hooks/usePatterns.ts` — loads cached rows, applies the staleness rule, invokes the function, exposes `{ patterns, loading, working, lookAgain }`.
 - `src/components/PatternCard.tsx` — title, reading, quote, note links (titles fetched by id, same approach as `HomeNote`).
-- `src/pages/Patterns.tsx` — header line, "Look again", card stack, empty and thin states.
+- `src/pages/Patterns.tsx` — header line, "Look again", card stack, empty and thin states, plus the deterministic **Words you keep using** strip: transcripts tokenized client-side, stop-word filtered, only words appearing in 2+ notes, shown as quiet bordered chips with a small count (adapted from the tarot app's `words` computation).
 - `src/App.tsx` route `/patterns`; `src/components/ProjectRail.tsx` nav entry above Ask.
+
+Prompt voice (adapted from the tarot letter engine): read the notes as an ordered sequence with a shape, not a list; name each pattern plainly including when it's uncomfortable; close the stack with one line naming what the patterns are *not* asking of you, so the read stays honest rather than tidy.
 
 No changes to `home-note`, `notice-threads`, or the Map — Patterns is additive.
