@@ -246,6 +246,39 @@ export type Database = {
           },
         ]
       }
+      patterns: {
+        Row: {
+          body: string
+          computed_at: string
+          created_at: string
+          id: string
+          note_ids: string[]
+          notes_analyzed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          computed_at?: string
+          created_at?: string
+          id?: string
+          note_ids?: string[]
+          notes_analyzed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          computed_at?: string
+          created_at?: string
+          id?: string
+          note_ids?: string[]
+          notes_analyzed?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ai_exempt: boolean
